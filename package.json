@@ -1,0 +1,22 @@
+{
+  "name": "pantry",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "benchmark": "turbo run benchmark",
+    "check-types": "turbo run check-types",
+    "clean": "pnpm dlx rimraf --glob ./**/dist ./**/node_modules ./**/.turbo ./**/logs ./**/coverage ./**/test-report.html"
+  },
+  "devDependencies": {
+    "prettier": "^3.7.4",
+    "turbo": "^2.9.9",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9.2.0"
+}
