@@ -52,10 +52,11 @@ del progetto.
 
 ```
 pantry/
-├── packages/
-│   ├── shared/          # schemi Zod, tipi, costanti, logica di permessi
+├── apps/
 │   ├── api/             # Fastify + tRPC + Drizzle
 │   └── web/             # React + Vite (include il backoffice)
+├── packages/
+│   └── shared/          # schemi Zod, tipi, costanti, logica di permessi
 ├── docker-compose.yml
 ├── Caddyfile
 ├── .env.example
