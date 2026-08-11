@@ -1,4 +1,5 @@
 import { createAuth } from "./auth/auth.js";
+import { loadLocalEnv } from "./config/dotenv.js";
 import type { AppServices } from "./context.js";
 import { createDatabase } from "./db/client.js";
 import { runMigrations } from "./db/migrate.js";
@@ -10,6 +11,8 @@ import { createRealtime } from "./realtime/io.js";
 import { buildServer } from "./server.js";
 
 const main = async (): Promise<void> => {
+  loadLocalEnv();
+
   const config = loadConfig();
   const logger = createLogger(config);
   const { db, close } = createDatabase(config);

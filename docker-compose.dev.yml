@@ -1,0 +1,32 @@
+# Solo il database, per lo sviluppo locale.
+#
+# Deliberatamente separato da docker-compose.yml: quello descrive la
+# produzione, e mescolare i due significherebbe che una svista in sviluppo
+# diventa una svista in produzione. Qui la password è fissa e in chiaro
+# proprio perché non deve mai poter essere scambiata per un segreto.
+#
+#   pnpm db:up      avvia
+#   pnpm db:down    ferma e cancella il volume
+
+services:
+  db:
+    image: postgres:17.5
+    container_name: pantry-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pantry
+      POSTGRES_DB: pantry
+      POSTGRES_PASSWORD: pantry-dev
+    ports:
+      # In sviluppo la porta serve: i test di integrazione e `pnpm dev`
+      # girano sull'host, non in un container.
+      - "5432:5432"
+    volumes:
+      - pantry_dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pantry -d pantry"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pantry_dev_pgdata:

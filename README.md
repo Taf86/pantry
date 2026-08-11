@@ -39,7 +39,8 @@ pantry/
 │   └── web/          React 19 + Vite + TanStack Query (include /admin)
 ├── packages/
 │   └── shared/       schemi Zod, permessi, logica di dominio condivisa
-├── docker-compose.yml
+├── docker-compose.dev.yml     Postgres per lo sviluppo locale
+├── docker-compose.yml  produzione: Caddy + API + Postgres
 ├── Caddyfile
 └── docs/
     ├── spec.md
@@ -51,76 +52,88 @@ valere identico** su client e server — la forma degli item, i flag di
 permesso, la risoluzione dei conflitti, l'ordinamento della spesa. Definirlo
 due volte sarebbe la fonte di bug più prevedibile del progetto.
 
-| Livello       | Scelta                | Perché                                                        |
-| ------------- | --------------------- | ------------------------------------------------------------- |
-| HTTP          | Fastify               | processo long-running, nessuna struttura imposta               |
-| API           | tRPC                  | tipi end-to-end senza codegen                                  |
-| ORM           | Drizzle               | inferenza dei tipi, migrazioni serie, SQL grezzo per le CTE    |
-| Database      | PostgreSQL 17         | le funzionalità interessanti sono JOIN fra liste e dispensa    |
-| Auth          | Better Auth           | sessioni su Postgres, tabella utenti nostra (serve `status`)   |
-| Real-time     | Socket.IO             | riconnessione con backoff su rete mobile                       |
-| Stato client  | TanStack Query v5     | cache persistente + mutation in pausa = offline quasi gratis   |
-| Reverse proxy | Caddy 2               | TLS automatico, SPA e API sulla stessa origin                  |
+| Livello       | Scelta            | Perché                                                       |
+| ------------- | ----------------- | ------------------------------------------------------------ |
+| HTTP          | Fastify           | processo long-running, nessuna struttura imposta             |
+| API           | tRPC              | tipi end-to-end senza codegen                                |
+| ORM           | Drizzle           | inferenza dei tipi, migrazioni serie, SQL grezzo per le CTE  |
+| Database      | PostgreSQL 17     | le funzionalità interessanti sono JOIN fra liste e dispensa  |
+| Auth          | Better Auth       | sessioni su Postgres, tabella utenti nostra (serve `status`) |
+| Real-time     | Socket.IO         | riconnessione con backoff su rete mobile                     |
+| Stato client  | TanStack Query v5 | cache persistente + mutation in pausa = offline quasi gratis |
+| Reverse proxy | Caddy 2           | TLS automatico, SPA e API sulla stessa origin                |
 
 ## Sviluppo
 
-Requisiti: Node 22+, pnpm 9, un PostgreSQL raggiungibile.
+Requisiti: Node 22+, pnpm 9, e un PostgreSQL raggiungibile.
+
+**1. Dipendenze e configurazione.** Copia `.env.example` in `.env` alla radice
+e scommenta il blocco "sviluppo locale". L'API lo carica da sola, quindi non
+c'è niente da esportare a mano — e funziona identico su bash e su PowerShell.
 
 ```bash
 pnpm install
+cp .env.example .env
 ```
 
-Avvia un Postgres locale (o usa quello che preferisci):
+**2. Il database.** O con il compose di sviluppo, che contiene il solo Postgres:
 
 ```bash
-docker run -d --name pantry-db -p 5432:5432 -e POSTGRES_USER=pantry -e POSTGRES_DB=pantry -e POSTGRES_PASSWORD=pantry postgres:17.5
+pnpm db:up
 ```
 
-Esporta la configurazione minima:
+O con un PostgreSQL già installato: crea il database `pantry` e allinea
+`POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER` e `POSTGRES_PASSWORD` nel
+`.env`. Le migrazioni le applica l'API all'avvio, non serve preparare nulla.
+
+**3. Il primo amministratore.** Non esiste auto-registrazione: l'account
+iniziale si crea qui, e il comando stampa il link di attivazione.
 
 ```bash
-export POSTGRES_HOST=localhost POSTGRES_PASSWORD=pantry
-export BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-export DOMAIN=localhost:5173 EXTRA_ORIGINS=http://localhost:5173
+pnpm seed:admin -- --email tu@esempio.it --name "Il tuo nome"
 ```
 
-Crea il primo amministratore e prendi il link di attivazione:
-
-```bash
-pnpm --filter pantry-api seed:admin -- --email tu@esempio.it --name "Il tuo nome"
-```
-
-Avvia tutto:
+**4. Avvio.**
 
 ```bash
 pnpm dev
 ```
 
-L'app è su <http://localhost:5173>; Vite fa da proxy verso l'API, così il
-browser vede una sola origin esattamente come in produzione. Non è un
-dettaglio: il cookie di sessione e l'handshake WebSocket dipendono da questo.
+L'app è su <http://localhost:5173>. Apri il link di attivazione, scegli una
+password, e sei dentro.
+
+Vite fa da proxy verso l'API sulla 3000, così il browser vede una sola origin
+esattamente come in produzione dietro Caddy. Non è un dettaglio di comodità:
+il cookie di sessione e l'autenticazione dell'handshake WebSocket dipendono
+interamente da questo, ed è il motivo per cui `DOMAIN` in sviluppo vale
+`localhost:5173` e non la porta dell'API.
+
+Per fermare e ripulire il database: `pnpm db:down`.
 
 ### Comandi
 
-| Comando                              | Cosa fa                                        |
-| ------------------------------------ | ---------------------------------------------- |
-| `pnpm build`                         | compila tutti i workspace                      |
-| `pnpm check-types`                   | verifica dei tipi                              |
-| `pnpm lint`                          | ESLint + Prettier                              |
-| `pnpm test`                          | test unitari e di integrazione                 |
-| `pnpm --filter pantry-api db:generate` | genera una migrazione dallo schema Drizzle   |
-| `pnpm --filter pantry-api seed:admin`  | crea o rigenera il primo amministratore      |
+| Comando                                | Cosa fa                                    |
+| -------------------------------------- | ------------------------------------------ |
+| `pnpm dev`                             | avvia API e SPA in watch                   |
+| `pnpm db:up` / `pnpm db:down`          | Postgres di sviluppo, su e giù             |
+| `pnpm build`                           | compila tutti i workspace                  |
+| `pnpm check-types`                     | verifica dei tipi                          |
+| `pnpm lint`                            | ESLint + Prettier                          |
+| `pnpm test`                            | test unitari e di integrazione             |
+| `pnpm --filter pantry-api db:generate` | genera una migrazione dallo schema Drizzle |
+| `pnpm seed:admin`                      | crea o rigenera il primo amministratore    |
 
 ### Test
 
 I test unitari girano ovunque, senza dipendenze esterne. Le suite di
 integrazione dell'API richiedono un Postgres vero e si **saltano
 automaticamente** se `POSTGRES_PASSWORD` non è impostata, così un checkout
-appena clonato resta verde.
+appena clonato resta verde. Basta `pnpm db:up` e un `.env` perché si attivino
+da sole.
 
 Non c'è un finto database, ed è deliberato: le invarianti che contano in
 questa applicazione — locking ottimistico, `ON CONFLICT DO NOTHING`, CTE
-ricorsive, `UPDATE` relativi — *sono* comportamento del database. Verificarle
+ricorsive, `UPDATE` relativi — _sono_ comportamento del database. Verificarle
 contro una simulazione proverebbe solo che la simulazione funziona.
 
 ## Deployment

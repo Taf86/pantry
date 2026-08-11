@@ -2,14 +2,19 @@
   "name": "pantry",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "turbo run format",
+    "build": "turbo run build",
     "check-types": "turbo run check-types",
-    "clean": "pnpm dlx rimraf --glob ./**/dist ./**/node_modules ./**/.turbo ./**/logs ./**/coverage ./**/test-report.html",
+    "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:coverage": "turbo run test -- --coverage"
+    "test:coverage": "turbo run test -- --coverage",
+    "format": "turbo run format",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d --wait",
+    "db:down": "docker compose -f docker-compose.dev.yml down -v",
+    "db:logs": "docker compose -f docker-compose.dev.yml logs -f db",
+    "db:migrate": "turbo run db:migrate",
+    "seed:admin": "turbo run seed:admin --",
+    "clean": "pnpm dlx rimraf --glob ./**/dist ./**/node_modules ./**/.turbo ./**/logs ./**/coverage ./**/test-report.html"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
@@ -17,7 +22,7 @@
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "packageManager": "pnpm@9.2.0"
 }

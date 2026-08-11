@@ -27,6 +27,9 @@
       ]
     },
     "dev": {
+      "dependsOn": [
+        "^build"
+      ],
       "cache": false,
       "persistent": true
     },
@@ -34,6 +37,18 @@
       "cache": false
     },
     "test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "seed:admin": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "db:migrate": {
       "dependsOn": [
         "^build"
       ],

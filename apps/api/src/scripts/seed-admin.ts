@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import { eq } from "drizzle-orm";
 import { createUserInput } from "pantry-shared";
 
+import { loadLocalEnv } from "../config/dotenv.js";
 import { createDatabase } from "../db/client.js";
 import { runMigrations } from "../db/migrate.js";
 import { users } from "../db/schema/auth.js";
@@ -23,6 +24,8 @@ import {
  *   pnpm --filter pantry-api seed:admin -- --email a@b.it --name "Nome"
  */
 const main = async (): Promise<void> => {
+  loadLocalEnv();
+
   const { values } = parseArgs({
     options: {
       email: { type: "string" },

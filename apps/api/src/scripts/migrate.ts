@@ -1,8 +1,11 @@
+import { loadLocalEnv } from "../config/dotenv.js";
 import { createDatabase } from "../db/client.js";
 import { runMigrations } from "../db/migrate.js";
 import { loadConfig } from "../env.js";
 
 const main = async (): Promise<void> => {
+  loadLocalEnv();
+
   const handle = createDatabase(loadConfig());
   try {
     await runMigrations(handle.db);
