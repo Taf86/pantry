@@ -1,0 +1,39 @@
+{$DOMAIN} {
+    encode gzip zstd
+
+    handle /api/* {
+        reverse_proxy api:3000
+    }
+
+    handle /socket.io/* {
+        reverse_proxy api:3000
+    }
+
+    handle {
+        root * /srv
+
+        # Il service worker non va mai messo in cache: se il browser tiene una
+        # vecchia copia di sw.js, l'aggiornamento dell'app non arriva mai.
+        @sw path /sw.js /registerSW.js
+        header @sw Cache-Control "no-cache, no-store, must-revalidate"
+
+        # Gli asset hanno l'hash nel nome: sono immutabili per definizione.
+        @assets path /assets/*
+        header @assets Cache-Control "public, max-age=31536000, immutable"
+
+        try_files {path} /index.html # SPA fallback
+        file_server
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "same-origin"
+        -Server
+    }
+}
+
+# Stessa origin per SPA e API: è il presupposto di tutto il modello di
+# autenticazione. Niente CORS, e il cookie di sessione viaggia da solo
+# sull'handshake WebSocket — dove il browser non permetterebbe header custom.

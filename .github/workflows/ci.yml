@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    # Le suite di integrazione dell'API girano contro Postgres vero: le
+    # invarianti che contano (locking ottimistico, ON CONFLICT, CTE ricorsive,
+    # UPDATE relativi) sono comportamento del database, e verificarle contro
+    # una simulazione proverebbe solo che la simulazione funziona.
+    services:
+      postgres:
+        image: postgres:17.5
+        env:
+          POSTGRES_USER: pantry
+          POSTGRES_DB: pantry
+          POSTGRES_PASSWORD: pantry-ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pantry -d pantry"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: pantry
+      POSTGRES_DB: pantry
+      POSTGRES_PASSWORD: pantry-ci
+      BETTER_AUTH_SECRET: segreto-solo-per-la-ci-0123456789
+      DOMAIN: localhost
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build dei pacchetti
+        run: pnpm build
+
+      - name: Verifica dei tipi
+        run: pnpm check-types
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test

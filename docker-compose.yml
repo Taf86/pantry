@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:17.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pantry
+      POSTGRES_DB: pantry
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing var .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pantry -d pantry"]
+      interval: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY:?missing var .env}-api:${TAG:?missing tag}
+    restart: unless-stopped
+    # Solo .env: il tag arriva dall'ambiente della shell, che deploy.sh
+    # popola leggendo .env.tag. Elencarlo qui renderebbe il compose incapace
+    # di partire prima del primo deploy.
+    env_file: [.env]
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: db
+      PORT: 3000
+    depends_on:
+      db: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?missing var .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./dist:/srv:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

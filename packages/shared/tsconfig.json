@@ -1,12 +1,30 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "rootDir": "./",
-    "outDir": "./dist",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
     "moduleResolution": "bundler",
+
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "useUnknownInCatchVariables": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+
+    "noEmit": true,
+    "types": [],
+
+    // tsup inietta `baseUrl` durante la generazione dei .d.ts.
     "ignoreDeprecations": "6.0"
-  }
+  },
+  "include": ["src", "test"]
 }

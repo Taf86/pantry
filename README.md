@@ -1,14 +1,174 @@
-# pantry
-A shared shopping list and pantry tracker with with real-time collaboration, offline support, and automatic synchronization.
+# Pantry
 
-## License
+Liste della spesa e dispense condivise, pensate per funzionare **anche quando
+la rete non c'è** — perché fra gli scaffali del supermercato, di norma, non c'è.
+
+Le due metà dell'applicazione sono progettate per parlarsi: la dispensa sa cosa
+manca, la lista sa cosa è stato comprato, e al ritorno dal supermercato i
+prodotti acquistati si riversano nella dispensa.
+
+Specifica completa: [`docs/spec.md`](./docs/spec.md) ·
+Decisioni architetturali: [`docs/decisions`](./docs/decisions)
+
+---
+
+## Cosa fa
+
+- **Liste condivise** con permessi a bitmask. `Shop` è separato da `Write`: si
+  può chiedere a qualcuno di fare la spesa senza dargli la facoltà di
+  cambiare la lista.
+- **Modalità spesa**: tutte le liste su cui hai `Shop`, fuse in un'unica vista
+  ordinata per corsia del supermercato. I duplicati non si deduplicano — se il
+  latte è in due liste, restano due righe etichettate.
+- **Offline-first**: cache persistita su IndexedDB, coda di mutazioni che
+  sopravvive al riavvio dell'app, aggiornamenti ottimistici, indicatore di
+  stato sempre visibile.
+- **Real-time**: due persone sulla stessa lista si vedono a vicenda.
+- **Dispensa ad albero**: armadio → scaffale → cassetto → biscotti, con
+  soglie di riordino e scadenze.
+- **Il ponte**: i prodotti sotto soglia diventano item di lista; i prodotti
+  comprati diventano giacenza in dispensa.
+- **Backoffice** per creare utenti e generare i link di attivazione.
+
+## Architettura
+
+```
+pantry/
+├── apps/
+│   ├── api/          Fastify + tRPC + Drizzle + Better Auth + Socket.IO
+│   └── web/          React 19 + Vite + TanStack Query (include /admin)
+├── packages/
+│   └── shared/       schemi Zod, permessi, logica di dominio condivisa
+├── docker-compose.yml
+├── Caddyfile
+└── docs/
+    ├── spec.md
+    └── decisions/    ADR
+```
+
+`packages/shared` non è una cartella di utilità: contiene ciò che **deve
+valere identico** su client e server — la forma degli item, i flag di
+permesso, la risoluzione dei conflitti, l'ordinamento della spesa. Definirlo
+due volte sarebbe la fonte di bug più prevedibile del progetto.
+
+| Livello       | Scelta                | Perché                                                        |
+| ------------- | --------------------- | ------------------------------------------------------------- |
+| HTTP          | Fastify               | processo long-running, nessuna struttura imposta               |
+| API           | tRPC                  | tipi end-to-end senza codegen                                  |
+| ORM           | Drizzle               | inferenza dei tipi, migrazioni serie, SQL grezzo per le CTE    |
+| Database      | PostgreSQL 17         | le funzionalità interessanti sono JOIN fra liste e dispensa    |
+| Auth          | Better Auth           | sessioni su Postgres, tabella utenti nostra (serve `status`)   |
+| Real-time     | Socket.IO             | riconnessione con backoff su rete mobile                       |
+| Stato client  | TanStack Query v5     | cache persistente + mutation in pausa = offline quasi gratis   |
+| Reverse proxy | Caddy 2               | TLS automatico, SPA e API sulla stessa origin                  |
+
+## Sviluppo
+
+Requisiti: Node 22+, pnpm 9, un PostgreSQL raggiungibile.
+
+```bash
+pnpm install
+```
+
+Avvia un Postgres locale (o usa quello che preferisci):
+
+```bash
+docker run -d --name pantry-db -p 5432:5432 -e POSTGRES_USER=pantry -e POSTGRES_DB=pantry -e POSTGRES_PASSWORD=pantry postgres:17.5
+```
+
+Esporta la configurazione minima:
+
+```bash
+export POSTGRES_HOST=localhost POSTGRES_PASSWORD=pantry
+export BETTER_AUTH_SECRET=$(openssl rand -base64 32)
+export DOMAIN=localhost:5173 EXTRA_ORIGINS=http://localhost:5173
+```
+
+Crea il primo amministratore e prendi il link di attivazione:
+
+```bash
+pnpm --filter pantry-api seed:admin -- --email tu@esempio.it --name "Il tuo nome"
+```
+
+Avvia tutto:
+
+```bash
+pnpm dev
+```
+
+L'app è su <http://localhost:5173>; Vite fa da proxy verso l'API, così il
+browser vede una sola origin esattamente come in produzione. Non è un
+dettaglio: il cookie di sessione e l'handshake WebSocket dipendono da questo.
+
+### Comandi
+
+| Comando                              | Cosa fa                                        |
+| ------------------------------------ | ---------------------------------------------- |
+| `pnpm build`                         | compila tutti i workspace                      |
+| `pnpm check-types`                   | verifica dei tipi                              |
+| `pnpm lint`                          | ESLint + Prettier                              |
+| `pnpm test`                          | test unitari e di integrazione                 |
+| `pnpm --filter pantry-api db:generate` | genera una migrazione dallo schema Drizzle   |
+| `pnpm --filter pantry-api seed:admin`  | crea o rigenera il primo amministratore      |
+
+### Test
+
+I test unitari girano ovunque, senza dipendenze esterne. Le suite di
+integrazione dell'API richiedono un Postgres vero e si **saltano
+automaticamente** se `POSTGRES_PASSWORD` non è impostata, così un checkout
+appena clonato resta verde.
+
+Non c'è un finto database, ed è deliberato: le invarianti che contano in
+questa applicazione — locking ottimistico, `ON CONFLICT DO NOTHING`, CTE
+ricorsive, `UPDATE` relativi — *sono* comportamento del database. Verificarle
+contro una simulazione proverebbe solo che la simulazione funziona.
+
+## Deployment
+
+Una VPS, tre container: Caddy, API, Postgres.
+
+```bash
+# sulla macchina, una volta sola
+mkdir -p /opt/pantry && cd /opt/pantry
+cp .env.example .env && chmod 600 .env   # poi riempilo a mano
+```
+
+Poi ogni push su `main` fa il resto: la CI compila, esegue i test, pubblica
+l'immagine su GHCR taggata con il SHA del commit, copia la SPA e lancia
+`deploy.sh`.
+
+Il tag è **sempre il SHA**, mai `latest`: sai sempre cosa gira, e il rollback
+è scrivere il SHA precedente in `.env.tag` e rilanciare `deploy.sh`.
+
+Le migrazioni le applica il container `api` all'avvio, prima di accettare
+traffico. Solo migrazioni additive: un deploy deve poter tornare indietro.
+
+### Segreti
+
+Tre posti, nessun altro: il password manager, `/opt/pantry/.env` (chmod 600,
+scritto solo a mano), e i GitHub Actions Secrets — dove stanno unicamente
+`SSH_HOST` e `SSH_KEY`.
+
+`DATABASE_URL` non è fra questi: si compone nel codice da `POSTGRES_PASSWORD`.
+Se la password vivesse in due posti, prima o poi la rotazione ne
+dimenticherebbe uno.
+
+## Stato
+
+Le fasi 1-7 della roadmap sono implementate: fondamenta, liste, real-time,
+offline, modalità spesa, dispensa e il ponte fra le due metà. Le notifiche
+Web Push per le scadenze restano l'unico pezzo della fase 7 non ancora
+realizzato; le chiavi VAPID sono già previste in `.env.example`.
+
+## Licenza
 
 Copyright (C) 2026 Davide Casadei
 
-Pantry is free software: you can redistribute it and/or modify it under the
-terms of the GNU Affero General Public License as published by the Free
-Software Foundation, either version 3 of the License, or (at your option)
-any later version. See [LICENSE](./LICENSE) for the full text.
+Pantry è software libero: puoi ridistribuirlo e modificarlo secondo i termini
+della GNU Affero General Public License, versione 3 o (a tua scelta) qualunque
+versione successiva, come pubblicata dalla Free Software Foundation. Il testo
+completo è in [LICENSE](./LICENSE).
 
-This means: if you run a modified version of Pantry as a network service,
-you must make the complete source code of your version available to its users.
+In pratica: se esegui una versione modificata di Pantry come servizio di rete,
+devi rendere disponibile ai suoi utenti il codice sorgente completo della tua
+versione.
