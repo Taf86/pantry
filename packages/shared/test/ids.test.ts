@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { isUuidV7 } from "../src/ids";
-import type * as IdsModule from "../src/ids";
+import { isUuidV7 } from "../src/ids.js";
+import type * as IdsModule from "../src/ids.js";
 
 /**
  * Il generatore tiene uno stato monotòno di modulo (ultimo timestamp +
@@ -10,7 +10,7 @@ import type * as IdsModule from "../src/ids";
  */
 const freshIds = async (): Promise<typeof IdsModule> => {
   vi.resetModules();
-  return import("../src/ids");
+  return import("../src/ids.js");
 };
 
 describe("uuidv7", () => {

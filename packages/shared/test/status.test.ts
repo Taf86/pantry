@@ -4,8 +4,8 @@ import {
   daysUntil,
   expiryStatus,
   isBelowThreshold,
-} from "../src/domain/status";
-import { makeNode } from "./factories";
+} from "../src/domain/status.js";
+import { makeNode } from "./factories.js";
 
 const today = new Date("2026-08-11T22:00:00.000Z");
 

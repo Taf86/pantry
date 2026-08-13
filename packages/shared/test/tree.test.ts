@@ -7,9 +7,9 @@ import {
   flattenTree,
   pathOf,
   wouldCycle,
-} from "../src/domain/tree";
-import type { PantryNode } from "../src/schemas/pantry";
-import { makeNode } from "./factories";
+} from "../src/domain/tree.js";
+import type { PantryNode } from "../src/schemas/pantry.js";
+import { makeNode } from "./factories.js";
 
 /**
  * Armadio cucina

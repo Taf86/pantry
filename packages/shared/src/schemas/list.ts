@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { Role } from "../permissions";
+import { Role } from "../permissions.js";
 import {
   entityIdSchema,
   isoDateTimeSchema,
@@ -8,8 +8,8 @@ import {
   nameSchema,
   permissionsSchema,
   userIdSchema,
-} from "./common";
-import { userRefSchema } from "./user";
+} from "./common.js";
+import { userRefSchema } from "./user.js";
 
 export const listSchema = z.object({
   id: entityIdSchema,

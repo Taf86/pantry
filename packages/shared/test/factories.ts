@@ -1,5 +1,5 @@
-import type { ListItem } from "../src/schemas/item";
-import type { PantryNode } from "../src/schemas/pantry";
+import type { ListItem } from "../src/schemas/item.js";
+import type { PantryNode } from "../src/schemas/pantry.js";
 
 /** Costruttori di prova: default sensati, override espliciti. */
 

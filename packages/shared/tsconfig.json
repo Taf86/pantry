@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023", "DOM"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -21,10 +21,7 @@
     "skipLibCheck": true,
 
     "noEmit": true,
-    "types": [],
-
-    // tsup inietta `baseUrl` durante la generazione dei .d.ts.
-    "ignoreDeprecations": "6.0"
+    "types": []
   },
   "include": ["src", "test"]
 }

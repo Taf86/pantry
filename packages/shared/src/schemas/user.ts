@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { MIN_PASSWORD_LENGTH } from "../constants";
-import { isoDateTimeSchema, nameSchema, userIdSchema } from "./common";
+import { MIN_PASSWORD_LENGTH } from "../constants.js";
+import { isoDateTimeSchema, nameSchema, userIdSchema } from "./common.js";
 
 export const userRoleSchema = z.enum(["user", "admin"]);
 export type UserRole = z.infer<typeof userRoleSchema>;

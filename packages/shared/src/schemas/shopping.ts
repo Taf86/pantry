@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { entityIdSchema } from "./common";
-import { categorySchema } from "./category";
-import { listItemSchema } from "./item";
+import { entityIdSchema } from "./common.js";
+import { categorySchema } from "./category.js";
+import { listItemSchema } from "./item.js";
 
 /**
  * Una sessione di spesa non esiste lato server: è una fusione lato client di

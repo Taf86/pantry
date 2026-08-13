@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { entityIdSchema, mutationEnvelope } from "./common";
-import { listItemSchema } from "./item";
-import { pantryNodeSchema } from "./pantry";
+import { entityIdSchema, mutationEnvelope } from "./common.js";
+import { listItemSchema } from "./item.js";
+import { pantryNodeSchema } from "./pantry.js";
 
 /**
  * Il ponte fra le due metà dell'app.

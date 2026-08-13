@@ -6,10 +6,10 @@ import {
   sessionProgress,
   sortEntries,
   toEntries,
-} from "../src/domain/shopping";
-import type { Category } from "../src/schemas/category";
-import type { ShoppingList } from "../src/schemas/shopping";
-import { makeItem } from "./factories";
+} from "../src/domain/shopping.js";
+import type { Category } from "../src/schemas/category.js";
+import type { ShoppingList } from "../src/schemas/shopping.js";
+import { makeItem } from "./factories.js";
 
 const categories: Category[] = [
   { id: "ortofrutta", name: "Ortofrutta", sortOrder: 10 },

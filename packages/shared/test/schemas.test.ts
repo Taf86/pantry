@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_CHECK_BATCH } from "../src/constants";
-import { serverEventSchema } from "../src/events";
-import { Permission, Role } from "../src/permissions";
-import { permissionsSchema } from "../src/schemas/common";
+import { MAX_CHECK_BATCH } from "../src/constants.js";
+import { serverEventSchema } from "../src/events.js";
+import { Permission, Role } from "../src/permissions.js";
+import { permissionsSchema } from "../src/schemas/common.js";
 import {
   addItemInput,
   checkManyInput,
   updateItemInput,
-} from "../src/schemas/item";
-import { consumeNodeInput, moveNodeInput } from "../src/schemas/pantry";
-import { createUserInput } from "../src/schemas/user";
-import { makeItem } from "./factories";
+} from "../src/schemas/item.js";
+import { consumeNodeInput, moveNodeInput } from "../src/schemas/pantry.js";
+import { createUserInput } from "../src/schemas/user.js";
+import { makeItem } from "./factories.js";
 
 const ID = "01930d1e-0000-7000-8000-000000000001";
 const LIST_ID = "01930d1e-0000-7000-8000-0000000000ff";

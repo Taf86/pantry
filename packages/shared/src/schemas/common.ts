@@ -5,8 +5,8 @@ import {
   MAX_NOTE_LENGTH,
   MAX_QUANTITY,
   MAX_UNIT_LENGTH,
-} from "../constants";
-import { ALL_PERMISSIONS } from "../permissions";
+} from "../constants.js";
+import { ALL_PERMISSIONS } from "../permissions.js";
 
 /**
  * Gli ID delle entità di dominio nascono nel browser come UUID v7.

@@ -8,21 +8,21 @@
  * modo. Definirle due volte è la fonte di bug più prevedibile del progetto.
  */
 
-export * from "./constants";
-export * from "./events";
-export * from "./ids";
-export * from "./permissions";
+export * from "./constants.js";
+export * from "./events.js";
+export * from "./ids.js";
+export * from "./permissions.js";
 
-export * from "./domain/conflict";
-export * from "./domain/shopping";
-export * from "./domain/status";
-export * from "./domain/tree";
+export * from "./domain/conflict.js";
+export * from "./domain/shopping.js";
+export * from "./domain/status.js";
+export * from "./domain/tree.js";
 
-export * from "./schemas/bridge";
-export * from "./schemas/category";
-export * from "./schemas/common";
-export * from "./schemas/item";
-export * from "./schemas/list";
-export * from "./schemas/pantry";
-export * from "./schemas/shopping";
-export * from "./schemas/user";
+export * from "./schemas/bridge.js";
+export * from "./schemas/category.js";
+export * from "./schemas/common.js";
+export * from "./schemas/item.js";
+export * from "./schemas/list.js";
+export * from "./schemas/pantry.js";
+export * from "./schemas/shopping.js";
+export * from "./schemas/user.js";

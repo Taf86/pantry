@@ -1,11 +1,11 @@
-import { UNCATEGORIZED_SORT_ORDER } from "../constants";
-import type { Category } from "../schemas/category";
-import type { ListItem } from "../schemas/item";
+import { UNCATEGORIZED_SORT_ORDER } from "../constants.js";
+import type { Category } from "../schemas/category.js";
+import type { ListItem } from "../schemas/item.js";
 import type {
   ShoppingEntry,
   ShoppingList,
   ShoppingSession,
-} from "../schemas/shopping";
+} from "../schemas/shopping.js";
 
 export interface ShoppingGroup {
   categoryId: string | null;

@@ -3,8 +3,8 @@ import { z } from "zod";
 import {
   DEFAULT_EXPIRING_WITHIN_DAYS,
   MAX_EXPIRING_WITHIN_DAYS,
-} from "../constants";
-import { Role } from "../permissions";
+} from "../constants.js";
+import { Role } from "../permissions.js";
 import {
   categoryIdSchema,
   entityIdSchema,
@@ -18,8 +18,8 @@ import {
   unitSchema,
   userIdSchema,
   versionSchema,
-} from "./common";
-import { userRefSchema } from "./user";
+} from "./common.js";
+import { userRefSchema } from "./user.js";
 
 export const pantrySchema = z.object({
   id: entityIdSchema,

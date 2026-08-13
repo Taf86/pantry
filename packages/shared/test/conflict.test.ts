@@ -4,7 +4,7 @@ import {
   CONFLICT_CODE,
   isConflictPayload,
   resolveCheck,
-} from "../src/domain/conflict";
+} from "../src/domain/conflict.js";
 
 describe("resolveCheck", () => {
   it("applica una spunta più recente dell'ultimo cambiamento", () => {

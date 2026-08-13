@@ -1,4 +1,4 @@
-import type { PantryNode } from "../schemas/pantry";
+import type { PantryNode } from "../schemas/pantry.js";
 
 const MS_PER_DAY = 86_400_000;
 

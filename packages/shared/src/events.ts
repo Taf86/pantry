@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { entityIdSchema } from "./schemas/common";
-import { listItemSchema } from "./schemas/item";
-import { listSchema } from "./schemas/list";
-import { pantryNodeSchema, pantrySchema } from "./schemas/pantry";
+import { entityIdSchema } from "./schemas/common.js";
+import { listItemSchema } from "./schemas/item.js";
+import { listSchema } from "./schemas/list.js";
+import { pantryNodeSchema, pantrySchema } from "./schemas/pantry.js";
 
 /**
  * Il socket non trasporta mai mutazioni: solo notifiche server→client, che il

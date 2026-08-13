@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MAX_CHECK_BATCH } from "../constants";
+import { MAX_CHECK_BATCH } from "../constants.js";
 import {
   categoryIdSchema,
   entityIdSchema,
@@ -13,7 +13,7 @@ import {
   unitSchema,
   userIdSchema,
   versionSchema,
-} from "./common";
+} from "./common.js";
 
 export const listItemSchema = z.object({
   id: entityIdSchema,

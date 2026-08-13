@@ -1,4 +1,4 @@
-import type { PantryNode, PantryTreeNode } from "../schemas/pantry";
+import type { PantryNode, PantryTreeNode } from "../schemas/pantry.js";
 
 /** Sottoinsieme di un nodo sufficiente a ragionare sulla struttura dell'albero. */
 export interface TreeShape {

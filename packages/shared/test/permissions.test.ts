@@ -8,7 +8,7 @@ import {
   describePermissions,
   roleOf,
   sanitizePermissions,
-} from "../src/permissions";
+} from "../src/permissions.js";
 
 describe("can", () => {
   it("richiede tutti i bit, non almeno uno", () => {
