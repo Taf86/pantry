@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { CONFLICT_CODE } from "pantry-shared";
 import type {
   AddItemInput,
@@ -44,9 +44,14 @@ const requireRow = async (tx: Executor, id: string) => {
  * Il prezzo di questa formula è che anche una modifica di contenuto sposta il
  * riferimento. È il compromesso della specifica: nessuna colonna in più, e la
  * stessa regola valutata identica da client (`resolveCheck`) e server.
+ *
+ * Il confronto è contro una stringa ISO 8601 con cast esplicito: il lato
+ * sinistro è un frammento `sql` grezzo, quindi Drizzle non ha una colonna da cui
+ * dedurre il mapper e passerebbe l'oggetto `Date` così com'è al driver, che
+ * accetta solo stringhe.
  */
 const lastWriteWins = (at: Date) =>
-  lte(sql`COALESCE(${listItems.checkedAt}, ${listItems.updatedAt})`, at);
+  sql`COALESCE(${listItems.checkedAt}, ${listItems.updatedAt}) <= ${at.toISOString()}::timestamptz`;
 
 export const listItemsOfList = async (
   deps: ServiceDeps,
