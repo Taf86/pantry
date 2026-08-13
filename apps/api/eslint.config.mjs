@@ -1,6 +1,6 @@
 // @ts-check
 import eslint from "@eslint/js";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
@@ -9,7 +9,9 @@ export default tseslint.config(
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
+  // Ultimo anello: disattiva le regole in conflitto con Prettier. La
+  // formattazione è verificata a parte da `format:check`, non da ESLint.
+  eslintConfigPrettier,
   {
     languageOptions: {
       parserOptions: {

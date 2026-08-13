@@ -62,5 +62,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # ESLint non verifica più la formattazione (usa solo
+      # eslint-config-prettier, che disattiva le regole in conflitto):
+      # il controllo lo fa Prettier direttamente.
+      - name: Formattazione
+        run: pnpm format:check
+
       - name: Test
         run: pnpm test

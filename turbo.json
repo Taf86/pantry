@@ -36,6 +36,7 @@
     "format": {
       "cache": false
     },
+    "format:check": {},
     "test": {
       "dependsOn": [
         "^build"

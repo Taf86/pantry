@@ -9,6 +9,7 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test -- --coverage",
     "format": "turbo run format",
+    "format:check": "turbo run format:check",
     "db:up": "docker compose -f docker-compose.dev.yml up -d --wait",
     "db:down": "docker compose -f docker-compose.dev.yml down -v",
     "db:logs": "docker compose -f docker-compose.dev.yml logs -f db",
@@ -17,9 +18,7 @@
     "clean": "pnpm dlx rimraf --glob ./**/dist ./**/node_modules ./**/.turbo ./**/logs ./**/coverage ./**/test-report.html"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.9.9",
-    "typescript": "5.9.2"
+    "turbo": "^2.10.9"
   },
   "engines": {
     "node": ">=22"

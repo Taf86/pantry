@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
@@ -11,6 +12,9 @@ export default tseslint.config(
   ...tseslint.configs.recommendedTypeChecked,
   reactHooks.configs.flat.recommended,
   reactRefresh.configs.vite,
+  // Ultimo anello: disattiva le regole in conflitto con Prettier. La
+  // formattazione è verificata a parte da `format:check`, non da ESLint.
+  eslintConfigPrettier,
 
   {
     languageOptions: {

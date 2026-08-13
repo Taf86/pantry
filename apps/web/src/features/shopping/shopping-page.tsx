@@ -1,9 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  groupByCategory,
-  sessionProgress,
-  toEntries,
-} from "pantry-shared";
+import { groupByCategory, sessionProgress, toEntries } from "pantry-shared";
 import { useMemo, useState } from "react";
 
 import { Button, Card, Empty, ErrorState, Loading } from "../../components/ui";
