@@ -11,16 +11,31 @@
       "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^build"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
     "format": {
       "cache": false
     },
-    "benchmark": {
+    "format:check": {},
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "seed:admin": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "db:generate": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "db:migrate": {
+      "dependsOn": ["^build"],
       "cache": false
     }
   }

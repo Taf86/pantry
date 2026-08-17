@@ -13,6 +13,7 @@
     "db:up": "docker compose -f docker-compose.dev.yml up -d --wait",
     "db:down": "docker compose -f docker-compose.dev.yml down -v",
     "db:logs": "docker compose -f docker-compose.dev.yml logs -f db",
+    "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "seed:admin": "turbo run seed:admin --",
     "clean": "pnpm dlx rimraf --glob ./**/dist ./**/node_modules ./**/.turbo ./**/logs ./**/coverage ./**/test-report.html"

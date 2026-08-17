@@ -1,0 +1,21 @@
+name: pantry-dev
+services:
+  db:
+    image: postgres:17.5
+    container_name: pantry-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pantry
+      POSTGRES_DB: pantry
+      POSTGRES_PASSWORD: pantry-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pantry_dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pantry -d pantry"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pantry_dev_pgdata:
