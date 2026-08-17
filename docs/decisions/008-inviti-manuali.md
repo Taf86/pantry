@@ -1,6 +1,9 @@
 # 008 — Onboarding a inviti, senza email
 
-**Stato**: accettata · **Data**: agosto 2026
+**Stato**: accettata · **Data**: agosto 2026 · **Superata in parte da**:
+[013](013-richieste-di-registrazione.md), che riapre l'ingresso come richiesta
+da approvare. Il flusso di invito descritto qui resta invariato: è ciò che
+l'approvazione riusa.
 
 ## Contesto
 

@@ -25,4 +25,5 @@ export * from "./schemas/item.js";
 export * from "./schemas/list.js";
 export * from "./schemas/pantry.js";
 export * from "./schemas/shopping.js";
+export * from "./schemas/signup.js";
 export * from "./schemas/user.js";

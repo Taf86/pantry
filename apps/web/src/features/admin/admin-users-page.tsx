@@ -6,6 +6,7 @@ import {
   type AdminUser,
   type CreateUserInput,
   type InviteLink,
+  type SignupRequest,
   type UserRole,
   type UserStatus,
 } from "pantry-shared";
@@ -94,9 +95,16 @@ export const AdminUsersPage = () => {
       </div>
 
       <p className="muted">
-        Non esiste auto-registrazione: gli account li crei tu, e il link di
-        attivazione va consegnato a mano.
+        Gli account nascono qui: o li crei tu, o approvi una richiesta. In
+        entrambi i casi il link di attivazione va consegnato a mano.
       </p>
+
+      <SignupRequestsSection
+        onApproved={(result) => {
+          setIssued(result);
+          refresh();
+        }}
+      />
 
       {users.isPending && <Loading what="degli utenti" />}
       {users.isError && (
@@ -203,6 +211,114 @@ export const AdminUsersPage = () => {
         <InviteModal issued={issued} onClose={() => setIssued(null)} />
       )}
     </>
+  );
+};
+
+/**
+ * La coda delle richieste di registrazione, sopra la tabella degli utenti.
+ *
+ * Sta nella stessa pagina perché è lo stesso lavoro: approvare una richiesta
+ * *è* creare un utente, e finisce nella stessa modale con il link. Quando la
+ * coda è vuota la sezione non c'è, così non occupa spazio nel caso normale.
+ */
+const SignupRequestsSection = ({
+  onApproved,
+}: {
+  onApproved: (result: { user: AdminUser; invite: InviteLink }) => void;
+}) => {
+  const client = useQueryClient();
+
+  const requests = useQuery({
+    queryKey: keys.adminSignupRequests(),
+    queryFn: () => trpc.admin.signupRequests.list.query(),
+    networkMode: "online",
+  });
+
+  const refresh = () =>
+    void client.invalidateQueries({ queryKey: keys.adminSignupRequests() });
+
+  const approve = useMutation({
+    mutationFn: (requestId: string) =>
+      trpc.admin.signupRequests.approve.mutate({ requestId }),
+    networkMode: "online",
+    onSuccess: (result) => {
+      refresh();
+      onApproved(result);
+    },
+    onError: (error) => notify("error", errorMessage(error)),
+  });
+
+  const reject = useMutation({
+    mutationFn: (requestId: string) =>
+      trpc.admin.signupRequests.reject.mutate({ requestId }),
+    networkMode: "online",
+    onSuccess: refresh,
+    onError: (error) => notify("error", errorMessage(error)),
+  });
+
+  if (requests.isError) {
+    return (
+      <ErrorState
+        message={errorMessage(requests.error)}
+        onRetry={() => void requests.refetch()}
+      />
+    );
+  }
+
+  if (!requests.data || requests.data.length === 0) return null;
+
+  const busy = approve.isPending || reject.isPending;
+
+  return (
+    <Card className="table-scroll">
+      <h2>Richieste in attesa</h2>
+      <p className="muted">
+        Approvare genera il link di attivazione. Consegnalo al contatto
+        indicato: è l&apos;unico modo che ha la persona di entrare.
+      </p>
+
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Contatto</th>
+            <th>Richiesta il</th>
+            <th aria-label="Azioni" />
+          </tr>
+        </thead>
+        <tbody>
+          {requests.data.map((request: SignupRequest) => (
+            <tr key={request.id}>
+              <td>{request.displayName}</td>
+              <td>{request.email}</td>
+              <td>{request.contact}</td>
+              <td>{formatDate(request.createdAt)}</td>
+              <td>
+                <div className="row">
+                  <Button
+                    size="small"
+                    variant="primary"
+                    disabled={busy}
+                    onClick={() => approve.mutate(request.id)}
+                  >
+                    Approva
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="danger"
+                    disabled={busy}
+                    onClick={() => reject.mutate(request.id)}
+                  >
+                    Rifiuta
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
   );
 };
 

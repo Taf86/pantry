@@ -129,6 +129,27 @@ CREATE TABLE invites (
   used_at     TIMESTAMPTZ
 );
 
+-- Richieste di registrazione da approvare. Separate da `users` perché una
+-- richiesta non è un account a metà: se viene rifiutata non deve lasciare
+-- dietro di sé una riga che tiene occupata l'email (ADR 013).
+CREATE TABLE signup_requests (
+  id            TEXT PRIMARY KEY,
+  email         TEXT NOT NULL,
+  display_name  TEXT NOT NULL,
+  contact       TEXT NOT NULL,           -- senza email, è il canale di consegna
+  status        TEXT NOT NULL DEFAULT 'pending'
+                CHECK (status IN ('pending','approved','rejected')),
+  user_id       TEXT REFERENCES users(id) ON DELETE SET NULL,
+  decided_by    TEXT REFERENCES users(id) ON DELETE SET NULL,
+  decided_at    TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Una sola richiesta aperta per indirizzo, come invariante del database.
+-- Essendo parziale, lascia ri-candidarsi dopo un rifiuto.
+CREATE UNIQUE INDEX idx_signup_requests_open
+  ON signup_requests (email) WHERE status = 'pending';
+
 -- ============ Liste ============
 
 CREATE TABLE lists (
@@ -297,9 +318,10 @@ const listProcedure = (required: number) =>
 
 ### Vincolo
 
-Nessun invio email in v1. Di conseguenza **non esiste auto-registrazione**: gli account
-li crea l'amministratore dal backoffice, e il link di attivazione viene consegnato a
-mano (WhatsApp, di persona, come capita).
+Nessun invio email in v1. Di conseguenza **nessun account nasce da solo**: o lo crea
+l'amministratore dal backoffice, o nasce dall'approvazione di una richiesta. In entrambi
+i casi il link di attivazione viene consegnato a mano (WhatsApp, di persona, come
+capita).
 
 ### Flusso di creazione utente
 
@@ -323,6 +345,38 @@ o si perde.
 **Reset password**: non self-service. L'admin rigenera un invito dal backoffice e
 riconsegna il link. Accettabile con una manciata di utenti.
 
+### Richieste di registrazione (ADR 013)
+
+L'ingresso può essere aperto come **coda da approvare**, senza che questo introduca
+auto-registrazione: una richiesta non crea un utente.
+
+```
+1. La persona apre /signup e lascia email, nome e UN CONTATTO
+      → riga in signup_requests, status 'pending'
+      → la risposta è sempre la stessa, qualunque sia il vero esito
+2. L'admin apre /admin/users e vede la coda sopra la tabella
+3. Approva
+      → users.status = 'invited' + invito generato (esattamente il flusso sopra)
+      → signup_requests.status = 'approved', user_id valorizzato
+   Rifiuta
+      → signup_requests.status = 'rejected'; nessun utente da cancellare,
+        e la persona può ri-candidarsi
+4. L'admin consegna il link al contatto indicato nella richiesta
+```
+
+**Perché il contatto è obbligatorio**: senza email da spedire, è l'unico modo di far
+arrivare il link a chi lo ha chiesto. Chi fa richiesta non ha nulla da controllare e non
+può tentare il login — il suo account non esiste ancora.
+
+**Perché la risposta è indistinguibile**: indirizzo libero, già utente o già in coda
+danno lo stesso esito. Differenziarlo trasformerebbe una rotta pubblica in un oracolo su
+quali email esistono.
+
+**Configurazione**: `SIGNUP_ENABLED` (chiuso per default), `SIGNUP_CODE` opzionale — un
+codice condiviso da indicare nel modulo — e un tetto alle richieste aperte. È l'unica
+scrittura pubblica non autenticata dell'applicazione, e fa un solo `INSERT`: nessun hash
+di password su rotta anonima.
+
 ### Sessioni
 
 Better Auth con sessioni su database. Cookie `httpOnly` + `Secure` + `SameSite=Lax`.
@@ -338,8 +392,8 @@ cambio la revoca è istantanea.
 ### Percorso di migrazione (quando arriveranno le email)
 
 Il modello a inviti è già quello giusto: basterà spedire automaticamente lo stesso link
-invece di mostrarlo all'admin. Si potrà poi aggiungere `status = 'pending'` per le
-auto-registrazioni da approvare — la colonna esiste già nel CHECK.
+invece di mostrarlo all'admin. La coda delle richieste non cambia forma — cambia solo il
+canale di consegna, e il campo `contact` diventa superfluo invece che indispensabile.
 
 ---
 

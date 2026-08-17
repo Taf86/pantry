@@ -5,6 +5,7 @@ import type { Logger } from "pino";
 import type { Database } from "../db/client.js";
 import { sessions } from "../db/schema/auth.js";
 import { appliedMutations } from "../db/schema/support.js";
+import { sweepDecidedSignupRequests } from "../services/signup.service.js";
 
 const MS_PER_DAY = 86_400_000;
 const INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -35,10 +36,15 @@ export const runCleanup = async (
     .where(lt(sessions.expiresAt, new Date()))
     .returning({ id: sessions.id });
 
+  // Le richieste di registrazione già evase sono storico, e lo storico di una
+  // coda non serve a nessuno dopo un mese.
+  const decidedRequests = await sweepDecidedSignupRequests(db);
+
   logger.info(
     {
       mutations: staleMutations.length,
       sessions: expiredSessions.length,
+      signupRequests: decidedRequests,
     },
     "pulizia periodica completata",
   );

@@ -8,6 +8,13 @@
       "when": 1786403612459,
       "tag": "0000_green_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786972295594,
+      "tag": "0001_medical_talos",
+      "breakpoints": true
     }
   ]
 }

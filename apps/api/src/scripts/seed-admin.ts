@@ -17,9 +17,10 @@ import {
 /**
  * Il primo amministratore.
  *
- * Si esegue una volta sola, a mano, sulla macchina: è l'unico modo per entrare
- * in un sistema senza auto-registrazione e senza email. Da lì in poi gli utenti
- * si creano dal backoffice.
+ * Si esegue una volta sola, a mano, sulla macchina: in un sistema dove ogni
+ * account ha bisogno di un amministratore che lo crei o approvi la richiesta,
+ * è l'unico modo di far entrare il primo. Da lì in poi gli utenti si creano —
+ * o si approvano — dal backoffice.
  *
  *   pnpm --filter pantry-api seed:admin -- --email a@b.it --name "Nome"
  */

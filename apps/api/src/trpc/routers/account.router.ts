@@ -1,9 +1,10 @@
-import { acceptInviteInput } from "pantry-shared";
+import { acceptInviteInput, signupRequestInput } from "pantry-shared";
 import { z } from "zod";
 
 import { searchActiveUsers } from "../../services/admin.service.js";
 import { acceptInvite, previewInvite } from "../../services/invites.service.js";
 import { listCategories } from "../../services/shopping.service.js";
+import { requestSignup, signupInfo } from "../../services/signup.service.js";
 import { authedProcedure, publicProcedure, router } from "../trpc.js";
 
 /**
@@ -22,6 +23,17 @@ export const accountRouter = router({
   acceptInvite: publicProcedure
     .input(acceptInviteInput)
     .mutation(({ ctx, input }) => acceptInvite(ctx, input)),
+
+  /** Se la porta delle richieste è aperta, e se serve un codice. */
+  signupInfo: publicProcedure.query(({ ctx }) => signupInfo(ctx)),
+
+  /**
+   * Richiesta di registrazione. Risponde identico in ogni caso: l'esito vero lo
+   * conosce solo l'amministratore che apre la coda del backoffice.
+   */
+  requestSignup: publicProcedure
+    .input(signupRequestInput)
+    .mutation(({ ctx, input }) => requestSignup(ctx, input)),
 
   /** Categorie: dato di riferimento, letto una volta e tenuto in cache. */
   categories: publicProcedure.query(({ ctx }) => listCategories(ctx)),

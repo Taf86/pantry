@@ -12,9 +12,14 @@ const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 /**
  * Better Auth con sessioni su database.
  *
- * Nessuna auto-registrazione: `disableSignUp` chiude la porta d'ingresso, e
- * gli account nascono solo dal backoffice (§5). L'unico flusso di credenziali
- * è email + password, e la password viene scelta accettando un invito.
+ * Nessuna auto-registrazione: `disableSignUp` chiude la porta d'ingresso, e gli
+ * account nascono solo dal backoffice — creati a mano o approvati da una
+ * richiesta (§5). Le richieste non passano da qui proprio per questo: se
+ * `sign-up/email` fosse aperto, creerebbe un utente con una sessione già
+ * valida, che è l'opposto di una coda da approvare.
+ *
+ * L'unico flusso di credenziali è email + password, e la password viene scelta
+ * accettando un invito.
  *
  * Frontend e API stanno sulla stessa origin, quindi il cookie di sessione
  * viaggia da solo: niente CORS e — soprattutto — l'handshake WebSocket è

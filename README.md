@@ -28,7 +28,8 @@ Decisioni architetturali: [`docs/decisions`](./docs/decisions)
   soglie di riordino e scadenze.
 - **Il ponte**: i prodotti sotto soglia diventano item di lista; i prodotti
   comprati diventano giacenza in dispensa.
-- **Backoffice** per creare utenti e generare i link di attivazione.
+- **Backoffice** per creare utenti e generare i link di attivazione, con la coda
+  delle richieste di registrazione da approvare.
 
 ## Architettura
 
@@ -86,8 +87,9 @@ O con un PostgreSQL già installato: crea il database `pantry` e allinea
 `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER` e `POSTGRES_PASSWORD` nel
 `.env`. Le migrazioni le applica l'API all'avvio, non serve preparare nulla.
 
-**3. Il primo amministratore.** Non esiste auto-registrazione: l'account
-iniziale si crea qui, e il comando stampa il link di attivazione.
+**3. Il primo amministratore.** Nessun account nasce da solo, e una richiesta di
+registrazione ha bisogno di qualcuno che la approvi: l'account iniziale si crea
+qui, e il comando stampa il link di attivazione.
 
 ```bash
 pnpm seed:admin -- --email tu@esempio.it --name "Il tuo nome"

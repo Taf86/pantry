@@ -7,6 +7,7 @@ import { Loading } from "./components/ui";
 import { AdminUsersPage } from "./features/admin/admin-users-page";
 import { InvitePage } from "./features/auth/invite-page";
 import { LoginPage } from "./features/auth/login-page";
+import { SignupPage } from "./features/auth/signup-page";
 import { ListDetailPage } from "./features/lists/list-detail-page";
 import { ListsPage } from "./features/lists/lists-page";
 import { PantriesPage } from "./features/pantries/pantries-page";
@@ -35,6 +36,7 @@ export const App = () => {
     <SocketProvider enabled={user !== null}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/invite/:token" element={<InvitePage />} />
 
         {user === null ? (

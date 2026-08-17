@@ -1,11 +1,12 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import { Button, Card, Field } from "../../components/ui";
 import { useSession } from "../../hooks/use-session";
 import { signIn } from "../../lib/auth-client";
 import { keys } from "../../lib/keys";
+import { trpc } from "../../lib/trpc";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,6 +17,17 @@ export const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /**
+   * Le richieste di registrazione si aprono per configurazione: se sono chiuse,
+   * proporre il modulo sarebbe un vicolo cieco.
+   */
+  const signup = useQuery({
+    queryKey: keys.signupInfo(),
+    queryFn: () => trpc.account.signupInfo.query(),
+    retry: false,
+    networkMode: "online",
+  });
 
   if (session.data) return <Navigate to="/lists" replace />;
 
@@ -44,8 +56,17 @@ export const LoginPage = () => {
         <form className="stack" onSubmit={(event) => void submit(event)}>
           <h1>Pantry</h1>
           <p className="muted">
-            Gli account li crea l&apos;amministratore: se non ne hai uno, chiedi
-            un link di invito.
+            {signup.data?.open === true ? (
+              <>
+                Gli account li approva l&apos;amministratore: se non ne hai uno,{" "}
+                <Link to="/signup">chiedine uno</Link>.
+              </>
+            ) : (
+              <>
+                Gli account li crea l&apos;amministratore: se non ne hai uno,
+                chiedi un link di invito.
+              </>
+            )}
           </p>
 
           <Field label="Email">

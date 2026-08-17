@@ -40,6 +40,7 @@ const TABLES = [
   "pantry_members",
   "pantries",
   "invites",
+  "signup_requests",
   "accounts",
   "sessions",
   "verifications",

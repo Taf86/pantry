@@ -10,7 +10,7 @@ import type {
   UserStatus,
 } from "pantry-shared";
 
-import type { Database } from "../db/client.js";
+import type { Database, Executor } from "../db/client.js";
 import { sessions, users } from "../db/schema/auth.js";
 import { issueInvite, pendingInviteCondition } from "./invites.service.js";
 
@@ -67,7 +67,7 @@ export const listUsers = async (deps: AdminDeps): Promise<AdminUser[]> => {
   return rows.map(toAdminUser);
 };
 
-const requireUser = async (deps: AdminDeps, userId: string) => {
+export const requireUser = async (deps: AdminDeps, userId: string) => {
   const [row] = await deps.db
     .select(selection)
     .from(users)
@@ -81,6 +81,45 @@ const requireUser = async (deps: AdminDeps, userId: string) => {
 };
 
 /**
+ * Creazione dell'utente e del suo primo invito, su un esecutore altrui.
+ *
+ * Prende un `Executor` e non un `Database` perché l'approvazione di una
+ * richiesta di registrazione deve creare l'utente nella *stessa* transazione in
+ * cui segna la richiesta come evasa: se la creazione fallisce, la richiesta
+ * deve tornare in coda.
+ */
+export const createUserTx = async (
+  tx: Executor,
+  /** `null` allo startup: il primo amministratore invita sé stesso. */
+  actorId: string | null,
+  input: CreateUserInput,
+): Promise<InviteLink> => {
+  const [existing] = await tx
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, input.email))
+    .limit(1);
+
+  if (existing) {
+    throw new TRPCError({
+      code: "CONFLICT",
+      message: "Esiste già un utente con questa email",
+    });
+  }
+
+  const userId = randomUUID();
+  await tx.insert(users).values({
+    id: userId,
+    email: input.email,
+    displayName: input.displayName,
+    role: input.role,
+    status: "invited",
+  });
+
+  return issueInvite(tx, userId, actorId ?? userId);
+};
+
+/**
  * Creazione di un utente dal backoffice.
  *
  * Il token in chiaro esiste solo nella risposta di questa chiamata: l'admin lo
@@ -89,35 +128,12 @@ const requireUser = async (deps: AdminDeps, userId: string) => {
  */
 export const createUser = async (
   deps: AdminDeps,
-  /** `null` allo startup: il primo amministratore invita sé stesso. */
   actorId: string | null,
   input: CreateUserInput,
 ): Promise<{ user: AdminUser; invite: InviteLink }> => {
-  const invite = await deps.db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, input.email))
-      .limit(1);
-
-    if (existing) {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "Esiste già un utente con questa email",
-      });
-    }
-
-    const userId = randomUUID();
-    await tx.insert(users).values({
-      id: userId,
-      email: input.email,
-      displayName: input.displayName,
-      role: input.role,
-      status: "invited",
-    });
-
-    return issueInvite(tx, userId, actorId ?? userId);
-  });
+  const invite = await deps.db.transaction((tx) =>
+    createUserTx(tx, actorId, input),
+  );
 
   return { user: await requireUser(deps, invite.userId), invite };
 };

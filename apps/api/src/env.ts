@@ -31,6 +31,25 @@ const envSchema = z.object({
   DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
 
   /**
+   * Richieste di registrazione: chiuse per default.
+   *
+   * È l'unica scrittura pubblica non autenticata dell'applicazione, quindi si
+   * apre deliberatamente — e si richiude senza un deploy di codice.
+   */
+  SIGNUP_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+
+  /**
+   * Codice condiviso da indicare nel modulo di richiesta, se impostato.
+   *
+   * Non è un segreto crittografico: è il filtro che azzera le richieste
+   * automatiche, che nessun rate limit riesce a fermare del tutto.
+   */
+  SIGNUP_CODE: z.string().min(4).max(200).optional(),
+
+  /**
    * Origini extra ammesse oltre a `https://<DOMAIN>`: serve solo in sviluppo,
    * dove Vite gira su un'altra porta.
    */
