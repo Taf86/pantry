@@ -168,7 +168,7 @@ export const listOpenSignupRequests = async (
 };
 
 /**
- * Approvazione: la richiesta diventa un utente `invited` con il suo link.
+ * Approvazione: la richiesta diventa un utente `unactivated` con il suo link.
  *
  * L'ordine è quello che conta. Si decide **prima** e si crea dopo, con un
  * `UPDATE ... WHERE status = 'pending' RETURNING`: due approvazioni concorrenti

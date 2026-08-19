@@ -56,10 +56,10 @@ describe.skipIf(!integrationEnabled)("onboarding senza email", () => {
       role: "admin",
     });
 
-  it("crea l'utente in stato 'invited' e restituisce il token una sola volta", async () => {
+  it("crea l'utente in stato 'unactivated' e restituisce il token una sola volta", async () => {
     const { user, invite } = await admin();
 
-    expect(user.status).toBe("invited");
+    expect(user.status).toBe("unactivated");
     expect(invite.token).toHaveLength(43);
 
     const [row] = await harness.db
@@ -170,6 +170,41 @@ describe.skipIf(!integrationEnabled)("onboarding senza email", () => {
     ).rejects.toThrow(TRPCError);
     await expect(setRole(deps, user.id, user.id, "user")).rejects.toThrow(
       TRPCError,
+    );
+  });
+
+  it("un utente sospeso non si riattiva da solo con un invito valido", async () => {
+    const deps = { db: harness.db };
+    const { user, invite } = await createUser(deps, null, {
+      email: "sospeso@esempio.it",
+      displayName: "Sospeso",
+      role: "user",
+    });
+
+    await setStatus(deps, "un-altro-admin", user.id, "suspended");
+
+    // Il link è ancora aperto e non scaduto: è lo stato dell'account a fermarlo.
+    await expect(previewInvite(harness.db, invite.token)).rejects.toThrow(
+      TRPCError,
+    );
+    await expect(
+      acceptInvite(
+        { db: harness.db, auth },
+        { token: invite.token, password: "password-lunga-1" },
+      ),
+    ).rejects.toThrow(/sospeso/i);
+
+    const [refreshed] = await harness.db
+      .select({ status: users.status })
+      .from(users)
+      .where(eq(users.id, user.id));
+    expect(refreshed?.status).toBe("suspended");
+
+    // Il tentativo respinto non ha bruciato l'invito: la transazione ha ceduto
+    // per intero, quindi il link resta valido per dopo la riattivazione.
+    const listed = await listUsers(deps);
+    expect(listed.find((entry) => entry.id === user.id)?.hasPendingInvite).toBe(
+      true,
     );
   });
 

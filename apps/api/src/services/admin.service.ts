@@ -2,12 +2,13 @@ import { randomUUID } from "node:crypto";
 
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, eq, ne, sql } from "drizzle-orm";
+import { userStatusSchema } from "pantry-shared";
 import type {
   AdminUser,
+  AssignableUserStatus,
   CreateUserInput,
   InviteLink,
   UserRole,
-  UserStatus,
 } from "pantry-shared";
 
 import type { Database, Executor } from "../db/client.js";
@@ -37,10 +38,7 @@ const toAdminUser = (row: {
   email: row.email,
   displayName: row.displayName,
   role: row.role === "admin" ? "admin" : "user",
-  status:
-    row.status === "active" || row.status === "suspended"
-      ? row.status
-      : "invited",
+  status: userStatusSchema.catch("unactivated").parse(row.status),
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
   lastSeenAt: row.lastSeenAt ? new Date(row.lastSeenAt).toISOString() : null,
@@ -113,7 +111,7 @@ export const createUserTx = async (
     email: input.email,
     displayName: input.displayName,
     role: input.role,
-    status: "invited",
+    status: "unactivated",
   });
 
   return issueInvite(tx, userId, actorId ?? userId);
@@ -183,7 +181,7 @@ export const setStatus = async (
   deps: AdminDeps,
   actorId: string,
   userId: string,
-  status: UserStatus,
+  status: AssignableUserStatus,
 ): Promise<AdminUser> => {
   if (userId === actorId && status !== "active") {
     throw new TRPCError({

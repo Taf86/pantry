@@ -4,6 +4,7 @@ import {
   USER_STATUS_LABELS,
   createUserInput,
   type AdminUser,
+  type AssignableUserStatus,
   type CreateUserInput,
   type InviteLink,
   type SignupRequest,
@@ -28,7 +29,7 @@ import { errorMessage, trpc } from "../../lib/trpc";
 
 const STATUS_TONE: Record<UserStatus, "accent" | "warning" | "danger"> = {
   active: "accent",
-  invited: "warning",
+  unactivated: "warning",
   suspended: "danger",
 };
 
@@ -68,7 +69,7 @@ export const AdminUsersPage = () => {
   });
 
   const setStatus = useMutation({
-    mutationFn: (input: { userId: string; status: UserStatus }) =>
+    mutationFn: (input: { userId: string; status: AssignableUserStatus }) =>
       trpc.admin.users.setStatus.mutate(input),
     networkMode: "online",
     onSuccess: refresh,

@@ -112,8 +112,8 @@ CREATE TABLE users (
   display_name  TEXT NOT NULL,
   role          TEXT NOT NULL DEFAULT 'user'
                 CHECK (role IN ('user','admin')),
-  status        TEXT NOT NULL DEFAULT 'invited'
-                CHECK (status IN ('invited','active','suspended')),
+  status        TEXT NOT NULL DEFAULT 'unactivated'
+                CHECK (status IN ('unactivated','active','suspended')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -327,7 +327,7 @@ capita).
 
 ```
 1. Admin apre /admin/users, crea l'utente (email + nome)
-      → users.status = 'invited'
+      → users.status = 'unactivated'
       → viene generato un token casuale (32 byte)
       → in DB si salva solo SHA-256(token)
 2. L'interfaccia mostra UNA SOLA VOLTA l'URL completo:
@@ -356,7 +356,7 @@ auto-registrazione: una richiesta non crea un utente.
       → la risposta è sempre la stessa, qualunque sia il vero esito
 2. L'admin apre /admin/users e vede la coda sopra la tabella
 3. Approva
-      → users.status = 'invited' + invito generato (esattamente il flusso sopra)
+      → users.status = 'unactivated' + invito generato (esattamente il flusso sopra)
       → signup_requests.status = 'approved', user_id valorizzato
    Rifiuta
       → signup_requests.status = 'rejected'; nessun utente da cancellare,

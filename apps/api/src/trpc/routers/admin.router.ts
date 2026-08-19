@@ -1,9 +1,9 @@
 import {
+  assignableUserStatusSchema,
   createUserInput,
   signupRequestIdSchema,
   userIdSchema,
   userRoleSchema,
-  userStatusSchema,
 } from "pantry-shared";
 import { z } from "zod";
 
@@ -41,7 +41,9 @@ export const adminRouter = router({
       ),
 
     setStatus: adminProcedure
-      .input(z.object({ userId: userIdSchema, status: userStatusSchema }))
+      .input(
+        z.object({ userId: userIdSchema, status: assignableUserStatusSchema }),
+      )
       .mutation(({ ctx, input }) =>
         setStatus(ctx, ctx.user.id, input.userId, input.status),
       ),

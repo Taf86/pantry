@@ -59,7 +59,7 @@ export const createAuth = (db: Database, config: AppConfig) =>
         status: {
           type: "string",
           required: false,
-          defaultValue: "invited",
+          defaultValue: "unactivated",
           input: false,
         },
       },

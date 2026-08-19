@@ -1,4 +1,5 @@
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+import { userStatusSchema } from "pantry-shared";
 import type { SessionUser, UserRole, UserStatus } from "pantry-shared";
 
 import type { AppServices } from "../context.js";
@@ -30,7 +31,7 @@ const asRole = (value: unknown): UserRole =>
   value === "admin" ? "admin" : "user";
 
 const asStatus = (value: unknown): UserStatus =>
-  value === "active" || value === "suspended" ? value : "invited";
+  userStatusSchema.catch("unactivated").parse(value);
 
 const toSessionUser = (user: {
   id: string;

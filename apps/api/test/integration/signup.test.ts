@@ -100,7 +100,7 @@ describe.skipIf(!integrationEnabled)("richieste di registrazione", () => {
     );
 
     expect(user.email).toBe("aspirante@esempio.it");
-    expect(user.status).toBe("invited");
+    expect(user.status).toBe("unactivated");
     expect(user.role).toBe("user");
 
     const preview = await previewInvite(harness.db, invite.token);

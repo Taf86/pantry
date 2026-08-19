@@ -38,5 +38,9 @@ spedire automaticamente lo stesso link invece di mostrarlo.
   password scritta lascerebbe l'utente fuori senza modo di rientrare.
 - Rigenerare un invito brucia i precedenti ancora aperti: solo l'ultimo link
   consegnato funziona.
-- `users.status` ammette già `'pending'` nel CHECK, per le auto-registrazioni
-  da approvare quando arriveranno le email.
+- `users.status` resta a tre valori — `'unactivated'`, `'active'`, `'suspended'` —
+  e le auto-registrazioni da approvare non ne hanno aggiunto un quarto: vivono in
+  `signup_requests`, tabella propria (ADR 013).
+- Accettare un invito non riattiva un account sospeso: il predicato sullo stato
+  sta nella `WHERE` dell'`UPDATE` che porta ad `active`, così un link ancora
+  valido non scavalca la decisione dell'amministratore.

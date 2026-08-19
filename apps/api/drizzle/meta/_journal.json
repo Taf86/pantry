@@ -15,6 +15,13 @@
       "when": 1786972295594,
       "tag": "0001_medical_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787142624444,
+      "tag": "0002_huge_proemial_gods",
+      "breakpoints": true
     }
   ]
 }

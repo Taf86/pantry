@@ -6,11 +6,22 @@ import { isoDateTimeSchema, nameSchema, userIdSchema } from "./common.js";
 export const userRoleSchema = z.enum(["user", "admin"]);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
-export const userStatusSchema = z.enum(["invited", "active", "suspended"]);
+export const userStatusSchema = z.enum(["unactivated", "active", "suspended"]);
 export type UserStatus = z.infer<typeof userStatusSchema>;
 
+/**
+ * I soli stati che un amministratore può assegnare.
+ *
+ * `unactivated` non è assegnabile: ci si entra alla creazione e se ne esce solo
+ * accettando l'invito, che nella stessa transazione scrive la credenziale.
+ * Poterci tornare per decisione dell'admin produrrebbe un utente con password
+ * valida in uno stato che dichiara il contrario.
+ */
+export const assignableUserStatusSchema = z.enum(["active", "suspended"]);
+export type AssignableUserStatus = z.infer<typeof assignableUserStatusSchema>;
+
 export const USER_STATUS_LABELS: Record<UserStatus, string> = {
-  invited: "Invitato",
+  unactivated: "Da attivare",
   active: "Attivo",
   suspended: "Sospeso",
 };

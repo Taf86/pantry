@@ -25,7 +25,7 @@ export const users = pgTable(
     emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
     role: text("role").notNull().default("user"),
-    status: text("status").notNull().default("invited"),
+    status: text("status").notNull().default("unactivated"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -37,7 +37,7 @@ export const users = pgTable(
     check("users_role_check", sql`${table.role} IN ('user','admin')`),
     check(
       "users_status_check",
-      sql`${table.status} IN ('invited','active','suspended')`,
+      sql`${table.status} IN ('unactivated','active','suspended')`,
     ),
   ],
 );

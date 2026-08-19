@@ -8,7 +8,7 @@ import { emailInputSchema } from "./user.js";
  * Richiesta di registrazione.
  *
  * Non è un utente a metà: vive in una tabella propria e non ha né credenziali
- * né sessione. L'approvazione la trasforma in un utente `invited` con il
+ * né sessione. L'approvazione la trasforma in un utente `unactivated` con il
  * consueto link di attivazione (§5).
  */
 export const signupRequestIdSchema = z.uuid();

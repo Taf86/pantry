@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import { TRPCError } from "@trpc/server";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, ne, sql } from "drizzle-orm";
 import {
   INVITE_TTL_DAYS,
   type AcceptInviteInput,
@@ -85,6 +85,9 @@ export const previewInvite = async (
         eq(invites.tokenHash, hashToken(token)),
         isNull(invites.usedAt),
         gt(invites.expiresAt, new Date()),
+        // Coerente con `acceptInvite`: se il link non porterebbe a nulla, non
+        // si mostra il form. Il 404 resta generico, non dice che è sospeso.
+        ne(users.status, "suspended"),
       ),
     )
     .limit(1);
@@ -167,16 +170,26 @@ export const acceptInvite = async (
       });
     }
 
+    // Accettare un invito non può resuscitare un account sospeso: un link
+    // ancora valido in mano a chi è stato sospeso sarebbe una via di rientro
+    // che scavalca la decisione dell'amministratore.
+    //
+    // Il predicato sullo stato sta nella WHERE dell'UPDATE e non in una
+    // lettura precedente: così una sospensione concorrente non può infilarsi
+    // fra il controllo e la scrittura.
     const [user] = await tx
       .update(users)
       .set({ status: "active", emailVerified: true, updatedAt: new Date() })
-      .where(eq(users.id, invite.userId))
+      .where(and(eq(users.id, invite.userId), ne(users.status, "suspended")))
       .returning({ email: users.email });
 
     if (!user) {
+      // La FK con ON DELETE CASCADE garantisce che l'utente esista finché
+      // esiste il suo invito: se l'UPDATE non ha toccato nulla è stato il
+      // predicato sullo stato a escludere la riga.
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Utente inesistente",
+        code: "FORBIDDEN",
+        message: "Account sospeso: rivolgiti a un amministratore",
       });
     }
 
