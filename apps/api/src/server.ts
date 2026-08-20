@@ -1,5 +1,11 @@
-import Fastify, { type FastifyRequest } from "fastify";
+import Fastify, { LogController, type FastifyRequest } from "fastify";
 import type { AppServices } from "./context.js";
+import {
+  fastifyTRPCPlugin,
+  type FastifyTRPCPluginOptions,
+} from "@trpc/server/adapters/fastify";
+import { appRouter, type AppRouter } from "./trpc/routers/index.js";
+import { createContextFactory } from "./trpc/context.js";
 
 const METHODS_WITHOUT_BODY = new Set(["GET", "HEAD"]);
 
@@ -8,7 +14,10 @@ const createApp = (services: AppServices) =>
     loggerInstance: services.logger,
     trustProxy: true,
     bodyLimit: 1_048_576,
-    disableRequestLogging: !services.config.isProduction,
+
+    logController: new LogController({
+      disableRequestLogging: !services.config.isProduction,
+    }),
   });
 
 export type AppServer = ReturnType<typeof createApp>;
@@ -73,5 +82,17 @@ export const buildServer = async (
   app.get("/api/health", () => ({ status: "ok" }));
 
   await registerAuthRoutes(app, services);
+  await app.register(fastifyTRPCPlugin, {
+    prefix: "/api/trpc",
+    trpcOptions: {
+      router: appRouter,
+      createContext: createContextFactory(services),
+      onError({ error, path }) {
+        if (error.code === "INTERNAL_SERVER_ERROR") {
+          services.logger.error({ error, path }, "errore tRPC non gestito");
+        }
+      },
+    } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
+  });
   return app;
 };

@@ -17,15 +17,17 @@ export interface DatabaseHandle {
 
 export const createDatabase = (
   config: AppConfig,
-  logger: Logger,
+  logger?: Logger,
 ): DatabaseHandle => {
   const client = postgres(config.databaseUrl, {
     max: config.DB_POOL_MAX,
-    onnotice: (notice) => {
-      if (notice["severity"] === "WARNING")
-        logger.warn({ notice }, "postgres warning");
-      else logger.debug({ notice }, "postgres notice");
-    },
+    onnotice: logger
+      ? (notice) => {
+          if (notice["severity"] === "WARNING")
+            logger.warn({ notice }, "postgres warning");
+          else logger.debug({ notice }, "postgres notice");
+        }
+      : () => {},
   });
 
   const db = drizzle({ client, relations });

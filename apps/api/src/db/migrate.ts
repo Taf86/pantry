@@ -13,9 +13,9 @@ export const MIGRATIONS_FOLDER = path.join(
 
 export const runMigrations = async (
   db: Database,
-  logger: Logger,
+  logger?: Logger,
 ): Promise<void> => {
-  logger.info("Applying migrations...");
+  logger?.info("Applying migrations...");
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-  logger.info("Migrations applied.");
+  logger?.info("Migrations applied.");
 };

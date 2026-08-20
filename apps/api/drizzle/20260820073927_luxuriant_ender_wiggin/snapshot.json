@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "8214073d-be38-45ac-843c-38c257163713",
+  "id": "d5ac074a-676d-459e-b4be-2b2716bbbfae",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -483,7 +483,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "'invited'",
+      "default": "'unactivated'",
       "generated": null,
       "identity": null,
       "name": "status",
@@ -513,6 +513,19 @@
       "generated": null,
       "identity": null,
       "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "users"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "last_seen_at",
       "entityType": "columns",
       "schema": "public",
       "table": "users"
@@ -866,7 +879,7 @@
       "table": "users"
     },
     {
-      "value": "\"status\" IN ('invited,active,suspended')",
+      "value": "\"status\" IN ('unactivated,active,suspended')",
       "name": "users_status_check",
       "entityType": "checks",
       "schema": "public",

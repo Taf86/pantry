@@ -42,11 +42,12 @@ CREATE TABLE "users" (
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"role" text DEFAULT 'user' NOT NULL,
-	"status" text DEFAULT 'invited' NOT NULL,
+	"status" text DEFAULT 'unactivated' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"last_seen_at" timestamp with time zone,
 	CONSTRAINT "users_role_check" CHECK ("role" IN ('user,admin')),
-	CONSTRAINT "users_status_check" CHECK ("status" IN ('invited,active,suspended'))
+	CONSTRAINT "users_status_check" CHECK ("status" IN ('unactivated,active,suspended'))
 );
 --> statement-breakpoint
 CREATE TABLE "verifications" (
