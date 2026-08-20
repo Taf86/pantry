@@ -1,4 +1,6 @@
+import path from "node:path";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -7,18 +9,17 @@ const API_TARGET = process.env["VITE_API_TARGET"] ?? "http://localhost:3000";
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg"],
       manifest: {
         name: "Pantry",
         short_name: "Pantry",
-        description: "Liste della spesa e dispense condivise",
+        description: "Shared shopping lists and pantries",
         lang: "it",
         start_url: "/",
         display: "standalone",
-        background_color: "#f7f7f5",
-        theme_color: "#2f6f4f",
         icons: [
           {
             src: "/favicon.svg",
@@ -55,13 +56,10 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  resolve: {
+    alias: { "@": path.resolve(import.meta.dirname, "./src") },
+  },
   server: {
-    /**
-     * In sviluppo Vite fa da proxy verso l'API, così il browser vede una sola
-     * origin esattamente come in produzione dietro Caddy. Senza, il cookie di
-     * sessione non partirebbe e l'intero modello di autenticazione andrebbe
-     * provato solo in produzione — che è il modo peggiore di provarlo.
-     */
     proxy: {
       "/api": { target: API_TARGET, changeOrigin: false },
       "/socket.io": { target: API_TARGET, ws: true, changeOrigin: false },
