@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MIN_PASSWORD_LENGTH } from "@pantry/shared";
+import { MIN_PASSWORD_LENGTH, type InvitePreview } from "@pantry/shared";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import { signIn } from "../../lib/auth-client";
 import { keys } from "../../lib/keys";
 import { errorMessage, trpc } from "../../lib/trpc";
@@ -11,7 +10,6 @@ import {
   Field,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
@@ -19,15 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormField } from "@/components/form-field";
 
 export default function InvitePage() {
   const { token = "" } = useParams();
-  const navigate = useNavigate();
-  const client = useQueryClient();
-
-  const [password, setPassword] = useState("");
-  const [confirmation, setConfirmation] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const preview = useQuery({
     queryKey: keys.invitePreview(token),
@@ -36,12 +32,50 @@ export default function InvitePage() {
     networkMode: "online",
   });
 
+  if (preview.isPending) {
+    return <div>Loading</div>;
+  }
+
+  if (preview.isError || !preview.data) {
+    return <div>Error</div>;
+  }
+
+  return <Form invite={preview.data} token={token} />;
+}
+
+const formSchema = z
+  .object({
+    password: z.string().trim().min(MIN_PASSWORD_LENGTH),
+    confirmation: z.string(),
+  })
+  .check((ctx) => {
+    const { password, confirmation } = ctx.value;
+    if (confirmation !== password) {
+      ctx.issues.push({
+        path: ["confirmation"],
+        code: "custom",
+        message: "Passwords don't match",
+        input: confirmation,
+      });
+    }
+  });
+
+function Form({ invite, token }: { invite: InvitePreview; token: string }) {
+  const navigate = useNavigate();
+  const client = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { confirmation: "", password: "" },
+  });
+
   const accept = useMutation({
     mutationFn: (input: { token: string; password: string }) =>
       trpc.account.acceptInvite.mutate(input),
     networkMode: "online",
-    onSuccess: async (result) => {
-      const signedIn = await signIn(result.email, password);
+    onSuccess: async (result, variables) => {
+      const signedIn = await signIn(result.email, variables.password);
       if (signedIn.error) {
         toast.add({ description: "Account activated, you can login now." });
         void navigate("/login", { replace: true });
@@ -52,65 +86,55 @@ export default function InvitePage() {
     },
     onError: (cause) => setError(errorMessage(cause)),
   });
-
-  if (preview.isPending) {
-    return <div>Loading</div>;
-  }
-
-  if (preview.isError) {
-    return <div>Error</div>;
-  }
-
-  const submit: React.SubmitEventHandler<HTMLFormElement> = (event): void => {
-    event.preventDefault();
+  const onValid: SubmitHandler<z.infer<typeof formSchema>, unknown> = (
+    data,
+    event,
+  ) => {
+    event?.preventDefault();
     setError(null);
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(
-        `La password deve avere almeno ${MIN_PASSWORD_LENGTH} caratteri.`,
-      );
-      return;
-    }
-    if (password !== confirmation) {
-      setError("Le due password non coincidono.");
-      return;
-    }
-    accept.mutate({ token, password });
+    accept.mutate({ token, password: data.password });
   };
 
   return (
     <div className="w-full max-w-md">
-      <form onSubmit={submit}>
+      <form onSubmit={(e) => void form.handleSubmit(onValid)(e)}>
         <FieldGroup>
           <FieldSet>
             <FieldLegend>Sign up</FieldLegend>
             <FieldDescription>
-              Welcome {preview.data.displayName}, choose a password for{" "}
-              {preview.data.email} account.
+              Welcome {invite.displayName}, choose a password for {invite.email}{" "}
+              account.
             </FieldDescription>
             <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="invite-password">Password</FieldLabel>
-                <Input
-                  id="invite-password"
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="invite-confirm-password">
-                  Confirm password
-                </FieldLabel>
-                <Input
-                  id="invite-confirm-password"
-                  required
-                  type="password"
-                  value={confirmation}
-                  onChange={(e) => setConfirmation(e.target.value)}
-                />
-              </Field>
+              <FormField
+                name="password"
+                control={form.control}
+                label="Password"
+              >
+                {({ field, invalid }) => (
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={invalid}
+                    type="password"
+                  />
+                )}
+              </FormField>
+
+              <FormField
+                name="confirmation"
+                control={form.control}
+                label="Confirm password"
+              >
+                {({ field, invalid }) => (
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={invalid}
+                    type="password"
+                  />
+                )}
+              </FormField>
             </FieldGroup>
           </FieldSet>
 

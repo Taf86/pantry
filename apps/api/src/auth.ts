@@ -16,14 +16,6 @@ export const createAuth = (db: Database, config: AppConfig) =>
     basePath: "/api/auth",
     secret: config.BETTER_AUTH_SECRET,
     trustedOrigins: config.trustedOrigins,
-    logger: {
-      level: "debug",
-      log: (level, message, ...args) => {
-        console.log(`[${level}] ${message}`, ...args);
-        if (message.includes("not found"))
-          console.log(new Error("trace").stack);
-      },
-    },
 
     database: drizzleAdapter(db, {
       provider: "pg",

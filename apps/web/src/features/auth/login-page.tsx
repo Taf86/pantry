@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldGroup,
-  FieldLabel,
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
@@ -13,28 +12,33 @@ import { keys } from "@/lib/keys";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
 import { useState } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormField } from "@/components/form-field";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const client = useQueryClient();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (event: React.SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setBusy(true);
+  const onValid: SubmitHandler<
+    {
+      email: string;
+      password: string;
+    },
+    unknown
+  > = async (data, event) => {
+    event?.preventDefault();
+    setLoading(true);
     setError(null);
 
-    console.log({ email, password });
-    const result = await signIn(email, password);
-
+    const result = await signIn(data.email, data.password);
     if (result.error) {
-      setError("Email o password non corretti.");
-      setBusy(false);
+      setError("Invalid email or password");
+      setLoading(false);
       return;
     }
 
@@ -42,46 +46,56 @@ export default function LoginPage() {
     void navigate("/lists", { replace: true });
   };
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
   return (
     <div className="w-full max-w-md">
-      <form onSubmit={(event) => void submit(event)}>
+      <form onSubmit={(e) => void form.handleSubmit(onValid)(e)}>
         <FieldGroup>
           <FieldSet>
             <FieldLegend>Login</FieldLegend>
             <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="login-email">Email</FieldLabel>
-                <Input
-                  id="login-email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="login-password">Password</FieldLabel>
-                <Input
-                  id="login-password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-              </Field>
+              <FormField name="email" control={form.control} label="Email">
+                {({ field, invalid }) => (
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={invalid}
+                    type="email"
+                  />
+                )}
+              </FormField>
+
+              <FormField
+                name="password"
+                control={form.control}
+                label="Password"
+              >
+                {({ field, invalid }) => (
+                  <Input
+                    {...field}
+                    id={field.name}
+                    aria-invalid={invalid}
+                    type="password"
+                  />
+                )}
+              </FormField>
             </FieldGroup>
           </FieldSet>
           {error !== null && (
             <Field orientation="horizontal">
               <Alert variant="destructive" className="max-w-md">
                 <AlertCircleIcon />
-                <AlertTitle>Signup failed</AlertTitle>
+                <AlertTitle>Login failed</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             </Field>
           )}
           <Field orientation="horizontal">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={loading}>
               Submit
             </Button>
           </Field>
@@ -90,3 +104,8 @@ export default function LoginPage() {
     </div>
   );
 }
+
+const formSchema = z.object({
+  email: z.email(),
+  password: z.string().trim().min(1, { error: "Required" }),
+});

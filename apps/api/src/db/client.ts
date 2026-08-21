@@ -30,7 +30,7 @@ export const createDatabase = (
       : () => {},
   });
 
-  const db = drizzle({ client, relations, logger: true });
+  const db = drizzle({ client, relations });
 
   return {
     db,
