@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "d5ac074a-676d-459e-b4be-2b2716bbbfae",
+  "id": "7df4824e-924d-42ce-a018-bc85a071e5a4",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -71,6 +71,19 @@
       "generated": null,
       "identity": null,
       "name": "account_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "accounts"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "issuer",
       "entityType": "columns",
       "schema": "public",
       "table": "accounts"
@@ -633,7 +646,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "provider_id",
+          "value": "issuer",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -652,7 +665,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "idx_accounts_provider",
+      "name": "idx_accounts_identity",
       "entityType": "indexes",
       "schema": "public",
       "table": "accounts"
@@ -872,14 +885,14 @@
       "entityType": "uniques"
     },
     {
-      "value": "\"role\" IN ('user,admin')",
+      "value": "\"role\" IN ('user', 'admin')",
       "name": "users_role_check",
       "entityType": "checks",
       "schema": "public",
       "table": "users"
     },
     {
-      "value": "\"status\" IN ('unactivated,active,suspended')",
+      "value": "\"status\" IN ('unactivated', 'active', 'suspended')",
       "name": "users_status_check",
       "entityType": "checks",
       "schema": "public",

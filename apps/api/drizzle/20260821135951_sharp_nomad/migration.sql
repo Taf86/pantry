@@ -2,6 +2,7 @@ CREATE TABLE "accounts" (
 	"id" text PRIMARY KEY,
 	"user_id" text NOT NULL,
 	"account_id" text NOT NULL,
+	"issuer" text NOT NULL,
 	"provider_id" text NOT NULL,
 	"access_token" text,
 	"refresh_token" text,
@@ -46,8 +47,8 @@ CREATE TABLE "users" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"last_seen_at" timestamp with time zone,
-	CONSTRAINT "users_role_check" CHECK ("role" IN ('user,admin')),
-	CONSTRAINT "users_status_check" CHECK ("status" IN ('unactivated,active,suspended'))
+	CONSTRAINT "users_role_check" CHECK ("role" IN ('user', 'admin')),
+	CONSTRAINT "users_status_check" CHECK ("status" IN ('unactivated', 'active', 'suspended'))
 );
 --> statement-breakpoint
 CREATE TABLE "verifications" (
@@ -60,7 +61,7 @@ CREATE TABLE "verifications" (
 );
 --> statement-breakpoint
 CREATE INDEX "idx_accounts_user" ON "accounts" ("user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "idx_accounts_provider" ON "accounts" ("provider_id","account_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "idx_accounts_identity" ON "accounts" ("issuer","account_id");--> statement-breakpoint
 CREATE INDEX "idx_invites_user" ON "invites" ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_sessions_user" ON "sessions" ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_verifications_identifier" ON "verifications" ("identifier");--> statement-breakpoint

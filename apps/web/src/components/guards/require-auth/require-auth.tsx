@@ -2,16 +2,19 @@ import FullPageSpinner from "@/components/full-page-spinner";
 import { useSession } from "@/hooks/use-session";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { RequireAuthContext } from "./require-auth-context";
+import ServiceUnavailablePage from "@/components/errors/service-unavailable-page";
 
 export default function RequireAuth() {
-  const { data: user, isPending } = useSession();
+  const session = useSession();
   const location = useLocation();
 
-  if (isPending) return <FullPageSpinner />;
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (session.isPending) return <FullPageSpinner />;
+  if (session.isError) return <ServiceUnavailablePage />;
+  if (!session?.data)
+    return <Navigate to="/login" state={{ from: location }} replace />;
 
   return (
-    <RequireAuthContext value={user}>
+    <RequireAuthContext value={session.data}>
       <Outlet />
     </RequireAuthContext>
   );

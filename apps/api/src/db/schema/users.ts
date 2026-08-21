@@ -23,10 +23,19 @@ export const users = pgTable(
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   },
   (table) => [
-    check("users_role_check", sql`${table.role} IN (${UserRoles.join(",")})`),
+    check(
+      "users_role_check",
+      sql`${table.role} IN (${sql.join(
+        UserRoles.map((r) => sql`${r}`),
+        sql`, `,
+      )})`,
+    ),
     check(
       "users_status_check",
-      sql`${table.status} IN (${UserStatuses.join(",")})`,
+      sql`${table.status} IN (${sql.join(
+        UserStatuses.map((r) => sql`${r}`),
+        sql`, `,
+      )})`,
     ),
   ],
 );

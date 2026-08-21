@@ -19,6 +19,6 @@ export const keys = {
   // adminUsers: () => ["admin", "users"] as const,
   // adminSignupRequests: () => ["admin", "signup-requests"] as const,
   // userSearch: (query: string) => ["users", "search", query] as const,
-  // invitePreview: (token: string) => ["invite", token] as const,
+  invitePreview: (token: string) => ["invite", token] as const,
   // signupInfo: () => ["signup", "info"] as const,
 } as const;

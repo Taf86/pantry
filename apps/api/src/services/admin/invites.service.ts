@@ -125,6 +125,7 @@ export const acceptInvite = async (
         and(
           eq(accounts.userId, invite.userId),
           eq(accounts.providerId, CREDENTIAL_PROVIDER),
+          eq(accounts.issuer, CREDENTIAL_ISSUER),
         ),
       )
       .limit(1);
@@ -140,6 +141,7 @@ export const acceptInvite = async (
         userId: invite.userId,
         accountId: invite.userId,
         providerId: CREDENTIAL_PROVIDER,
+        issuer: CREDENTIAL_ISSUER,
         password: passwordHash,
       });
     }
@@ -149,6 +151,7 @@ export const acceptInvite = async (
 };
 
 const CREDENTIAL_PROVIDER = "credential";
+const CREDENTIAL_ISSUER = "local:credential";
 const MS_PER_DAY = 86_400_000;
 const generateToken = (): string => randomBytes(32).toString("base64url");
 const hashToken = (token: string): string =>

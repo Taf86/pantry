@@ -16,6 +16,14 @@ export const createAuth = (db: Database, config: AppConfig) =>
     basePath: "/api/auth",
     secret: config.BETTER_AUTH_SECRET,
     trustedOrigins: config.trustedOrigins,
+    logger: {
+      level: "debug",
+      log: (level, message, ...args) => {
+        console.log(`[${level}] ${message}`, ...args);
+        if (message.includes("not found"))
+          console.log(new Error("trace").stack);
+      },
+    },
 
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -44,6 +52,12 @@ export const createAuth = (db: Database, config: AppConfig) =>
           type: "string",
           required: false,
           defaultValue: UserStatus.unactivated,
+          input: false,
+        },
+        lastSeenAt: {
+          type: "date",
+          required: false,
+          defaultValue: null,
           input: false,
         },
       },
