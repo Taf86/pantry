@@ -25,7 +25,7 @@ export const publicProcedure = t.procedure;
 
 export const authedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessione assente" });
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Missing session" });
   }
   if (ctx.user.status !== "active") {
     throw new TRPCError({
