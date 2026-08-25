@@ -21,7 +21,7 @@
     "skipLibCheck": true,
 
     "noEmit": true,
-    "types": []
+    "types": ["node"]
   },
   "include": ["src", "test"]
 }
