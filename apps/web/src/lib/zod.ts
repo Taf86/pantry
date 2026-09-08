@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { en, it } from "zod/locales";
-import type { i18n as I18n } from "i18next";
+import type { i18n as I18n, TFunction } from "i18next";
 
 const locales = { en, it } as const;
 type Supported = keyof typeof locales;
@@ -18,4 +18,11 @@ export function bindZodToI18n(i18n: I18n) {
   applyZodLocale(i18n.resolvedLanguage);
   i18n.on("languageChanged", applyZodLocale);
   return () => i18n.off("languageChanged", applyZodLocale);
+}
+
+export function requiredString(t?: TFunction<"translation", undefined>) {
+  return z
+    .string()
+    .trim()
+    .min(1, { error: t ? t("validation.required") : undefined });
 }

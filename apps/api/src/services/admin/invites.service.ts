@@ -101,7 +101,7 @@ export const acceptInvite = async (
     if (!invite) {
       throw new TRPCError({
         code: "NOT_FOUND",
-        message: "Invito non valido o scaduto",
+        message: "Expired or invalid link",
       });
     }
 

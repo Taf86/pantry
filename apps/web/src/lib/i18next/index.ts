@@ -1,8 +1,8 @@
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
-import * as en from "./locale/en.json";
-import * as it from "./locale/it.json";
+import * as en from "./locales/en.json";
+import * as it from "./locales/it.json";
 import { bindZodToI18n } from "../zod";
 
 await i18n

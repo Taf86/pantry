@@ -1,4 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -10,15 +15,20 @@ import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/auth-client";
 import { keys } from "@/lib/keys";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "@/components/form-field";
+import { useTranslation } from "react-i18next";
+import { requiredString } from "@/lib/zod";
+import useErrorMessage from "@/hooks/use-error-message";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
+  const errorMessage = useErrorMessage();
   const navigate = useNavigate();
   const client = useQueryClient();
 
@@ -37,7 +47,7 @@ export default function LoginPage() {
 
     const result = await signIn(data.email, data.password);
     if (result.error) {
-      setError("Invalid email or password");
+      setError(errorMessage(result.error));
       setLoading(false);
       return;
     }
@@ -45,6 +55,11 @@ export default function LoginPage() {
     await client.invalidateQueries({ queryKey: keys.me() });
     void navigate("/lists", { replace: true });
   };
+
+  const formSchema = z.object({
+    email: z.email(),
+    password: requiredString(t),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,9 +71,13 @@ export default function LoginPage() {
       <form onSubmit={(e) => void form.handleSubmit(onValid)(e)}>
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Login</FieldLegend>
+            <FieldLegend>{t("feature.login.welcome")}</FieldLegend>
             <FieldGroup>
-              <FormField name="email" control={form.control} label="Email">
+              <FormField
+                name="email"
+                control={form.control}
+                label={t("feature.login.email")}
+              >
                 {({ field, invalid }) => (
                   <Input
                     {...field}
@@ -72,7 +91,7 @@ export default function LoginPage() {
               <FormField
                 name="password"
                 control={form.control}
-                label="Password"
+                label={t("feature.login.password")}
               >
                 {({ field, invalid }) => (
                   <Input
@@ -88,15 +107,18 @@ export default function LoginPage() {
           {error !== null && (
             <Field orientation="horizontal">
               <Alert variant="destructive" className="max-w-md">
+                <AlertAction>
+                  <XIcon aria-hidden="true" onClick={() => setError(null)} />
+                </AlertAction>
                 <AlertCircleIcon />
-                <AlertTitle>Login failed</AlertTitle>
+                <AlertTitle>{t("feature.login.loginFailed")}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             </Field>
           )}
           <Field orientation="horizontal">
             <Button type="submit" disabled={loading}>
-              Submit
+              {t("feature.login.signIn")}
             </Button>
           </Field>
         </FieldGroup>
@@ -104,8 +126,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-const formSchema = z.object({
-  email: z.email(),
-  password: z.string().trim().min(1, { error: "Required" }),
-});

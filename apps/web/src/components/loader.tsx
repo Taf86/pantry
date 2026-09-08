@@ -7,15 +7,21 @@ import {
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
 
-export default function FullPageSpinner() {
+export default function Loader({
+  title,
+  description,
+}: {
+  title?: string;
+  description?: string;
+}) {
   return (
     <Empty className="w-full">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <Spinner />
         </EmptyMedia>
-        <EmptyTitle>Loading Pantry</EmptyTitle>
-        <EmptyDescription>Trying to find something funny...</EmptyDescription>
+        {title && <EmptyTitle>{title}</EmptyTitle>}
+        {description && <EmptyDescription>{description}</EmptyDescription>}
       </EmptyHeader>
     </Empty>
   );

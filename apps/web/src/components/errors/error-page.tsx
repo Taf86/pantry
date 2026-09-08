@@ -7,13 +7,19 @@ import {
 } from "@/components/ui/empty";
 import { useTranslation } from "react-i18next";
 
-export default function NotFoundPage() {
+export default function ErrorPage({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   const { t } = useTranslation();
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyTitle>{t("feature.notFound.title")}</EmptyTitle>
-        <EmptyDescription>{t("feature.notFound.description")}</EmptyDescription>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <EmptyDescription>

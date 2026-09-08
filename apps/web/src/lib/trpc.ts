@@ -16,17 +16,9 @@ export type ApiError = TRPCClientError<AppRouter>;
 export const isApiError = (error: unknown): error is ApiError =>
   error instanceof TRPCClientError;
 
-export const errorCode = (error: unknown): string | null =>
-  isApiError(error) ? (error.data?.code ?? null) : null;
-
 export const isRetriable = (error: unknown): boolean => {
-  const code = errorCode(error);
-  if (code === null) return true;
-  return code === "INTERNAL_SERVER_ERROR" || code === "TIMEOUT";
-};
-
-export const errorMessage = (error: unknown): string => {
-  if (isApiError(error)) return error.message;
-  if (error instanceof Error) return error.message;
-  return "Unkown error";
+  const code = isApiError(error) ? (error.data?.code ?? null) : null;
+  return (
+    code === null || code === "INTERNAL_SERVER_ERROR" || code === "TIMEOUT"
+  );
 };

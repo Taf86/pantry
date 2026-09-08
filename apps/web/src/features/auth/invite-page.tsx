@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { signIn } from "../../lib/auth-client";
 import { keys } from "../../lib/keys";
-import { errorMessage, trpc } from "../../lib/trpc";
+import { trpc, type ApiError } from "../../lib/trpc";
 import { toast } from "@/components/ui/toast";
 import {
   Field,
@@ -21,8 +21,13 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "@/components/form-field";
+import { useTranslation } from "react-i18next";
+import useErrorMessage from "@/hooks/use-error-message";
+import Loader from "@/components/loader";
+import ErrorPage from "@/components/errors/error-page";
 
 export default function InvitePage() {
+  const { t } = useTranslation();
   const { token = "" } = useParams();
 
   const preview = useQuery({
@@ -33,37 +38,55 @@ export default function InvitePage() {
   });
 
   if (preview.isPending) {
-    return <div>Loading</div>;
+    return <Loader />;
   }
 
   if (preview.isError || !preview.data) {
-    return <div>Error</div>;
+    return (
+      <ErrorPage
+        title={t("feature.invite.error.expiredOrInvalidLinkTitle")}
+        description={t("feature.invite.error.expiredOrInvalidLink")}
+      />
+    );
   }
 
   return <Form invite={preview.data} token={token} />;
 }
 
-const formSchema = z
-  .object({
-    password: z.string().trim().min(MIN_PASSWORD_LENGTH),
-    confirmation: z.string(),
-  })
-  .check((ctx) => {
-    const { password, confirmation } = ctx.value;
-    if (confirmation !== password) {
-      ctx.issues.push({
-        path: ["confirmation"],
-        code: "custom",
-        message: "Passwords don't match",
-        input: confirmation,
-      });
-    }
-  });
-
 function Form({ invite, token }: { invite: InvitePreview; token: string }) {
+  const { t } = useTranslation();
+  const apiErrorMessage = (apiError: ApiError) => {
+    switch (apiError.data?.code) {
+      case "NOT_FOUND":
+        return t("feature.invite.error.expiredOrInvalidLink");
+      case "FORBIDDEN":
+        return t("feature.invite.error.forbidden");
+      default:
+        return null;
+    }
+  };
+  const errorMessage = useErrorMessage(apiErrorMessage);
+
   const navigate = useNavigate();
   const client = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+
+  const formSchema = z
+    .object({
+      password: z.string().trim().min(MIN_PASSWORD_LENGTH),
+      confirmation: z.string(),
+    })
+    .check((ctx) => {
+      const { password, confirmation } = ctx.value;
+      if (confirmation !== password) {
+        ctx.issues.push({
+          path: ["confirmation"],
+          code: "custom",
+          message: t("feature.invite.error.confirmation"),
+          input: confirmation,
+        });
+      }
+    });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,7 +100,7 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
     onSuccess: async (result, variables) => {
       const signedIn = await signIn(result.email, variables.password);
       if (signedIn.error) {
-        toast.add({ description: "Account activated, you can login now." });
+        toast.add({ description: t("feature.invite.manualLogin") });
         void navigate("/login", { replace: true });
         return;
       }
@@ -86,6 +109,7 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
     },
     onError: (cause) => setError(errorMessage(cause)),
   });
+
   const onValid: SubmitHandler<z.infer<typeof formSchema>, unknown> = (
     data,
     event,
@@ -100,16 +124,18 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
       <form onSubmit={(e) => void form.handleSubmit(onValid)(e)}>
         <FieldGroup>
           <FieldSet>
-            <FieldLegend>Sign up</FieldLegend>
+            <FieldLegend>{t("feature.invite.signUp")}</FieldLegend>
             <FieldDescription>
-              Welcome {invite.displayName}, choose a password for {invite.email}{" "}
-              account.
+              {t("feature.invite.welcome", {
+                displayName: invite.displayName,
+                email: invite.email,
+              })}
             </FieldDescription>
             <FieldGroup>
               <FormField
                 name="password"
                 control={form.control}
-                label="Password"
+                label={t("feature.invite.password")}
               >
                 {({ field, invalid }) => (
                   <Input
@@ -124,7 +150,7 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
               <FormField
                 name="confirmation"
                 control={form.control}
-                label="Confirm password"
+                label={t("feature.invite.confirmation")}
               >
                 {({ field, invalid }) => (
                   <Input
@@ -142,7 +168,7 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
             <Field orientation="horizontal">
               <Alert variant="destructive" className="max-w-md">
                 <AlertCircleIcon />
-                <AlertTitle>Signup failed</AlertTitle>
+                <AlertTitle>{t("feature.invite.failed")}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             </Field>
@@ -150,7 +176,7 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
 
           <Field orientation="horizontal">
             <Button type="submit" disabled={accept.isPending}>
-              Submit
+              {t("common.submit")}
             </Button>
           </Field>
         </FieldGroup>

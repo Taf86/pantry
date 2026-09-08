@@ -1,4 +1,4 @@
-import FullPageSpinner from "@/components/full-page-spinner";
+import SessionLoader from "@/components/session-loader";
 import { useSession } from "@/hooks/use-session";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { RequireAuthContext } from "./require-auth-context";
@@ -8,7 +8,7 @@ export default function RequireAuth() {
   const session = useSession();
   const location = useLocation();
 
-  if (session.isPending) return <FullPageSpinner />;
+  if (session.isPending) return <SessionLoader />;
   if (session.isError) return <ServiceUnavailablePage />;
   if (!session?.data)
     return <Navigate to="/login" state={{ from: location }} replace />;

@@ -4,14 +4,16 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useTranslation } from "react-i18next";
 
 export default function ServiceUnavailablePage() {
+  const { t } = useTranslation();
   return (
     <Empty>
       <EmptyHeader>
-        <EmptyTitle>503 - Service unavailable</EmptyTitle>
+        <EmptyTitle>{t("feature.serviceUnavailable.title")}</EmptyTitle>
         <EmptyDescription>
-          Our server is temporary unavailable. Please, try again later.
+          {t("feature.serviceUnavailable.description")}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

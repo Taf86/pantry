@@ -1,0 +1,45 @@
+{
+  "common": {
+    "submit": "Invia"
+  },
+  "error": {
+    "auth": { "invalidCredentials": "Credenziali non valide" },
+    "unknown": "Errore sconosciuto"
+  },
+  "feature": {
+    "sessionLoader": {
+      "title": "Caricamento di Pantry",
+      "description": "Ripristino della sessione precedente"
+    },
+    "notFound": {
+      "title": "404 - Pagina non trovata",
+      "description": "La pagina che stai cercando non esiste.",
+      "home": "Home"
+    },
+    "serviceUnavailable": {
+      "title": "503 - Servizio non disponibile",
+      "description": "Il nostro server è temporaneamente non disponibile. Riprova più tardi."
+    },
+    "login": {
+      "welcome": "Benvenuto/a",
+      "email": "Email",
+      "password": "Password",
+      "failed": "Accesso non riuscito",
+      "signIn": "Accedi"
+    },
+    "invite": {
+      "signUp": "Registrati",
+      "welcome": "Benvenuto/a {{displayName}}, scegli una password per l'account {{email}}.",
+      "failed": "Registrazione non riuscita",
+      "error": {
+        "expiredOrInvalidLinkTitle": "404 - Pagina non trovata",
+        "expiredOrInvalidLink": "Link scaduto o non valido.",
+        "forbidden": "Accesso negato.",
+        "confirmation": "Le password non coincidono."
+      },
+      "manualLogin": "Account attivato, ora puoi accedere.",
+      "password": "Password",
+      "confirmation": "Conferma password"
+    }
+  }
+}

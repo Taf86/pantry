@@ -1,0 +1,45 @@
+{
+  "common": {
+    "submit": "Submit"
+  },
+  "error": {
+    "auth": { "invalidCredentials": "Invalid credentials" },
+    "unknown": "Unknown error"
+  },
+  "feature": {
+    "sessionLoader": {
+      "title": "Loading Pantry",
+      "description": "Restoring previous session"
+    },
+    "notFound": {
+      "title": "404 - Not Found",
+      "description": "The page you're looking for doesn't exist.",
+      "home": "Home"
+    },
+    "serviceUnavailable": {
+      "title": "503 - Service unavailable",
+      "description": "Our server is temporary unavailable. Please, try again later."
+    },
+    "login": {
+      "welcome": "Welcome",
+      "email": "Email",
+      "password": "Password",
+      "failed": "Login failed",
+      "signIn": "Sign in"
+    },
+    "invite": {
+      "signUp": "Sign up",
+      "welcome": "Welcome {{displayName}}, choose a password for {{email}} account.",
+      "failed": "Sign up failed",
+      "error": {
+        "expiredOrInvalidLinkTitle": "404 - Not found",
+        "expiredOrInvalidLink": "Expired or invalid link.",
+        "forbidden": "Forbidden.",
+        "confirmation": "Passwords don't match."
+      },
+      "manualLogin": "Account activated, you can login now.",
+      "password": "Password",
+      "confirmation": "Confirm password"
+    }
+  }
+}
