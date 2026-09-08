@@ -20,6 +20,10 @@
       "title": "503 - Servizio non disponibile",
       "description": "Il nostro server è temporaneamente non disponibile. Riprova più tardi."
     },
+    "navBar": {
+      "menu": "Menu",
+      "logout": "Esci"
+    },
     "login": {
       "welcome": "Benvenuto/a",
       "email": "Email",

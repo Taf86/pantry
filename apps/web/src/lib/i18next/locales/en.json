@@ -20,6 +20,10 @@
       "title": "503 - Service unavailable",
       "description": "Our server is temporary unavailable. Please, try again later."
     },
+    "navBar": {
+      "menu": "Menu",
+      "logout": "Logout"
+    },
     "login": {
       "welcome": "Welcome",
       "email": "Email",
