@@ -111,7 +111,7 @@ export default function LoginPage() {
                   <XIcon aria-hidden="true" onClick={() => setError(null)} />
                 </AlertAction>
                 <AlertCircleIcon />
-                <AlertTitle>{t("feature.login.loginFailed")}</AlertTitle>
+                <AlertTitle>{t("feature.login.failed")}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             </Field>

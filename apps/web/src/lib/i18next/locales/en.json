@@ -45,5 +45,8 @@
       "password": "Password",
       "confirmation": "Confirm password"
     }
+  },
+  "validation": {
+    "required": "Required"
   }
 }

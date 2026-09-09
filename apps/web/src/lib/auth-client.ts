@@ -31,11 +31,9 @@ export function isAuthError(error: unknown): AuthError | null {
   return result.data || null;
 }
 
-export function authErrorKey(error: AuthError): string | null {
+export function authErrorKey(error: AuthError) {
   switch (error.code) {
     case "INVALID_EMAIL_OR_PASSWORD":
-      return "error.auth.invalidCredentials";
-    default:
-      return null;
+      return "error.auth.invalidCredentials" as const;
   }
 }

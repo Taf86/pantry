@@ -14,7 +14,6 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "seed:admin": "tsx --env-file=.env scripts/seed-admin.ts",
-    "probe-signin": "tsx --env-file=.env scripts/probe-signin.ts",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\""
   },

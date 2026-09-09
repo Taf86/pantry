@@ -30,15 +30,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache dell'app shell: al supermercato l'app deve aprirsi anche
-        // senza rete, prima ancora di leggere i dati dalla cache di query.
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
         runtimeCaching: [
           {
-            // Le risposte di sessione non si mettono mai in cache: servirne
-            // una stantia significa mostrare l'app a chi è stato sospeso.
             urlPattern: /^\/api\/auth\//,
             handler: "NetworkOnly",
           },
@@ -66,6 +62,6 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    sourcemap: "hidden",
   },
 });
