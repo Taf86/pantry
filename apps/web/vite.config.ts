@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { API_CACHE_NAME } from "./src/lib/pwa";
 
 const API_TARGET = process.env["VITE_API_TARGET"] ?? "http://localhost:3000";
 
@@ -35,14 +36,16 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
         runtimeCaching: [
           {
-            urlPattern: /^\/api\/auth\//,
+            urlPattern: ({ url, sameOrigin }) =>
+              sameOrigin && url.pathname.startsWith("/api/auth/"),
             handler: "NetworkOnly",
           },
           {
-            urlPattern: /^\/api\//,
+            urlPattern: ({ url, sameOrigin }) =>
+              sameOrigin && url.pathname.startsWith("/api/"),
             handler: "NetworkFirst",
             options: {
-              cacheName: "pantry-api",
+              cacheName: API_CACHE_NAME,
               networkTimeoutSeconds: 5,
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },

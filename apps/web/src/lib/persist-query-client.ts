@@ -3,6 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 import type { PersistQueryClientOptions } from "@tanstack/react-query-persist-client";
 import { del, get, set } from "idb-keyval";
 import { isRetriable } from "./trpc";
+import { PERSIST_KEY } from "./pwa";
 
 const WEEK_IN_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -33,7 +34,7 @@ const idbPersister = createAsyncStoragePersister({
     setItem: (key, value) => set(key, value),
     removeItem: (key) => del(key),
   },
-  key: "pantry-cache",
+  key: PERSIST_KEY,
   throttleTime: 1000,
 });
 

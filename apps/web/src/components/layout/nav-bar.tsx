@@ -21,6 +21,9 @@ import { signOut } from "@/lib/auth-client";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearLocalUserData } from "@/lib/local-data";
+import { forgetLastUser } from "@/lib/last-user";
 
 const navItems = ["/lists", "/shopping-lists", "/pantries"] as const;
 const quickActions = [
@@ -35,9 +38,12 @@ export default function NavBar() {
   const user = useRequireAuth();
   const initial = getInitial(user);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const logout = async () => {
     await signOut();
+    forgetLastUser();
+    await clearLocalUserData(queryClient);
     await navigate("/login", { replace: true });
   };
 
