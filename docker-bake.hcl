@@ -13,6 +13,7 @@ group "default" {
 target "_common" {
   context    = "."
   dockerfile = "Dockerfile"
+  platforms = ["linux/amd64"]
 }
 
 target "api" {
