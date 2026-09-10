@@ -57,6 +57,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
   CMD ["node","-e","const p=process.env.PORT||3000;fetch('http://127.0.0.1:'+p+'/api/health').then(r=>r.ok?r.json():Promise.reject(new Error(r.status))).then(j=>process.exit(j.status==='ok'?0:1)).catch(()=>process.exit(1))"]
 LABEL org.opencontainers.image.title="pantry-api" \
+      org.opencontainers.image.description="pantry-api" \
       org.opencontainers.image.source="https://github.com/Taf86/pantry" \
       org.opencontainers.image.licenses="AGPL-3.0"
 CMD ["node", "dist/main.js"]
@@ -72,5 +73,6 @@ EXPOSE 80 443 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD ["wget","--quiet","--tries=1","--spider","http://127.0.0.1:8080/healthz"]
 LABEL org.opencontainers.image.title="pantry-web" \
+      org.opencontainers.image.description="pantry-web" \
       org.opencontainers.image.source="https://github.com/Taf86/pantry" \
       org.opencontainers.image.licenses="AGPL-3.0"

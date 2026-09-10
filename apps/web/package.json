@@ -11,8 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"test/**/*.{ts,tsx}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"test/**/*.{ts,tsx}\""
+    "format": "prettier --write --no-error-on-unmatched-pattern \"src/**/*.{ts,tsx,css}\" \"test/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check --no-error-on-unmatched-pattern \"src/**/*.{ts,tsx,css}\" \"test/**/*.{ts,tsx}\""
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

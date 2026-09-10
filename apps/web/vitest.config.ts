@@ -9,6 +9,7 @@ export default mergeConfig(
       globals: false,
       setupFiles: ["./test/setup.ts"],
       include: ["test/**/*.test.{ts,tsx}"],
+      passWithNoTests: true,
     },
   }),
 );

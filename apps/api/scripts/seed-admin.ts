@@ -2,7 +2,6 @@ import { parseArgs } from "node:util";
 import { eq } from "drizzle-orm";
 import { createUserInputSchema } from "@pantry/shared";
 import { createDatabase } from "../src/db/client.js";
-import { runMigrations } from "../src/db/migrate.js";
 import { users } from "../src/db/schema/users.js";
 import { loadConfig } from "../src/config/env.js";
 import {
@@ -39,7 +38,6 @@ const main = async (): Promise<void> => {
   const handle = createDatabase(config);
 
   try {
-    await runMigrations(handle.db);
     const deps = { db: handle.db };
 
     const [existing] = await handle.db
