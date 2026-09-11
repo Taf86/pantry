@@ -432,6 +432,48 @@ della sintassi `${VAR:?}`.
 
 ---
 
+## Operazioni correnti
+
+**Deploy.** Merge su `main`. Il workflow costruisce, pubblica su GHCR con tag uguale allo SHA del
+commit, e lancia il deploy via SSH. Nient'altro da fare.
+
+**Rollback.** Le immagini precedenti sono già su GHCR, quindi la via più rapida non passa dalla CI:
+
+```
+ssh -i ~/.ssh/pantry_ci deploy@<IP> <sha-precedente>
+```
+
+La chiave della CI è vincolata a `ci-deploy.sh`, che accetta solo uno SHA di 40 caratteri
+minuscoli, scrive `.env.tag` e lancia `deploy.sh`. Sono pochi secondi contro i minuti di una
+ricostruzione. Se quello SHA non è più su GHCR il pull fallisce e **non viene toccato nulla**.
+
+In alternativa, `workflow_dispatch` sul ref desiderato: ricostruisce da zero, più lento ma non
+richiede di ricordare lo SHA.
+
+> Il rollback riporta indietro il **codice, non lo schema del database**. È il motivo per cui le
+> migrazioni devono essere solo additive: mai `DROP COLUMN` in un rilascio da cui si deve poter
+> tornare indietro.
+
+**Log.**
+
+```
+ssh pantry "cd /opt/pantry && docker compose --env-file .env --env-file .env.tag logs -f --tail 100"
+```
+
+I due `--env-file` servono sempre: `TAG` vive solo in `.env.tag`, e senza il secondo file compose
+si ferma su `${TAG:?}`.
+
+**Cosa gira adesso.**
+
+```
+ssh pantry "docker ps --filter name=pantry --format '{{.Names}}\t{{.Image}}\t{{.Status}}'"
+```
+
+**Nuovo utente.** Dal backoffice `/admin/users`, che genera il link di invito. Lo script
+`seed:admin:remote` serve solo a creare il *primo* amministratore su un database vuoto.
+
+---
+
 ## Cosa resta
 
 Lo Step 4 sceglie l'hostname, fa il primo deploy e crea il primo utente amministratore.
