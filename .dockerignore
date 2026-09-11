@@ -38,6 +38,7 @@ docker-bake.hcl
 Thumbs.db
 
 docs
+ops
 *.md
 LICENSE
 
