@@ -1,0 +1,14 @@
+[Unit]
+Description=Pantry database encrypted backup
+Documentation=https://github.com/Taf86/pantry/blob/main/docs/backup.md
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/pantry
+ExecStart=/opt/pantry/backup.sh
+Nice=10
+TimeoutStartSec=30m

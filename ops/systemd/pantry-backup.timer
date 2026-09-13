@@ -1,0 +1,11 @@
+[Unit]
+Description=Pantry database nightly backup timer
+
+[Timer]
+OnCalendar=*-*-* 03:17:00
+RandomizedDelaySec=15m
+Persistent=true
+Unit=pantry-backup.service
+
+[Install]
+WantedBy=timers.target

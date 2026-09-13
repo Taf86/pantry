@@ -472,9 +472,19 @@ ssh pantry "docker ps --filter name=pantry --format '{{.Names}}\t{{.Image}}\t{{.
 **Nuovo utente.** Dal backoffice `/admin/users`, che genera il link di invito. Lo script
 `seed:admin:remote` serve solo a creare il *primo* amministratore su un database vuoto.
 
+**Backup.** Automatico, ogni notte alle 03:17, via `pantry-backup.timer`. Non c'è niente da fare a
+mano — tranne la prova di ripristino, che è trimestrale e va eseguita davvero. Procedura,
+configurazione e ripristino d'emergenza in [backup.md](backup.md).
+
+```
+ssh pantry "systemctl list-timers pantry-backup.timer && journalctl -u pantry-backup.service -n 20 --no-pager"
+```
+
 ---
 
 ## Cosa resta
 
 Lo Step 4 sceglie l'hostname, fa il primo deploy e crea il primo utente amministratore.
 Lo Step 5 sostituisce il deploy manuale con GitHub Actions.
+Lo Step 6 è l'operatività: il backup è in [backup.md](backup.md), restano il monitoraggio esterno
+su `/api/health` con l'alert sullo spazio disco, e `gitleaks` come hook di pre-commit.
