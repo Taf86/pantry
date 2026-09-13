@@ -31,6 +31,7 @@ set -a; source "$CONF"; set +a
 : "${RCLONE_REMOTE:?manca in backup.env}"
 LOCAL_KEEP_DAYS="${LOCAL_KEEP_DAYS:-7}"
 REMOTE_KEEP_DAYS="${REMOTE_KEEP_DAYS:-30}"
+KEEP_MIN="${KEEP_MIN:-3}"
 HEALTHCHECK_URL="${HEALTHCHECK_URL:-}"
 
 hc() {
@@ -107,10 +108,25 @@ rclone check "$LOCAL_DIR" "$RCLONE_REMOTE" \
   --include "$dump_name" --include "$manifest_name" --one-way \
   || die "uploaded object don't match local"
 
-log "retention: local ${LOCAL_KEEP_DAYS}g, remote ${REMOTE_KEEP_DAYS}g"
-find "$LOCAL_DIR" -maxdepth 1 -name 'pantry-*.age' -mtime "+${LOCAL_KEEP_DAYS}" -delete
+log "retention: local ${LOCAL_KEEP_DAYS}d, remote ${REMOTE_KEEP_DAYS}d, floor ${KEEP_MIN}"
 
-rclone delete "$RCLONE_REMOTE" --min-age "${REMOTE_KEEP_DAYS}d" --include 'pantry-*.age'
+# Never let retention take the count below KEEP_MIN, whatever the dates say.
+count_local() { find "$LOCAL_DIR" -maxdepth 1 -name 'pantry-*.dump.age' "$@" | wc -l; }
+count_remote() { rclone lsf "$RCLONE_REMOTE" --include 'pantry-*.dump.age' "$@" | wc -l; }
+
+local_left=$(( $(count_local) - $(count_local -mtime "+${LOCAL_KEEP_DAYS}") ))
+if (( local_left >= KEEP_MIN )); then
+  find "$LOCAL_DIR" -maxdepth 1 -name 'pantry-*.age' -mtime "+${LOCAL_KEEP_DAYS}" -delete
+else
+  log "WARN: local retention skipped, would leave only ${local_left} dumps"
+fi
+
+remote_left=$(( $(count_remote) - $(count_remote --min-age "${REMOTE_KEEP_DAYS}d") ))
+if (( remote_left >= KEEP_MIN )); then
+  rclone delete "$RCLONE_REMOTE" --min-age "${REMOTE_KEEP_DAYS}d" --include 'pantry-*.age'
+else
+  log "WARN: remote retention skipped, would leave only ${remote_left} dumps"
+fi
 
 kept=$(rclone lsf "$RCLONE_REMOTE" --include 'pantry-*.dump.age' | wc -l)
 log "OK: $dump_name (${dump_bytes} byte), ${kept} dump off-site"

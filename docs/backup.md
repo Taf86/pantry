@@ -96,8 +96,16 @@ Su [backblaze.com](https://www.backblaze.com/cloud-storage): crea un account, po
 |---|---|
 | Bucket Unique Name | `pantry-backups-<qualcosa-di-tuo>` (il nome è globale) |
 | Files in Bucket are | **Private** |
-| Default Encryption | Disable — cifriamo già noi, e con una chiave che Backblaze non ha |
+| Default Encryption | indifferente (vedi sotto) |
 | Object Lock | Disable |
+
+Sulla **Default Encryption** (SSE-B2): è gratuita, ma qui non aggiunge niente. Quello che arriva
+nel bucket è già un blob `age`, e SSE-B2 usa chiavi che gestisce Backblaze, quindi non protegge
+dal rischio realistico — la chiave applicativa che sfugge dalla VPS. Resta una rete di sicurezza a
+costo zero contro un errore futuro, il giorno in cui qualcuno caricasse lì un dump non cifrato. Se
+la abiliti, fallo **adesso**: vale solo per gli upload successivi, i file già presenti non vengono
+ricifrati. Evita invece SSE-C, con chiave fornita da te: sarebbe una seconda chiave da custodire e
+da non perdere per proteggere dati già cifrati con la prima.
 
 I primi 10 GB sono gratuiti e non scadono. Qui i dump sono da qualche decina di KB: non li vedrai
 mai, quei 10 GB.
@@ -117,6 +125,23 @@ VPS *nasconde* i file più vecchi di 30 giorni, non li cancella — **e questo �
 credenziali che stanno sulla VPS non possono distruggere lo storico: nello scenario peggiore, la
 macchina compromessa che "cancella i backup", i file restano recuperabili per un altro mese con
 `rclone --b2-versions`.
+
+> **`Days Till Hide` deve restare vuoto.** È il campo che, se compilato, svuota il bucket: a
+> differenza di `Days Till Delete`, agisce *«on all of the copies of the file, even the most
+> current version»*. Con `30` lì dentro, un backup verrebbe nascosto al compimento dei 30 giorni e
+> cancellato 30 giorni dopo — anche se nel frattempo fosse rimasto l'unico. Lasciandolo vuoto, B2
+> non nasconde mai niente di sua iniziativa e cancella solo ciò che abbiamo nascosto noi.
+
+**Perché non esiste una regola «cancella dopo 30 giorni tranne il più recente».** Le lifecycle rule
+di B2 ragionano per *nome di file*: garantiscono che «the most current version of a file is always
+kept unless it is explicitly deleted», ma qui ogni backup ha un nome suo, quindi ogni file è già la
+versione corrente di sé stesso e quella garanzia non dice niente sul bucket nel suo insieme.
+
+La stessa proprietà si ottiene dal lato dello script, che è anche l'unico a nascondere qualcosa:
+`backup.sh` esegue la retention **solo dopo** che il dump nuovo è stato caricato e verificato, e
+comunque non scende mai sotto `KEEP_MIN` dump (3 di default), qualunque cosa dicano le date. Se il
+timer si rompe, lo script non parte e quindi non nasconde niente: il bucket si congela invece di
+svuotarsi.
 
 ### B.2 La chiave applicativa
 
@@ -183,6 +208,7 @@ AGE_RECIPIENT=age1...
 RCLONE_REMOTE=offsite:pantry-backups-<il tuo>/db
 LOCAL_KEEP_DAYS=7
 REMOTE_KEEP_DAYS=30
+KEEP_MIN=3
 HEALTHCHECK_URL=
 EOF
 
