@@ -2,6 +2,7 @@
   "name": "pantry",
   "private": true,
   "scripts": {
+    "prepare": "node scripts/setup-hooks.mjs",
     "dev": "turbo run dev",
     "build": "turbo run build",
     "check-types": "turbo run check-types",

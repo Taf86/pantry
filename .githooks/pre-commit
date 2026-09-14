@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -eu
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  cat >&2 <<'EOF'
+
+gitleaks is not installed, and this hook will not let the commit through
+without it: a check that silently skips itself is worse than no check at all,
+because it buys the same peace of mind for nothing.
+
+  Windows   winget install Gitleaks.Gitleaks
+  macOS     brew install gitleaks
+  Linux     https://github.com/gitleaks/gitleaks/releases
+
+If you really must commit right now:  git commit --no-verify
+
+EOF
+  exit 1
+fi
+
+gitleaks git --staged --verbose --redact --no-banner
