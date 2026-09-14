@@ -27,7 +27,7 @@ export const registerHealthRoute = (
       ]);
       return true;
     } catch (error) {
-      services.logger.error({ error }, "health: database non raggiungibile");
+      services.logger.error({ error }, "health: database unreachable");
       return false;
     } finally {
       clearTimeout(timer);

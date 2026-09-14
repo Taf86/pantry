@@ -1,45 +1,45 @@
-/** Costanti di dominio condivise fra client e server. */
+/** Domain constants shared between client and server. */
 
-/** Validità di un token di invito. */
+/** Lifetime of an invite token. */
 export const INVITE_TTL_DAYS = 7;
 
-/** Ritenzione delle righe di deduplicazione delle mutazioni. */
+/** Retention of the mutation deduplication rows. */
 export const APPLIED_MUTATION_TTL_DAYS = 30;
 
-/** Ritenzione delle richieste di registrazione già evase. */
+/** Retention of signup requests that have already been decided. */
 export const SIGNUP_REQUEST_TTL_DAYS = 30;
 
 /**
- * Tetto alle richieste di registrazione aperte.
+ * Cap on the number of open signup requests.
  *
- * È l'unica scrittura pubblica non autenticata dell'applicazione: oltre questa
- * soglia smette di accettarne, così un flusso automatico non può riempire la
- * tabella né sommergere la coda del backoffice.
+ * This is the application's only unauthenticated public write: past this
+ * threshold it stops accepting them, so an automated flow cannot fill up the
+ * table nor swamp the backoffice queue.
  */
 export const MAX_OPEN_SIGNUP_REQUESTS = 50;
 
-/** Finestra di default per "in scadenza". */
+/** Default window for "expiring soon". */
 export const DEFAULT_EXPIRING_WITHIN_DAYS = 7;
 
-/** Massimo numero di giorni interrogabile da `pantry.expiring`. */
+/** Maximum number of days that `pantry.expiring` can be queried for. */
 export const MAX_EXPIRING_WITHIN_DAYS = 365;
 
-/** Profondità massima dell'albero di una dispensa. */
+/** Maximum depth of a pantry tree. */
 export const MAX_PANTRY_DEPTH = 12;
 
-/** Dimensione massima di un batch di spunte inviato dalla coda offline. */
+/** Maximum size of a batch of checks sent by the offline queue. */
 export const MAX_CHECK_BATCH = 200;
 
-/** Vincoli di lunghezza applicati sia in input che dalla UI. */
+/** Length limits enforced both on input and by the UI. */
 export const MAX_NAME_LENGTH = 120;
 export const MAX_UNIT_LENGTH = 20;
 export const MAX_NOTE_LENGTH = 500;
 export const MAX_QUANTITY = 1_000_000;
 export const MAX_CONTACT_LENGTH = 200;
 
-/** Lunghezza minima della password scelta in fase di attivazione. */
+/** Minimum length of the password chosen during activation. */
 export const MIN_PASSWORD_LENGTH = 10;
 
-/** Prefisso delle room Socket.IO. */
+/** Prefix of the Socket.IO rooms. */
 export const listRoom = (listId: string): string => `list:${listId}`;
 export const pantryRoom = (pantryId: string): string => `pantry:${pantryId}`;

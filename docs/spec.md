@@ -639,7 +639,7 @@ services:
     environment:
       POSTGRES_USER: pantry
       POSTGRES_DB: pantry
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?manca in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -660,7 +660,7 @@ services:
     restart: unless-stopped
     ports: ["80:80", "443:443"]
     environment:
-      DOMAIN: ${DOMAIN:?manca in .env}
+      DOMAIN: ${DOMAIN:?missing in .env}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./dist:/srv

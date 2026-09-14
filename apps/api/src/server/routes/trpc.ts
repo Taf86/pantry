@@ -18,7 +18,7 @@ export const registerTRPCRoutes = async (
       createContext: createContextFactory(services),
       onError({ error, path }) {
         if (error.code === "INTERNAL_SERVER_ERROR") {
-          services.logger.error({ error, path }, "errore tRPC non gestito");
+          services.logger.error({ error, path }, "unhandled tRPC error");
         }
       },
     } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],

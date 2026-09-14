@@ -1,11 +1,11 @@
-# .env.example: riga di esempio commentata, "segreto-solo-per-lo-sviluppo-…"
+# .env.example: commented-out sample line, "segreto-solo-per-lo-sviluppo-…"
 d690da4bbb8eaca5b54ee254cd7cce8c146c1a71:.env.example:generic-api-key:31
 
-# ci.yml (file poi rimosso): variabili del servizio Postgres della CI,
+# ci.yml (file later removed): Postgres service variables for CI,
 # "segreto-solo-per-la-ci-…"
 b64c93227da06d177c00ab3025929b3a3e0f6129:.github/workflows/ci.yml:generic-api-key:40
 
-# fixture di un test poi rimosso: "0123456789abcdef0123"
-# Il commit non è più raggiungibile da develop, ma lo è ancora da origin/dev:
-# finché quel ramo esiste, questa riga serve.
+# fixture of a test later removed: "0123456789abcdef0123"
+# The commit is no longer reachable from develop, but it still is from
+# origin/dev: as long as that branch exists, this line is needed.
 b64c93227da06d177c00ab3025929b3a3e0f6129:apps/api/test/env.test.ts:generic-api-key:8

@@ -37,8 +37,8 @@ if [[ -r $CONF ]]; then
   set -a; source "$CONF"; set +a
 fi
 
-: "${RCLONE_REMOTE:?missing in enviroment and in $CONF}"
-: "${AGE_IDENTITY:?missing in enviroment and in $CONF}"
+: "${RCLONE_REMOTE:?missing in environment and in $CONF}"
+: "${AGE_IDENTITY:?missing in environment and in $CONF}"
 [[ -r $AGE_IDENTITY ]] || die "invalid private key: $AGE_IDENTITY"
 
 for cmd in docker rclone age; do
@@ -83,7 +83,7 @@ manifest_get() { grep -m1 "^$1=" "$work/manifest" | cut -d= -f2- || true; }
 
 want_sha=$(manifest_get dump_sha256)
 have_sha=$(sha256sum "$work/$dump_name" | cut -d' ' -f1)
-[[ $want_sha == "$have_sha" ]] || die "sha256 different from manifest's one: corrupted object"
+[[ $want_sha == "$have_sha" ]] || die "sha256 does not match the manifest: corrupted object"
 log "sha256 verified: ${have_sha:0:16}…"
 
 db_name=$(manifest_get db_name)
@@ -120,7 +120,7 @@ if ! docker exec "$CONTAINER" sh -c \
        "pg_restore -U '$db_user' -d '$db_name' --no-owner --exit-on-error /tmp/pantry.dump"; then
   die "pg_restore failed: this backup is not restorable"
 fi
-log "pg_restore successfull"
+log "pg_restore succeeded"
 
 declare -A expected restored
 while IFS='=' read -r k v; do
@@ -131,13 +131,13 @@ while IFS='=' read -r k v; do
   if [[ $k == count.* ]]; then restored[${k#count.}]=$v; fi
 done < <(docker exec -i "$CONTAINER" psql -U "$db_user" -d "$db_name" -Atq -f - <<< "$COUNT_SQL")
 
-printf '\n  %-34s %10s %12s   %s\n' table "with dump" restored outcome
+printf '\n  %-34s %10s %12s   %s\n' table expected restored outcome
 printf '  %s\n' "$(printf '%.0s-' {1..74})"
 
 failures=0
 for t in $(printf '%s\n' "${!expected[@]}" "${!restored[@]}" | sort -u); do
-  want=${expected[$t]:-assente}
-  have=${restored[$t]:-assente}
+  want=${expected[$t]:-missing}
+  have=${restored[$t]:-missing}
   if [[ $want == "$have" ]]; then
     verdict=ok
   else
@@ -148,14 +148,14 @@ for t in $(printf '%s\n' "${!expected[@]}" "${!restored[@]}" | sort -u); do
 done
 echo
 
-(( ${#expected[@]} > 0 )) || die "manifest don't have any count"
+(( ${#expected[@]} > 0 )) || die "manifest has no counts"
 [[ ${restored[public.users]:-0} -ge 1 ]] || die "no users restored: empty dump"
 [[ ${restored[drizzle.__drizzle_migrations]:-0} -ge 1 ]] \
   || die "migration table missing: not the same schema"
 
 if (( failures > 0 )); then
-  die "$failures tables don't match"
+  die "$failures tables do not match"
 fi
 
-log "DRILL SUCCESSFULL: backup $stamp restorable, ${#restored[@]} tables, same counts."
-log "Write down date in docs/backup.md, at «Registro delle prove»"
+log "DRILL SUCCEEDED: backup $stamp restorable, ${#restored[@]} tables, same counts."
+log "Write down the date in docs/backup.md, under «Registro delle prove»"

@@ -26,7 +26,7 @@ const main = async (): Promise<void> => {
 
   if (!parsed.success) {
     process.stderr.write(
-      "Usage: seed:admin --email <email> --name <nome>\n" +
+      "Usage: seed:admin --email <email> --name <name>\n" +
         parsed.error.issues.map((issue) => `  ${issue.message}`).join("\n") +
         "\n",
     );

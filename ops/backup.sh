@@ -27,8 +27,8 @@ die() { log "ERROR: $*"; exit 1; }
 # shellcheck source=/dev/null
 set -a; source "$CONF"; set +a
 
-: "${AGE_RECIPIENT:?manca in backup.env}"
-: "${RCLONE_REMOTE:?manca in backup.env}"
+: "${AGE_RECIPIENT:?missing in backup.env}"
+: "${RCLONE_REMOTE:?missing in backup.env}"
 LOCAL_KEEP_DAYS="${LOCAL_KEEP_DAYS:-7}"
 REMOTE_KEEP_DAYS="${REMOTE_KEEP_DAYS:-30}"
 KEEP_MIN="${KEEP_MIN:-3}"
@@ -77,7 +77,7 @@ for (( i = 0; i < DB_WAIT_SECS; i++ )); do
 done
 db_ready || die "$CONTAINER not accepting connections after ${DB_WAIT_SECS}s"
 
-log "dump di $CONTAINER -> $dump_name"
+log "dump of $CONTAINER -> $dump_name"
 in_db 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' | age -r "$AGE_RECIPIENT" -o "$dump_part"
 
 dump_bytes=$(stat -c%s "$dump_part")
@@ -91,7 +91,7 @@ log "manifest: counting rows"
 db_name=$(in_db 'printf %s "$POSTGRES_DB"')
 db_user=$(in_db 'printf %s "$POSTGRES_USER"')
 server_version=$(in_db 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atqc "show server_version"')
-[[ -n $db_name && -n $db_user && -n $server_version ]] || die "empty database querying"
+[[ -n $db_name && -n $db_user && -n $server_version ]] || die "empty result while querying the database"
 
 {
   printf 'stamp=%s\n' "$stamp"
@@ -112,7 +112,7 @@ rclone copy "$LOCAL_DIR" "$RCLONE_REMOTE" \
 
 rclone check "$LOCAL_DIR" "$RCLONE_REMOTE" \
   --include "$dump_name" --include "$manifest_name" --one-way \
-  || die "uploaded object don't match local"
+  || die "uploaded objects do not match the local ones"
 
 log "retention: local ${LOCAL_KEEP_DAYS}d, remote ${REMOTE_KEEP_DAYS}d, floor ${KEEP_MIN}"
 
@@ -140,5 +140,5 @@ else
 fi
 
 kept=$(rclone lsf "$RCLONE_REMOTE" --include 'pantry-*.dump.age' | wc -l)
-log "OK: $dump_name (${dump_bytes} byte), ${kept} dump off-site"
+log "OK: $dump_name (${dump_bytes} bytes), ${kept} dumps off-site"
 hc
