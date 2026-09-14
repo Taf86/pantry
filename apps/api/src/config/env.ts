@@ -1,5 +1,6 @@
 import z from "zod";
 import { buildDbUrl, rawDbEnvSchema } from "./db.js";
+import { parseEnvOrThrow } from "./parse-env.js";
 
 const envSchema = rawDbEnvSchema.safeExtend({
   NODE_ENV: z
@@ -32,16 +33,7 @@ export interface AppConfig extends RawEnv {
 export const loadConfig = (
   source: NodeJS.ProcessEnv = process.env,
 ): AppConfig => {
-  const parsed = envSchema.safeParse(source);
-
-  if (!parsed.success) {
-    const details = parsed.error.issues
-      .map((issue) => `  ${issue.path.join(".") || "(root)"}: ${issue.message}`)
-      .join("\n");
-    throw new Error(`Configurazione non valida:\n${details}`);
-  }
-
-  const env = parsed.data;
+  const env = parseEnvOrThrow(envSchema, source);
   const isProduction = env.NODE_ENV === "production";
   const scheme = isProduction ? "https" : "http";
   const appUrl = `${scheme}://${env.DOMAIN}`;

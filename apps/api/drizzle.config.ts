@@ -1,15 +1,8 @@
 import { defineConfig } from "drizzle-kit";
 import { buildDbUrl, rawDbEnvSchema } from "./src/config/db.js";
+import { parseEnvOrThrow } from "./src/config/parse-env.js";
 
-const parsed = rawDbEnvSchema.safeParse(process.env);
-if (!parsed.success) {
-  const details = parsed.error.issues
-    .map((issue) => `  ${issue.path.join(".") || "(root)"}: ${issue.message}`)
-    .join("\n");
-  throw new Error(`Configurazione non valida:\n${details}`);
-}
-
-const url = buildDbUrl(parsed.data);
+const url = buildDbUrl(parseEnvOrThrow(rawDbEnvSchema, process.env));
 export default defineConfig({
   schema: "./src/db/schema/index.ts",
   out: "./drizzle",

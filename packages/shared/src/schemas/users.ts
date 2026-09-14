@@ -7,6 +7,7 @@ export const UserRole = {
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 export const UserRoles = [UserRole.user, UserRole.admin] as const;
+export const userRoleSchema = z.enum(UserRole);
 
 export const UserStatus = {
   unactivated: "unactivated",
@@ -19,6 +20,7 @@ export const UserStatuses = [
   UserStatus.active,
   UserStatus.suspended,
 ] as const;
+export const userStatusSchema = z.enum(UserStatus);
 
 export type UserRef = {
   id: string;
@@ -38,7 +40,7 @@ export type UserExtended = User & {
 export const createUserInputSchema = z.object({
   email: emailSchema,
   displayName: nameSchema,
-  role: z.enum(UserRole).default("user"),
+  role: userRoleSchema.default("user"),
 });
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
 
@@ -50,7 +52,7 @@ export type SetUserStatusInput = z.infer<typeof setUserStatusInputSchema>;
 
 export const setUserRoleInputSchema = z.object({
   userId: z.uuid(),
-  role: z.enum(UserRole),
+  role: userRoleSchema,
 });
 export type SetUserRoleInput = z.infer<typeof setUserRoleInputSchema>;
 
@@ -58,6 +60,3 @@ export const userIdInputSchema = z.object({
   userId: z.uuid(),
 });
 export type UserIdInput = z.infer<typeof userIdInputSchema>;
-
-export const userStatusSchema = z.enum(UserStatus);
-export const userRoleSchema = z.enum(UserRole);
