@@ -15,6 +15,7 @@ WORKDIR /app
 
 FROM base AS manifests
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+COPY scripts/setup-hooks.mjs      scripts/setup-hooks.mjs
 COPY apps/api/package.json        apps/api/package.json
 COPY apps/web/package.json        apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
