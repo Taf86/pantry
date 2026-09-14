@@ -5,7 +5,7 @@ import { createDatabase } from "./db/client.js";
 import { runMigrations } from "./db/migrate.js";
 import { startCleanupJob } from "./jobs/cleanup.js";
 import { createLogger } from "./logger.js";
-import { buildServer } from "./server.js";
+import { buildServer } from "./server/server.js";
 
 const SHUTDOWN_TIMEOUT_MS = 8_000;
 

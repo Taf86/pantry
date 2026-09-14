@@ -48,7 +48,7 @@ COPY --from=builder-api /prod/api /app
 RUN node --input-type=module -e "\
 import { existsSync, readdirSync } from 'node:fs'; \
 const { MIGRATIONS_FOLDER } = await import('./dist/db/migrate.js'); \
-await import('./dist/server.js'); \
+await import('./dist/server/server.js'); \
 await import('./dist/auth.js'); \
 if (!existsSync(MIGRATIONS_FOLDER)) throw new Error('Missing migration folder: ' + MIGRATIONS_FOLDER); \
 console.log('smoke ok — ' + readdirSync(MIGRATIONS_FOLDER).length + ' migrations in ' + MIGRATIONS_FOLDER);"
