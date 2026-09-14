@@ -94,7 +94,7 @@ Su [backblaze.com](https://www.backblaze.com/cloud-storage): crea un account, po
 
 | campo | valore |
 |---|---|
-| Bucket Unique Name | `pantry-backups-<qualcosa-di-tuo>` (il nome è globale) |
+| Bucket Unique Name | `pantry-backups` (il nome è globale, potrebbe servire un suffisso) |
 | Files in Bucket are | **Private** |
 | Default Encryption | indifferente (vedi sotto) |
 | Object Lock | Disable |
@@ -112,13 +112,16 @@ mai, quei 10 GB.
 
 ### B.1 La lifecycle rule
 
-Sul bucket appena creato: **Lifecycle Settings → Use custom lifecycle rules**.
+Sul bucket appena creato, **Lifecycle Settings**: scegli **«Conserva le versioni precedenti per
+questo numero di giorni»** e scrivi `30`.
 
-| campo | valore |
-|---|---|
-| File Path | (vuoto: tutto il bucket) |
-| Days Till Hide | (vuoto) |
-| Days Till Delete | `30` |
+Non serve *«Usa regole personalizzate»*: quel preset corrisponde esattamente a
+`daysFromHidingToDeleting = 30` con `daysFromUploadingToHiding` non impostato, che è la regola che
+vogliamo. Anzi, è la variante più sicura, perché la casella pericolosa (`Days Till Hide`, vedi
+sotto) con il preset non esiste proprio e non può essere riempita per sbaglio.
+
+Non scegliere *«Conserva solo l'ultima versione»*: è lo stesso meccanismo con 1 giorno invece di
+30, e lascerebbe una finestra di recupero di 24 ore invece di un mese.
 
 Significa: quando un file viene nascosto, B2 lo cancella davvero 30 giorni dopo. Lo script sulla
 VPS *nasconde* i file più vecchi di 30 giorni, non li cancella — **e questo è voluto**. Le
@@ -126,7 +129,8 @@ credenziali che stanno sulla VPS non possono distruggere lo storico: nello scena
 macchina compromessa che "cancella i backup", i file restano recuperabili per un altro mese con
 `rclone --b2-versions`.
 
-> **`Days Till Hide` deve restare vuoto.** È il campo che, se compilato, svuota il bucket: a
+> **Se un giorno passi alle regole personalizzate, `Days Till Hide` deve restare vuoto.** È il
+> campo che, se compilato, svuota il bucket: a
 > differenza di `Days Till Delete`, agisce *«on all of the copies of the file, even the most
 > current version»*. Con `30` lì dentro, un backup verrebbe nascosto al compimento dei 30 giorni e
 > cancellato 30 giorni dopo — anche se nel frattempo fosse rimasto l'unico. Lasciandolo vuoto, B2
@@ -145,19 +149,34 @@ svuotarsi.
 
 ### B.2 La chiave applicativa
 
-**Application Keys → Add a New Application Key**:
+Una *application key* è la coppia di credenziali con cui un programma si autentica su B2, distinta
+dall'email e password con cui entri tu nel pannello: un **keyID**, corto, che fa da nome utente, e
+un **applicationKey**, che è il segreto. Sono i due valori che rclone chiederà alla Fase C.2, e
+servono perché la VPS deve poter scrivere nel bucket alle tre di notte senza un essere umano che
+digita una password.
+
+Nel menu a sinistra, sotto Buckets, c'è **Application Keys**. Lì dentro esiste già una **Master
+Application Key**: quella **non va usata**. Ha accesso completo all'account, a tutti i bucket
+presenti e futuri, e non è limitabile — metterla su un server significa che chi prende il server
+prende tutto Backblaze.
+
+**Add a New Application Key**:
 
 | campo | valore |
 |---|---|
 | Name of Key | `pantry-vps` |
-| Allow access to Bucket | **solo il bucket appena creato** |
+| Allow access to Bucket | `pantry-backups` — **non** "All" |
 | Type of Access | Read and Write |
+| il resto | lascialo com'è |
 
-`keyID` e `applicationKey` compaiono **una volta sola**. Mettili subito nel password manager: se li
-perdi si rigenera la chiave, non è un dramma, ma è tempo buttato.
+`keyID` e `applicationKey` compaiono **una volta sola**, in una schermata che non si riapre. Mettili
+subito nel password manager, entrambi: se li perdi si cancella la chiave e se ne fa un'altra, non è
+un dramma, ma è tempo buttato.
 
 Limitare la chiave a un bucket solo conta: è la differenza fra "la VPS può scrivere qui" e "la VPS
-ha in mano tutto il tuo account Backblaze".
+ha in mano tutto il tuo account Backblaze". E il nome `pantry-vps` non è decorativo: il giorno in
+cui vorrai revocare l'accesso a quella macchina, è quello che ti dice quale chiave cancellare senza
+romperne altre.
 
 ---
 
@@ -183,11 +202,15 @@ chmod 600 ~/.config/rclone/rclone.conf
 Il backend nativo `b2` invece di `s3`: una riga di configurazione invece di endpoint e regione, e
 supporta il versioning che serve alla lifecycle rule della Fase B.1.
 
-Verifica che veda il bucket, e che non veda nient'altro:
+Verifica che il bucket risponda (vuoto: non stampa niente, ma non deve dare errore):
 
 ```bash
-rclone lsd offsite:
+rclone lsf offsite:pantry-backups/
 ```
+
+Indirizzare il bucket per nome invece di `rclone lsd offsite:`: con una chiave ristretta a un solo
+bucket l'elenco di *tutti* i bucket è una richiesta che l'account non ha il permesso di fare, e un
+errore lì direbbe soltanto che la restrizione funziona.
 
 ### C.3 Gli script **[locale]**
 
@@ -205,7 +228,7 @@ contenuto del file `.key`.
 ```bash
 cat > /opt/pantry/backup.env <<'EOF'
 AGE_RECIPIENT=age1...
-RCLONE_REMOTE=offsite:pantry-backups-<il tuo>/db
+RCLONE_REMOTE=offsite:pantry-backups/db
 LOCAL_KEEP_DAYS=7
 REMOTE_KEEP_DAYS=30
 KEEP_MIN=3
@@ -256,7 +279,7 @@ Il log deve finire con `OK: pantry-<data>.dump.age (<n> byte), 1 dump off-site`.
 
 ```bash
 ls -l /opt/pantry/backups/
-rclone lsl offsite:pantry-backups-<il tuo>/db
+rclone lsl offsite:pantry-backups/db
 ```
 
 Due file per ogni backup — il dump e il manifest — locali e remoti, stesse dimensioni.
@@ -287,7 +310,7 @@ rclone config create offsite b2 account "<keyID>" key "<applicationKey>"
 
 mkdir -p ~/.config/pantry
 cat > ~/.config/pantry/restore-drill.env <<EOF
-RCLONE_REMOTE=offsite:pantry-backups-<il tuo>/db
+RCLONE_REMOTE=offsite:pantry-backups/db
 AGE_IDENTITY=$HOME/.secrets/pantry-backup.key
 EOF
 ```
@@ -390,6 +413,6 @@ deployato — in quel caso fai anche un rollback del `TAG` allo SHA di allora, c
 Entro 30 giorni dalla sparizione è ancora lì, come versione nascosta:
 
 ```bash
-rclone lsl offsite:pantry-backups-<il tuo>/db --b2-versions
-rclone copy offsite:pantry-backups-<il tuo>/db . --b2-versions --include "pantry-<data>*"
+rclone lsl offsite:pantry-backups/db --b2-versions
+rclone copy offsite:pantry-backups/db . --b2-versions --include "pantry-<data>*"
 ```
