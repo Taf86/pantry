@@ -486,5 +486,5 @@ ssh pantry "systemctl list-timers pantry-backup.timer && journalctl -u pantry-ba
 
 Lo Step 4 sceglie l'hostname, fa il primo deploy e crea il primo utente amministratore.
 Lo Step 5 sostituisce il deploy manuale con GitHub Actions.
-Lo Step 6 è l'operatività: il backup è in [backup.md](backup.md), restano il monitoraggio esterno
-su `/api/health` con l'alert sullo spazio disco, e `gitleaks` come hook di pre-commit.
+Lo Step 6 è l'operatività: il backup è in [backup.md](backup.md), il monitoraggio in
+[monitoring.md](monitoring.md). Resta `gitleaks` come hook di pre-commit.

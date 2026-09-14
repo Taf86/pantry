@@ -1,0 +1,11 @@
+[Unit]
+Description=Pantry hourly disk space check timer
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+Unit=pantry-diskspace.service
+
+[Install]
+WantedBy=timers.target
