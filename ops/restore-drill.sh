@@ -45,6 +45,8 @@ for cmd in docker rclone age; do
   command -v "$cmd" >/dev/null || die "missing $cmd"
 done
 
+docker info >/dev/null 2>&1 || die "docker daemon not reachable: is Docker Desktop running?"
+
 work=$(mktemp -d)
 cleanup() {
   local rc=$?

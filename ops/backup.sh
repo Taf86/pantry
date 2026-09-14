@@ -32,6 +32,7 @@ set -a; source "$CONF"; set +a
 LOCAL_KEEP_DAYS="${LOCAL_KEEP_DAYS:-7}"
 REMOTE_KEEP_DAYS="${REMOTE_KEEP_DAYS:-30}"
 KEEP_MIN="${KEEP_MIN:-3}"
+DB_WAIT_SECS="${DB_WAIT_SECS:-300}"
 HEALTHCHECK_URL="${HEALTHCHECK_URL:-}"
 
 hc() {
@@ -66,10 +67,15 @@ dump_part="${dump_path}.part"
 manifest_part="${manifest_path}.part"
 scratch+=("$dump_part" "$manifest_part")
 
-docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null | grep -qx true \
-  || die "container $CONTAINER is not running"
-
 in_db() { docker exec -i "$CONTAINER" sh -c "$1"; }
+
+db_ready() { in_db 'pg_isready -q -U "$POSTGRES_USER" -d "$POSTGRES_DB"' >/dev/null 2>&1; }
+
+for (( i = 0; i < DB_WAIT_SECS; i++ )); do
+  if db_ready; then break; fi
+  sleep 1
+done
+db_ready || die "$CONTAINER not accepting connections after ${DB_WAIT_SECS}s"
 
 log "dump di $CONTAINER -> $dump_name"
 in_db 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' | age -r "$AGE_RECIPIENT" -o "$dump_part"
@@ -110,22 +116,27 @@ rclone check "$LOCAL_DIR" "$RCLONE_REMOTE" \
 
 log "retention: local ${LOCAL_KEEP_DAYS}d, remote ${REMOTE_KEEP_DAYS}d, floor ${KEEP_MIN}"
 
-# Never let retention take the count below KEEP_MIN, whatever the dates say.
 count_local() { find "$LOCAL_DIR" -maxdepth 1 -name 'pantry-*.dump.age' "$@" | wc -l; }
 count_remote() { rclone lsf "$RCLONE_REMOTE" --include 'pantry-*.dump.age' "$@" | wc -l; }
 
-local_left=$(( $(count_local) - $(count_local -mtime "+${LOCAL_KEEP_DAYS}") ))
-if (( local_left >= KEEP_MIN )); then
+local_stale=$(count_local -mtime "+${LOCAL_KEEP_DAYS}")
+local_left=$(( $(count_local) - local_stale ))
+if (( local_stale == 0 )); then
+  :
+elif (( local_left >= KEEP_MIN )); then
   find "$LOCAL_DIR" -maxdepth 1 -name 'pantry-*.age' -mtime "+${LOCAL_KEEP_DAYS}" -delete
 else
-  log "WARN: local retention skipped, would leave only ${local_left} dumps"
+  log "WARN: local retention skipped, ${local_stale} expired but only ${local_left} would remain"
 fi
 
-remote_left=$(( $(count_remote) - $(count_remote --min-age "${REMOTE_KEEP_DAYS}d") ))
-if (( remote_left >= KEEP_MIN )); then
+remote_stale=$(count_remote --min-age "${REMOTE_KEEP_DAYS}d")
+remote_left=$(( $(count_remote) - remote_stale ))
+if (( remote_stale == 0 )); then
+  :
+elif (( remote_left >= KEEP_MIN )); then
   rclone delete "$RCLONE_REMOTE" --min-age "${REMOTE_KEEP_DAYS}d" --include 'pantry-*.age'
 else
-  log "WARN: remote retention skipped, would leave only ${remote_left} dumps"
+  log "WARN: remote retention skipped, ${remote_stale} expired but only ${remote_left} would remain"
 fi
 
 kept=$(rclone lsf "$RCLONE_REMOTE" --include 'pantry-*.dump.age' | wc -l)

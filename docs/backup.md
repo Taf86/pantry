@@ -196,8 +196,11 @@ configurazione nella sua home.
 
 ```bash
 rclone config create offsite b2 account "<keyID>" key "<applicationKey>"
-chmod 600 ~/.config/rclone/rclone.conf
+chmod 600 "$(rclone config file | tail -1)"
 ```
+
+Il path si chiede a rclone invece di scriverlo a mano: quel file contiene l'`applicationKey` in
+chiaro ed è l'unico segreto dell'intera catena che vive sulla VPS.
 
 Il backend nativo `b2` invece di `s3`: una riga di configurazione invece di endpoint e regione, e
 supporta il versioning che serve alla lifecycle rule della Fase B.1.
@@ -220,22 +223,29 @@ ssh pantry "chmod 700 /opt/pantry/backup.sh"
 scp ops/systemd/pantry-backup.* pantry:/tmp/
 ```
 
-### C.4 La configurazione **[vps]**
+### C.4 La configurazione **[locale]**
 
-`AGE_RECIPIENT` è la chiave **pubblica** della Fase A — quella che inizia per `age1`, non il
-contenuto del file `.key`.
+`AGE_RECIPIENT` è la chiave **pubblica** della Fase A — la stringa che inizia per `age1`, non il
+contenuto del file `.key`. Si scrive dal laptop, pescandola dal file invece di ricopiarla a mano:
+è lunga, e una lettera sbagliata produce un backup che nessuno potrà mai rileggere.
+
+L'heredoc **non** è quotato, quindi la sostituzione avviene qui e sulla VPS arriva il valore:
 
 ```bash
-cat > /opt/pantry/backup.env <<'EOF'
-AGE_RECIPIENT=age1...
+ssh pantry "cat > /opt/pantry/backup.env && chmod 600 /opt/pantry/backup.env" <<EOF
+AGE_RECIPIENT=$(grep -o 'age1[a-z0-9]*' ~/.secrets/pantry-backup.key | head -1)
 RCLONE_REMOTE=offsite:pantry-backups/db
 LOCAL_KEEP_DAYS=7
 REMOTE_KEEP_DAYS=30
 KEEP_MIN=3
 HEALTHCHECK_URL=
 EOF
+```
 
-chmod 600 /opt/pantry/backup.env
+Poi controlla **[vps]** che la prima riga contenga una chiave vera e non una riga vuota:
+
+```bash
+cat /opt/pantry/backup.env
 ```
 
 Le due retention sono diverse di proposito: la copia locale di 7 giorni serve a rimettere in piedi
@@ -261,6 +271,34 @@ Un timer systemd invece di cron: i log finiscono nel journal insieme a tutto il 
 una mail che nessuno legge, `Persistent=true` recupera l'esecuzione se la VPS era spenta all'ora
 prevista, e `systemctl list-timers` risponde alla domanda "quando è partito l'ultimo?" senza
 interpretare una crontab.
+
+### C.6 Cosa succede a un riavvio
+
+Niente da rifare a mano, ma è utile sapere *perché*:
+
+| | |
+|---|---|
+| **Docker** | riparte da solo: il pacchetto `docker-ce` abilita `docker.service` all'installazione |
+| **i container** | ripartono per via di `restart: unless-stopped` nel compose — ma **non** quelli che avevi fermato tu a mano prima del riavvio: è la differenza con `always` |
+| **il timer** | resta abilitato, il collegamento in `timers.target` è su disco; e `Persistent=true` recupera il backup se la macchina era spenta alle 03:17 |
+
+Proprio quel recupero apre una corsa: systemd sa aspettare `docker.service`, ma "il demone è
+partito" non vuol dire "`pantry-db` accetta connessioni". Per questo `backup.sh` non controlla lo
+stato del container una volta sola: aspetta fino a `DB_WAIT_SECS` (300 di default) che Postgres
+risponda. Fallire un backup che sarebbe riuscito trenta secondi dopo significherebbe mandare un
+allarme falso, e gli allarmi falsi insegnano a ignorare quelli veri.
+
+L'unica prova vera resta riavviare davvero, in un momento tranquillo:
+
+```bash
+sudo reboot
+```
+
+e dopo un minuto, da locale:
+
+```bash
+ssh pantry "docker ps --filter name=pantry --format '{{.Names}}\t{{.Status}}' && systemctl is-enabled docker pantry-backup.timer && systemctl list-timers pantry-backup.timer --no-pager"
+```
 
 ### Verifica Fase C **[vps]**
 
@@ -348,11 +386,71 @@ funziona" da "il backup funzionava quando l'abbiamo scritto".
 
 | data | backup provato | esito | note |
 |---|---|---|---|
-| | | | |
+| 2026-09-14 | `20260914T074753Z` | superata | prima prova, sul primo backup prodotto. 6 tabelle, conteggi identici |
+
+Prossima prevista: **dicembre 2026**.
 
 ---
 
-## Quando serve davvero: ripristinare la produzione
+## Fase E — l'avviso quando il backup smette
+
+Tutto quello che precede protegge dalla perdita dei dati, non dal **silenzio**: se il timer
+smettesse di partire — unità disabilitata da un aggiornamento, container rinominato, chiave B2
+revocata — non se ne accorgerebbe nessuno fino alla prossima prova trimestrale. È il guasto per
+*assenza*, e per definizione non produce un log da leggere.
+
+Lo copre un dead man's switch: `backup.sh` chiama un URL esterno a ogni esecuzione, e se la
+chiamata non arriva è il servizio esterno ad avvisare. Il piano gratuito di
+[Healthchecks.io](https://healthchecks.io) copre 20 check; a noi ne serve uno.
+
+### E.1 Il check **[browser]**
+
+Crea un account, poi **Add Check**:
+
+| campo | valore |
+|---|---|
+| Name | `pantry-backup` |
+| Schedule | **Cron**: `17 3 * * *`, timezone `Europe/Rome` |
+| Grace Time | `1 hour` |
+
+La grace time non è generosità: il timer ha `RandomizedDelaySec=15m`, quindi l'esecuzione può
+iniziare fino alle 03:32, e `Persistent=true` può farla partire ancora più tardi dopo un riavvio.
+Un'ora copre entrambi senza produrre falsi allarmi.
+
+Copia il **ping URL** (`https://hc-ping.com/<uuid>`).
+
+> È un segreto debole: chi lo conosce può solo *fingere* che il backup sia andato bene, non leggere
+> niente. Sta in `/opt/pantry/backup.env`, che è già `chmod 600`, e non in un file versionato.
+
+### E.2 Collegarlo **[locale]**
+
+```bash
+ssh pantry "sed -i 's|^HEALTHCHECK_URL=.*|HEALTHCHECK_URL=https://hc-ping.com/<uuid>|' /opt/pantry/backup.env && grep HEALTHCHECK /opt/pantry/backup.env"
+```
+
+Lo script manda `/start` all'inizio, l'URL nudo alla riuscita e `/fail` a ogni uscita con errore —
+compresi i casi in cui muore prima, per esempio se il database non risponde entro `DB_WAIT_SECS`.
+
+### Verifica Fase E
+
+Prima il percorso felice **[vps]**:
+
+```bash
+sudo systemctl start pantry-backup.service
+```
+
+La dashboard deve passare a verde e mostrare la durata dell'esecuzione.
+
+Poi — e questa è la parte che di solito si salta — **verifica che l'avviso arrivi davvero**. Un
+canale di notifica mai provato ha esattamente lo stesso difetto di un backup mai ripristinato:
+
+```bash
+curl -fsS https://hc-ping.com/<uuid>/fail
+```
+
+Deve arrivarti l'email entro pochi secondi. Se non arriva, controlla il canale in
+**Integrations**: il problema è lì, e scoprirlo adesso costa un minuto invece di un incidente.
+Poi rilancia il backup per riportare il check al verde.
 
 La prova della Fase D ripristina in un container di scarto. Rimettere i dati **in produzione** è
 un'altra procedura, e si fa a testa fredda leggendo queste righe, non improvvisando.
