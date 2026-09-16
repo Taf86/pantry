@@ -30,6 +30,15 @@ export const MAX_PANTRY_DEPTH = 12;
 /** Maximum size of a batch of checks sent by the offline queue. */
 export const MAX_CHECK_BATCH = 200;
 
+/** Page size a paginated list falls back to when the client omits one. */
+export const DEFAULT_PAGE_SIZE = 20;
+
+/** Cap on the rows a single page may ask for. */
+export const MAX_PAGE_SIZE = 100;
+
+/** Page sizes the data table offers. */
+export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+
 /** Length limits enforced both on input and by the UI. */
 export const MAX_NAME_LENGTH = 120;
 export const MAX_UNIT_LENGTH = 20;

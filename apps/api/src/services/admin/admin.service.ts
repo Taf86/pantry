@@ -1,25 +1,54 @@
 import {
   type CreateUserInput,
   type InviteLink,
+  type ListUsersFilters,
+  type ListUsersInput,
+  type ListUsersResult,
   type SetUserRoleInput,
   type SetUserStatusInput,
   type UserExtended,
+  type UserSort,
+  type UserSortField,
   serializeDates,
 } from "@pantry/shared";
 import type { Database, Executor } from "../../db/client.js";
 import { users } from "../../db/schema/users.js";
-import { and, asc, count, eq, ne } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  ne,
+  type SQL,
+} from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 import { issueInviteTx } from "./invites.service.js";
 import { sessions } from "../../db/schema/sessions.js";
 
-export const listUsers = async (deps: AdminDeps): Promise<UserExtended[]> => {
-  const rows = await deps.db
-    .select(userSelection)
-    .from(users)
-    .orderBy(asc(users.displayName));
-  return rows.map(serializeDates);
+export const listUsers = async (
+  deps: AdminDeps,
+  input: ListUsersInput,
+): Promise<ListUsersResult> => {
+  const { pageIndex, pageSize } = input.pagination;
+  const where = buildUserFilters(input.filters);
+
+  const [rows, rowCount] = await Promise.all([
+    deps.db
+      .select(userSelection)
+      .from(users)
+      .where(where)
+      .orderBy(...buildUserOrder(input.sorting))
+      .limit(pageSize)
+      .offset(pageIndex * pageSize),
+    countUsers(deps, where),
+  ]);
+
+  return { rows: rows.map(serializeDates), rowCount };
 };
 
 export const requireUser = async (deps: AdminDeps, userId: string) => {
@@ -159,6 +188,49 @@ const userSelection = {
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
   lastSeenAt: users.lastSeenAt,
+};
+
+const sortableColumns = {
+  displayName: users.displayName,
+  email: users.email,
+  role: users.role,
+  status: users.status,
+} satisfies Record<UserSortField, PgColumn>;
+
+const buildUserOrder = (sorting: UserSort[]): SQL[] => {
+  const order = sorting.map((sort) =>
+    sort.desc ? desc(sortableColumns[sort.id]) : asc(sortableColumns[sort.id]),
+  );
+  return order.length > 0
+    ? [...order, asc(users.id)]
+    : [asc(users.displayName), asc(users.id)];
+};
+
+const contains = (term: string) => `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+
+const buildUserFilters = (filters: ListUsersFilters): SQL | undefined => {
+  const conditions: SQL[] = [];
+  if (filters.displayName) {
+    conditions.push(ilike(users.displayName, contains(filters.displayName)));
+  }
+  if (filters.email) {
+    conditions.push(ilike(users.email, contains(filters.email)));
+  }
+  if (filters.role && filters.role.length > 0) {
+    conditions.push(inArray(users.role, filters.role));
+  }
+  if (filters.status && filters.status.length > 0) {
+    conditions.push(inArray(users.status, filters.status));
+  }
+  return and(...conditions);
+};
+
+const countUsers = async (deps: AdminDeps, where: SQL | undefined) => {
+  const [row] = await deps.db
+    .select({ value: count() })
+    .from(users)
+    .where(where);
+  return row?.value ?? 0;
 };
 
 const countAdmins = async (deps: AdminDeps, excludingUserId: string) => {

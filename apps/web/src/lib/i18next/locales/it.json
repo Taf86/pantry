@@ -1,6 +1,19 @@
 {
   "common": {
-    "submit": "Invia"
+    "submit": "Invia",
+    "dataTable": {
+      "empty": "Nessun risultato.",
+      "filters": "Filtri",
+      "applyFilters": "Applica",
+      "resetFilters": "Reimposta",
+      "total": "Totale: {{count}}",
+      "page": "Pagina {{page}} di {{pageCount}}",
+      "pageSize": "Righe per pagina",
+      "firstPage": "Prima pagina",
+      "previousPage": "Pagina precedente",
+      "nextPage": "Pagina successiva",
+      "lastPage": "Ultima pagina"
+    }
   },
   "error": {
     "auth": { "invalidCredentials": "Credenziali non valide" },
@@ -49,6 +62,34 @@
       "password": "Password",
       "failed": "Accesso non riuscito",
       "signIn": "Accedi"
+    },
+    "users": {
+      "title": "Utenti",
+      "empty": "Nessun utente corrisponde ai filtri.",
+      "column": {
+        "name": "Nome",
+        "email": "Email",
+        "role": "Ruolo",
+        "status": "Stato",
+        "actions": "Azioni"
+      },
+      "role": {
+        "user": "Utente",
+        "admin": "Amministratore"
+      },
+      "status": {
+        "unactivated": "Non attivato",
+        "active": "Attivo",
+        "suspended": "Sospeso"
+      },
+      "action": {
+        "menu": "Azioni",
+        "activate": "Attiva",
+        "suspend": "Sospendi",
+        "regenerateInvite": "Nuovo link d'invito"
+      },
+      "inviteCopied": "Link d'invito copiato negli appunti.",
+      "inviteLink": "Link d'invito: {{url}}"
     },
     "invite": {
       "signUp": "Registrati",

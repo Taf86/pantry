@@ -1,5 +1,6 @@
 import {
   createUserInputSchema,
+  listUsersInputSchema,
   setUserRoleInputSchema,
   setUserStatusInputSchema,
   userIdInputSchema,
@@ -15,7 +16,9 @@ import { adminProcedure, router } from "../trpc.js";
 
 export const adminRouter = router({
   users: router({
-    list: adminProcedure.query(({ ctx }) => listUsers(ctx)),
+    list: adminProcedure
+      .input(listUsersInputSchema)
+      .query(({ ctx, input }) => listUsers(ctx, input)),
     create: adminProcedure
       .input(createUserInputSchema)
       .mutation(({ ctx, input }) => createUser(ctx, ctx.user.id, input)),

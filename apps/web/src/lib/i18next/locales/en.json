@@ -1,6 +1,19 @@
 {
   "common": {
-    "submit": "Submit"
+    "submit": "Submit",
+    "dataTable": {
+      "empty": "No results.",
+      "filters": "Filters",
+      "applyFilters": "Apply",
+      "resetFilters": "Reset",
+      "total": "Total: {{count}}",
+      "page": "Page {{page}} of {{pageCount}}",
+      "pageSize": "Rows per page",
+      "firstPage": "First page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "lastPage": "Last page"
+    }
   },
   "error": {
     "auth": { "invalidCredentials": "Invalid credentials" },
@@ -49,6 +62,34 @@
       "password": "Password",
       "failed": "Login failed",
       "signIn": "Sign in"
+    },
+    "users": {
+      "title": "Users",
+      "empty": "No user matches the filters.",
+      "column": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "role": {
+        "user": "User",
+        "admin": "Administrator"
+      },
+      "status": {
+        "unactivated": "Not activated",
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "action": {
+        "menu": "Actions",
+        "activate": "Activate",
+        "suspend": "Suspend",
+        "regenerateInvite": "New invite link"
+      },
+      "inviteCopied": "Invite link copied to the clipboard.",
+      "inviteLink": "Invite link: {{url}}"
     },
     "invite": {
       "signUp": "Sign up",
