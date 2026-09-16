@@ -20,9 +20,28 @@
       "title": "503 - Servizio non disponibile",
       "description": "Il nostro server è temporaneamente non disponibile. Riprova più tardi."
     },
+    "unknownError": {
+      "title": "Errore inatteso",
+      "description": "Capita, ma siamo già al lavoro per sistemare."
+    },
     "navBar": {
       "menu": "Menu",
-      "logout": "Esci"
+      "logout": "Esci",
+      "link": {
+        "lists": "Liste",
+        "shopping": "Spesa",
+        "pantries": "Dispense",
+        "admin": "Admin",
+        "users": "Utenti",
+        "invites": "Inviti",
+        "requests": "Richieste",
+        "home": "Home"
+      },
+      "quickAction": {
+        "add": "Aggiungi",
+        "shop": "Compra",
+        "stock": "Riponi"
+      }
     },
     "login": {
       "welcome": "Benvenuto/a",

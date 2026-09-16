@@ -20,9 +20,28 @@
       "title": "503 - Service unavailable",
       "description": "Our server is temporary unavailable. Please, try again later."
     },
+    "unknownError": {
+      "title": "Unknown error",
+      "description": "Bug happens, we'll fix it as soon as possible."
+    },
     "navBar": {
       "menu": "Menu",
-      "logout": "Logout"
+      "logout": "Logout",
+      "link": {
+        "lists": "Lists",
+        "shopping": "Shopping",
+        "pantries": "Pantries",
+        "admin": "Admin",
+        "users": "Users",
+        "invites": "Invites",
+        "requests": "Requests",
+        "home": "Home"
+      },
+      "quickAction": {
+        "add": "Add",
+        "shop": "Shop",
+        "stock": "Stock"
+      }
     },
     "login": {
       "welcome": "Welcome",

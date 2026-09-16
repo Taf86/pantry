@@ -1,4 +1,8 @@
-import { useState } from "react";
+import {
+  useState,
+  type ForwardRefExoticComponent,
+  type RefAttributes,
+} from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +16,9 @@ import {
   PackagePlusIcon,
   PlusIcon,
   ShoppingCartIcon,
+  type LucideProps,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useMatch, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import useRequireAuth from "@/hooks/use-require-auth";
 import type { User } from "@pantry/shared";
@@ -24,21 +29,60 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearLocalUserData } from "@/lib/local-data";
 import { forgetLastUser } from "@/lib/last-user";
+import type { ParseKeys } from "i18next";
 
-const navItems = ["/lists", "/shopping-lists", "/pantries"] as const;
+const adminPageNavItems = [
+  { to: "/admin/users", key: "feature.navBar.link.users" },
+  { to: "/admin/invites", key: "feature.navBar.link.invites" },
+  { to: "/admin/requests", key: "feature.navBar.link.requests" },
+  { to: "/", key: "feature.navBar.link.home" },
+] as const satisfies { to: string; key: ParseKeys }[];
+
+const homeNavItems = [
+  { to: "/lists", key: "feature.navBar.link.lists" },
+  { to: "/shopping", key: "feature.navBar.link.shopping" },
+  { to: "/pantries", key: "feature.navBar.link.pantries" },
+] as const satisfies { to: string; key: ParseKeys }[];
+
+const toAdminNavItems = [
+  { to: "/admin", key: "feature.navBar.link.admin" },
+] as const satisfies { to: string; key: ParseKeys }[];
+
 const quickActions = [
-  { id: "add", icon: PlusIcon },
-  { id: "buy", icon: ShoppingCartIcon },
-  { id: "stock", icon: PackagePlusIcon },
-] as const;
+  { id: "add", icon: PlusIcon, key: "feature.navBar.quickAction.add" },
+  {
+    id: "shop",
+    icon: ShoppingCartIcon,
+    key: "feature.navBar.quickAction.shop",
+  },
+  {
+    id: "stock",
+    icon: PackagePlusIcon,
+    key: "feature.navBar.quickAction.stock",
+  },
+] as const satisfies {
+  id: string;
+  icon: ForwardRefExoticComponent<
+    Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
+  >;
+  key: ParseKeys;
+}[];
 
 export default function NavBar() {
   const { t } = useTranslation();
+  const isAdminPage = useMatch("/admin/*");
   const [navOpen, setNavOpen] = useState(false);
   const user = useRequireAuth();
+  const isAdminUser = user.role === "admin";
   const initial = getInitial(user);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const navItems = isAdminPage
+    ? adminPageNavItems
+    : isAdminUser
+      ? [...homeNavItems, ...toAdminNavItems]
+      : homeNavItems;
 
   const logout = async () => {
     await signOut();
@@ -92,12 +136,12 @@ export default function NavBar() {
             >
               {navItems.map((item) => (
                 <Link
-                  key={item}
-                  to={item}
+                  key={item.to}
+                  to={item.to}
                   onClick={() => setNavOpen(false)}
                   className="text-2xl font-medium underline-offset-8 data-[status=active]:underline"
                 >
-                  {item}
+                  {t(item.key)}
                 </Link>
               ))}
             </nav>
@@ -110,27 +154,28 @@ export default function NavBar() {
         >
           {navItems.map((item) => (
             <Link
-              key={item}
-              to={item}
+              key={item.to}
+              to={item.to}
               className="text-foreground/60 hover:text-foreground/80 data-[status=active]:text-foreground transition-colors"
             >
-              {item}
+              {t(item.key)}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
-          {quickActions.map(({ id, icon: Icon }) => (
-            <Button
-              key={id}
-              variant="ghost"
-              className="px-2 sm:px-3"
-              onClick={() => {}}
-            >
-              <Icon data-icon="inline-start" />
-              <span className="sr-only sm:not-sr-only">{id}</span>
-            </Button>
-          ))}
+          {!isAdminPage &&
+            quickActions.map(({ id, icon: Icon, key }) => (
+              <Button
+                key={id}
+                variant="ghost"
+                className="px-2 sm:px-3"
+                onClick={() => {}}
+              >
+                <Icon data-icon="inline-start" />
+                <span className="sr-only sm:not-sr-only">{t(key)}</span>
+              </Button>
+            ))}
         </div>
 
         <div aria-hidden="true" className="bg-border mx-2 h-5 w-px" />
