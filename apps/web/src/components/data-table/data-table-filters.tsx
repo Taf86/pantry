@@ -9,118 +9,66 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import type { ColumnFiltersState } from "@tanstack/react-table";
 import { CheckIcon, FilterIcon } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   columnFilterValue,
   withColumnFilter,
+  type DataTableColumnId,
   type DataTableFilterField,
   type DataTableFilterOption,
+  type DataTableFiltersState,
+  type DataTableFilterValue,
   type DataTableState,
 } from "./data-table-core";
 
-/** Delay before a typed filter is committed, to not query on every keystroke. */
-const FILTER_DEBOUNCE_MS = 300;
-
-/**
- * Single text filter, committed as the user types. Meant to be put next to the
- * title of a page as the quick search of the table.
- */
-export function DataTableTextFilter({
-  state,
-  columnId,
-  label,
-  placeholder,
-  className,
-}: {
-  state: DataTableState;
-  columnId: string;
-  label: string;
-  placeholder?: string | undefined;
-  className?: string | undefined;
-}) {
-  const value = asText(columnFilterValue(state.columnFilters, columnId));
-  const [draft, setDraft] = useState(value);
-  const [committed, setCommitted] = useState(value);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  // Follows the value when it is changed from the outside, for instance from
-  // the filter panel or on a reset.
-  if (value !== committed) {
-    setCommitted(value);
-    setDraft(value);
-  }
-
-  // A change coming from elsewhere supersedes an edit still waiting to be
-  // committed; the same cleanup drops it when the filter goes away.
-  useEffect(() => () => clearTimeout(timer.current), [value]);
-
-  const commitLater = (next: string) => {
-    setDraft(next);
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      setCommitted(next);
-      state.setColumnFilters((current) =>
-        withColumnFilter(current, columnId, next),
-      );
-    }, FILTER_DEBOUNCE_MS);
-  };
-
-  return (
-    <Input
-      value={draft}
-      placeholder={placeholder ?? label}
-      aria-label={label}
-      onChange={(event) => commitLater(event.target.value)}
-      className={cn("h-7", className)}
-    />
-  );
-}
-
-/**
- * Button that opens every filter of the table in a panel, full screen on
- * phones. The edits are staged and only reach the table on apply, so a panel
- * full of filters costs one query instead of one per field.
- */
-export function DataTableFilters({
+export function DataTableFilters<TData>({
   state,
   fields,
   className,
 }: {
-  state: DataTableState;
-  fields: DataTableFilterField[];
+  state: DataTableState<TData>;
+  fields: DataTableFilterField<TData>[];
   className?: string | undefined;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<ColumnFiltersState>(state.columnFilters);
+  const [draft, setDraft] = useState<DataTableFiltersState<TData>>(
+    state.columnFilters,
+  );
 
   const activeCount = fields.filter(
     (field) =>
       columnFilterValue(state.columnFilters, field.columnId) !== undefined,
   ).length;
 
-  const edit = (columnId: string, value: unknown) =>
-    setDraft((current) => withColumnFilter(current, columnId, value));
+  const edit = (
+    columnId: DataTableColumnId<TData>,
+    value: DataTableFilterValue,
+  ) => setDraft((current) => withColumnFilter(current, columnId, value));
 
   return (
     <Popover
       open={open}
       onOpenChange={(next: boolean) => {
-        // Always start from what the table is actually filtered by.
         if (next) setDraft(state.columnFilters);
         setOpen(next);
       }}
     >
       <PopoverTrigger
-        render={<Button variant="outline" size="sm" className={className} />}
-        aria-label={t("common.dataTable.filters")}
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("max-sm:px-1.5", className)}
+          />
+        }
+        aria-label={t("feature.dataTable.filters")}
       >
         <FilterIcon data-icon="inline-start" />
         <span className="sr-only sm:not-sr-only">
-          {t("common.dataTable.filters")}
+          {t("feature.dataTable.filters")}
         </span>
         {activeCount > 0 && (
           <span className="inline-flex size-4 items-center justify-center bg-primary text-[0.625rem] text-primary-foreground">
@@ -134,7 +82,7 @@ export function DataTableFilters({
         className="h-(--available-height) w-(--available-width) sm:h-auto sm:w-80"
       >
         <PopoverHeader>
-          <PopoverTitle>{t("common.dataTable.filters")}</PopoverTitle>
+          <PopoverTitle>{t("feature.dataTable.filters")}</PopoverTitle>
         </PopoverHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
@@ -157,7 +105,7 @@ export function DataTableFilters({
               state.setColumnFilters([]);
             }}
           >
-            {t("common.dataTable.resetFilters")}
+            {t("feature.dataTable.resetFilters")}
           </Button>
           <Button
             size="sm"
@@ -166,7 +114,7 @@ export function DataTableFilters({
               setOpen(false);
             }}
           >
-            {t("common.dataTable.applyFilters")}
+            {t("feature.dataTable.applyFilters")}
           </Button>
         </div>
       </PopoverContent>
@@ -174,14 +122,14 @@ export function DataTableFilters({
   );
 }
 
-function FilterField({
+function FilterField<TData>({
   field,
   value,
   onChange,
 }: {
-  field: DataTableFilterField;
-  value: unknown;
-  onChange: (value: unknown) => void;
+  field: DataTableFilterField<TData>;
+  value: DataTableFilterValue | undefined;
+  onChange: (value: DataTableFilterValue) => void;
 }) {
   const id = useId();
 
@@ -193,7 +141,7 @@ function FilterField({
       {field.filter.kind === "text" ? (
         <Input
           id={id}
-          value={asText(value)}
+          value={typeof value === "string" ? value : ""}
           placeholder={field.filter.placeholder}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -201,7 +149,7 @@ function FilterField({
         <OptionsField
           id={id}
           options={field.filter.options}
-          selected={asOptionValues(value)}
+          selected={Array.isArray(value) ? value : []}
           onChange={onChange}
         />
       )}
@@ -216,7 +164,7 @@ function OptionsField({
   onChange,
 }: {
   id: string;
-  options: DataTableFilterOption[];
+  options: readonly DataTableFilterOption[];
   selected: string[];
   onChange: (value: string[]) => void;
 }) {
@@ -250,10 +198,3 @@ function OptionsField({
     </div>
   );
 }
-
-const asText = (value: unknown) => (typeof value === "string" ? value : "");
-
-const asOptionValues = (value: unknown) =>
-  Array.isArray(value)
-    ? value.filter((entry) => typeof entry === "string")
-    : [];

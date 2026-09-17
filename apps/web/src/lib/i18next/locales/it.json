@@ -1,6 +1,16 @@
 {
   "common": {
-    "submit": "Invia",
+    "submit": "Invia"
+  },
+  "error": {
+    "auth": { "invalidCredentials": "Credenziali non valide" },
+    "unknown": "Errore sconosciuto"
+  },
+  "feature": {
+    "sessionLoader": {
+      "title": "Caricamento di Pantry",
+      "description": "Ripristino della sessione precedente"
+    },
     "dataTable": {
       "empty": "Nessun risultato.",
       "filters": "Filtri",
@@ -12,17 +22,12 @@
       "firstPage": "Prima pagina",
       "previousPage": "Pagina precedente",
       "nextPage": "Pagina successiva",
-      "lastPage": "Ultima pagina"
-    }
-  },
-  "error": {
-    "auth": { "invalidCredentials": "Credenziali non valide" },
-    "unknown": "Errore sconosciuto"
-  },
-  "feature": {
-    "sessionLoader": {
-      "title": "Caricamento di Pantry",
-      "description": "Ripristino della sessione precedente"
+      "lastPage": "Ultima pagina",
+      "loaded": "{{loaded}} di {{total}}",
+      "loadMore": "Carica altri",
+      "sort": "Ordina",
+      "sortAscending": "Crescente",
+      "sortDescending": "Decrescente"
     },
     "notFound": {
       "title": "404 - Pagina non trovata",

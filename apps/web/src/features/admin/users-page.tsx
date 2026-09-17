@@ -1,14 +1,17 @@
 import { DataTable } from "@/components/data-table/data-table";
 import {
   createDataTableColumnHelper,
+  optionsFilterValue,
+  textFilterValue,
   useDataTableState,
   type DataTableColumns,
   type DataTableFilterField,
+  type DataTableFiltersState,
+  type DataTableSortField,
+  type DataTableSortingState,
 } from "@/components/data-table/data-table-core";
-import {
-  DataTableFilters,
-  DataTableTextFilter,
-} from "@/components/data-table/data-table-filters";
+import { DataTableFilters } from "@/components/data-table/data-table-filters";
+import { DataTableSort } from "@/components/data-table/data-table-sort";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +34,6 @@ import {
   type ListUsersFilters,
   type ListUsersInput,
   type UserExtended,
-  type UserRole as UserRoleValue,
   type UserSort,
   type UserSortField,
   type UserStatus as UserStatusValue,
@@ -42,7 +44,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -64,7 +65,7 @@ export default function UsersPage() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const queryClient = useQueryClient();
-  const table = useDataTableState({
+  const table = useDataTableState<UserExtended>({
     sorting: [{ id: "displayName", desc: false }],
   });
 
@@ -113,74 +114,103 @@ export default function UsersPage() {
     onError,
   });
 
-  const columns = useMemo<DataTableColumns<UserExtended>>(
-    () =>
-      columnHelper.columns([
-        columnHelper.accessor("displayName", {
-          header: t("feature.users.column.name"),
-        }),
+  const { desktopColumns, mobileColumns } = useMemo<{
+    desktopColumns: DataTableColumns<UserExtended>;
+    mobileColumns: DataTableColumns<UserExtended>;
+  }>(() => {
+    const name = columnHelper.accessor("displayName", {
+      header: t("feature.users.column.name"),
+    });
 
-        columnHelper.accessor("email", {
-          header: t("feature.users.column.email"),
-          cell: ({ getValue }) => (
-            <span className="text-muted-foreground">{getValue()}</span>
-          ),
-        }),
+    const email = columnHelper.accessor("email", {
+      header: t("feature.users.column.email"),
+      cell: ({ getValue }) => (
+        <span className="text-muted-foreground">{getValue()}</span>
+      ),
+    });
+    const mobileEmail = columnHelper.accessor("email", {
+      header: t("feature.users.column.email"),
+    });
 
-        columnHelper.accessor("role", {
-          header: t("feature.users.column.role"),
-          cell: ({ getValue }) => t(roleLabelKeys[getValue()]),
-        }),
+    const role = columnHelper.accessor("role", {
+      header: t("feature.users.column.role"),
+      cell: ({ getValue }) => t(roleLabelKeys[getValue()]),
+    });
 
-        columnHelper.accessor("status", {
-          header: t("feature.users.column.status"),
-          cell: ({ getValue }) => <StatusBadge status={getValue()} />,
-        }),
+    const status = columnHelper.accessor("status", {
+      header: t("feature.users.column.status"),
+      cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+    });
 
-        columnHelper.display({
-          id: "actions",
-          header: t("feature.users.column.actions"),
-          meta: { alignEnd: true },
-          cell: ({ row }) => {
-            const user = row.original;
-            const suspended = user.status === "suspended";
-            return (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={<Button variant="ghost" size="icon-xs" />}
-                  aria-label={t("feature.users.action.menu")}
-                >
-                  <MoreHorizontalIcon />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    variant={suspended ? "default" : "destructive"}
-                    onClick={() =>
-                      setStatus.mutate({
-                        userId: user.id,
-                        status: suspended ? "active" : "suspended",
-                      })
-                    }
-                  >
-                    {suspended
-                      ? t("feature.users.action.activate")
-                      : t("feature.users.action.suspend")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => regenerateInvite.mutate(user.id)}
-                  >
-                    {t("feature.users.action.regenerateInvite")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            );
-          },
-        }),
+    const actions = columnHelper.display({
+      id: "actions",
+      header: t("feature.users.column.actions"),
+      meta: { alignEnd: true },
+      cell: ({ row }) => {
+        const user = row.original;
+        const suspended = user.status === "suspended";
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button variant="ghost" size="icon-xs" />}
+              aria-label={t("feature.users.action.menu")}
+            >
+              <MoreHorizontalIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                variant={suspended ? "default" : "destructive"}
+                onClick={() =>
+                  setStatus.mutate({
+                    userId: user.id,
+                    status: suspended ? "active" : "suspended",
+                  })
+                }
+              >
+                {suspended
+                  ? t("feature.users.action.activate")
+                  : t("feature.users.action.suspend")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => regenerateInvite.mutate(user.id)}
+              >
+                {t("feature.users.action.regenerateInvite")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    });
+
+    return {
+      desktopColumns: columnHelper.columns([
+        name,
+        email,
+        role,
+        status,
+        actions,
       ]),
-    [t, setStatus, regenerateInvite],
+      mobileColumns: columnHelper.columns([
+        name,
+        mobileEmail,
+        role,
+        status,
+        actions,
+      ]),
+    };
+  }, [t, setStatus, regenerateInvite]);
+
+  const sortFields = useMemo<DataTableSortField<UserExtended>[]>(
+    () => [
+      { columnId: "displayName", label: t("feature.users.column.name") },
+      { columnId: "email", label: t("feature.users.column.email") },
+      { columnId: "role", label: t("feature.users.column.role") },
+      { columnId: "status", label: t("feature.users.column.status") },
+    ],
+    [t],
   );
 
-  const filterFields = useMemo<DataTableFilterField[]>(
+  const filterFields = useMemo<DataTableFilterField<UserExtended>[]>(
     () => [
       {
         columnId: "displayName",
@@ -224,21 +254,15 @@ export default function UsersPage() {
         <h1 className="font-heading text-lg font-medium">
           {t("feature.users.title")}
         </h1>
-        <DataTableTextFilter
-          state={table}
-          columnId="displayName"
-          label={t("feature.users.column.name")}
-          className="w-32 sm:w-56"
-        />
-        <DataTableFilters
-          state={table}
-          fields={filterFields}
-          className="ms-auto"
-        />
+        <div className="ms-auto flex items-center gap-2">
+          <DataTableSort state={table} fields={sortFields} />
+          <DataTableFilters state={table} fields={filterFields} />
+        </div>
       </div>
 
       <DataTable
-        columns={columns}
+        desktopColumns={desktopColumns}
+        mobileColumns={mobileColumns}
         data={users.data?.rows ?? noUsers}
         state={table}
         manual
@@ -273,36 +297,26 @@ function StatusBadge({ status }: { status: UserStatusValue }) {
 const isUserSortField = (id: string): id is UserSortField =>
   (UserSortFields as readonly string[]).includes(id);
 
-const toUserSorting = (sorting: SortingState): UserSort[] =>
+const toUserSorting = (
+  sorting: DataTableSortingState<UserExtended>,
+): UserSort[] =>
   sorting.filter((sort): sort is UserSort => isUserSortField(sort.id));
 
-const toUserFilters = (columnFilters: ColumnFiltersState): ListUsersFilters => {
-  const filters: ListUsersFilters = {};
-  for (const { id, value } of columnFilters) {
-    if (id === "displayName" && typeof value === "string" && value.trim()) {
-      filters.displayName = value.trim();
-    }
-    if (id === "email" && typeof value === "string" && value.trim()) {
-      filters.email = value.trim();
-    }
-    if (id === "role" && Array.isArray(value)) {
-      const roles = value.filter(isUserRole);
-      if (roles.length > 0) filters.role = roles;
-    }
-    if (id === "status" && Array.isArray(value)) {
-      const statuses = value.filter(isUserStatus);
-      if (statuses.length > 0) filters.status = statuses;
-    }
-  }
-  return filters;
+const toUserFilters = (
+  columnFilters: DataTableFiltersState<UserExtended>,
+): ListUsersFilters => {
+  const displayName = textFilterValue(columnFilters, "displayName");
+  const email = textFilterValue(columnFilters, "email");
+  const role = optionsFilterValue(columnFilters, "role", UserRoles);
+  const status = optionsFilterValue(columnFilters, "status", UserStatuses);
+
+  return {
+    ...(displayName !== undefined && { displayName }),
+    ...(email !== undefined && { email }),
+    ...(role.length > 0 && { role }),
+    ...(status.length > 0 && { status }),
+  };
 };
-
-const isUserRole = (value: unknown): value is UserRoleValue =>
-  typeof value === "string" && (UserRoles as readonly string[]).includes(value);
-
-const isUserStatus = (value: unknown): value is UserStatusValue =>
-  typeof value === "string" &&
-  (UserStatuses as readonly string[]).includes(value);
 
 const inviteUrl = (invite: InviteLink) =>
   new URL(`/invite/${invite.token}`, window.location.origin).href;

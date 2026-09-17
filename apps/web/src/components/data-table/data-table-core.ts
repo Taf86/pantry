@@ -19,41 +19,44 @@ import {
 } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 
-/** Control a filter is edited with. */
-export type DataTableFilter =
+export type DataTableColumnId<TData> = Extract<keyof TData, string>;
+export interface DataTableColumnSort<TData> {
+  id: DataTableColumnId<TData>;
+  desc: boolean;
+}
+export type DataTableSortingState<TData> = DataTableColumnSort<TData>[];
+export type DataTableFilterValue = string | string[];
+export interface DataTableColumnFilter<TData> {
+  id: DataTableColumnId<TData>;
+  value: DataTableFilterValue;
+}
+
+export type DataTableFiltersState<TData> = DataTableColumnFilter<TData>[];
+
+export type DataTableFilter<TValue extends string = string> =
   | { kind: "text"; placeholder?: string }
-  /** Multiple choice: the filter value is the array of the selected values. */
-  | { kind: "options"; options: DataTableFilterOption[] };
+  | { kind: "options"; options: readonly DataTableFilterOption<TValue>[] };
 
-export interface DataTableFilterOption {
-  value: string;
+export interface DataTableFilterOption<TValue extends string = string> {
+  value: TValue;
   label: string;
 }
-
-/** A filter the table offers, declared next to the columns it belongs to. */
-export interface DataTableFilterField {
-  /** Column the filter applies to, matching the id in the column filters. */
-  columnId: string;
+export interface DataTableFilterField<TData, TValue extends string = string> {
+  columnId: DataTableColumnId<TData>;
   label: string;
-  filter: DataTableFilter;
+  filter: DataTableFilter<TValue>;
 }
-
-/** Type of `columnDef.meta` for every column of a data table. */
+export interface DataTableSortField<TData> {
+  columnId: DataTableColumnId<TData>;
+  label: string;
+}
 export interface DataTableColumnMeta {
-  /** Aligns header and cells to the end of the row. */
   alignEnd?: boolean;
-  /** Extra classes for the body cells of the column. */
   cellClassName?: string;
 }
 
-/** Phantom value: only its type is read, to type `columnDef.meta`. */
 const columnMeta: DataTableColumnMeta = {};
 
-/**
- * The features every data table registers. Client-side row models are included
- * so a table with local data works without further configuration; the `manual`
- * prop bypasses them when the server does the work instead.
- */
 export const dataTableFeatures = tableFeatures({
   columnFilteringFeature,
   filteredRowModel: createFilteredRowModel(),
@@ -73,32 +76,23 @@ export type DataTableColumns<TData extends RowData> = ColumnDef<
   TData
 >[];
 
-/**
- * Column helper bound to the data table features, so `meta` is typed as
- * `DataTableColumnMeta` and only the registered sort and filter functions can
- * be named.
- */
 export const createDataTableColumnHelper = <TData extends RowData>() =>
   createColumnHelper<DataTableFeatures, TData>();
 
-/** An empty filter is removed instead of matching everything. */
-const isEmptyFilter = (value: unknown) =>
-  value === undefined ||
-  value === "" ||
-  (Array.isArray(value) && value.length === 0);
+const isEmptyFilter = (value: DataTableFilterValue) =>
+  value === "" || (Array.isArray(value) && value.length === 0);
 
-/** Value of one column filter, `undefined` when the filter is not set. */
-export const columnFilterValue = (
-  columnFilters: ColumnFiltersState,
-  columnId: string,
-): unknown => columnFilters.find((filter) => filter.id === columnId)?.value;
+export const columnFilterValue = <TData>(
+  columnFilters: DataTableFiltersState<TData>,
+  columnId: DataTableColumnId<TData>,
+): DataTableFilterValue | undefined =>
+  columnFilters.find((filter) => filter.id === columnId)?.value;
 
-/** Returns the filters with the one of `columnId` set to `value`. */
-export const withColumnFilter = (
-  columnFilters: ColumnFiltersState,
-  columnId: string,
-  value: unknown,
-): ColumnFiltersState => {
+export const withColumnFilter = <TData>(
+  columnFilters: DataTableFiltersState<TData>,
+  columnId: DataTableColumnId<TData>,
+  value: DataTableFilterValue,
+): DataTableFiltersState<TData> => {
   if (isEmptyFilter(value)) {
     return columnFilters.filter((filter) => filter.id !== columnId);
   }
@@ -109,46 +103,73 @@ export const withColumnFilter = (
     : [...columnFilters, { id: columnId, value }];
 };
 
-/** Sorting, filtering and pagination of a data table. */
-export interface DataTableState {
-  sorting: SortingState;
-  setSorting: OnChangeFn<SortingState>;
-  columnFilters: ColumnFiltersState;
-  setColumnFilters: OnChangeFn<ColumnFiltersState>;
+export const textFilterValue = <TData>(
+  columnFilters: DataTableFiltersState<TData>,
+  columnId: DataTableColumnId<TData>,
+): string | undefined => {
+  const value = columnFilterValue(columnFilters, columnId);
+  const text = typeof value === "string" ? value.trim() : "";
+  return text === "" ? undefined : text;
+};
+
+export const optionsFilterValue = <TData, TValue extends string>(
+  columnFilters: DataTableFiltersState<TData>,
+  columnId: DataTableColumnId<TData>,
+  allowed: readonly TValue[],
+): TValue[] => {
+  const value = columnFilterValue(columnFilters, columnId);
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is TValue =>
+    (allowed as readonly string[]).includes(entry),
+  );
+};
+
+export interface DataTableState<TData> {
+  sorting: DataTableSortingState<TData>;
+  setSorting: OnChangeFn<DataTableSortingState<TData>>;
+  columnFilters: DataTableFiltersState<TData>;
+  setColumnFilters: OnChangeFn<DataTableFiltersState<TData>>;
   pagination: PaginationState;
   setPagination: OnChangeFn<PaginationState>;
 }
 
-/**
- * Owns the state of a data table outside of it, so the caller can put it in a
- * query key, in the url or wherever else it is needed.
- */
-export function useDataTableState(initial?: {
-  sorting?: SortingState;
-  columnFilters?: ColumnFiltersState;
+export const dataTableStateOptions = <TData>(
+  state: DataTableState<TData>,
+  pagination: PaginationState,
+) => ({
+  state: {
+    sorting: state.sorting satisfies SortingState,
+    columnFilters: state.columnFilters satisfies ColumnFiltersState,
+    pagination,
+  },
+  onSortingChange: state.setSorting as unknown as OnChangeFn<SortingState>,
+  onColumnFiltersChange:
+    state.setColumnFilters as unknown as OnChangeFn<ColumnFiltersState>,
+});
+
+export function useDataTableState<TData>(initial?: {
+  sorting?: DataTableSortingState<TData>;
+  columnFilters?: DataTableFiltersState<TData>;
   pageSize?: number;
-}): DataTableState {
-  const [sorting, setSortingState] = useState<SortingState>(
+}): DataTableState<TData> {
+  const [sorting, setSortingState] = useState<DataTableSortingState<TData>>(
     initial?.sorting ?? [],
   );
-  const [columnFilters, setColumnFiltersState] = useState<ColumnFiltersState>(
-    initial?.columnFilters ?? [],
-  );
+  const [columnFilters, setColumnFiltersState] = useState<
+    DataTableFiltersState<TData>
+  >(initial?.columnFilters ?? []);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: initial?.pageSize ?? DEFAULT_PAGE_SIZE,
   });
 
-  // A different sorting or filter makes the current page meaningless: the row
-  // that was on page 4 is somewhere else now, and the result may be shorter
-  // than the page the table is on.
   const backToFirstPage = useCallback(() => {
     setPagination((current) =>
       current.pageIndex === 0 ? current : { ...current, pageIndex: 0 },
     );
   }, []);
 
-  const setSorting = useCallback<OnChangeFn<SortingState>>(
+  const setSorting = useCallback<OnChangeFn<DataTableSortingState<TData>>>(
     (updater) => {
       setSortingState(updater);
       backToFirstPage();
@@ -156,7 +177,9 @@ export function useDataTableState(initial?: {
     [backToFirstPage],
   );
 
-  const setColumnFilters = useCallback<OnChangeFn<ColumnFiltersState>>(
+  const setColumnFilters = useCallback<
+    OnChangeFn<DataTableFiltersState<TData>>
+  >(
     (updater) => {
       setColumnFiltersState(updater);
       backToFirstPage();
