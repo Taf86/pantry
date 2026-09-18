@@ -6,6 +6,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -183,7 +184,7 @@ export default function NavBar() {
             ))}
         </div>
 
-        <Separator orientation="vertical" className="mx-2 h-5 self-auto" />
+        <Separator orientation="vertical" className="mx-2" />
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -202,28 +203,30 @@ export default function NavBar() {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={10} className="w-64">
-            <DropdownMenuLabel className="p-0 text-foreground">
-              <div className="flex items-center gap-2 px-2 py-1.5">
-                <Avatar className="size-8 shrink-0">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
-                    {initial}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid min-w-0 flex-1 leading-tight">
-                  <span className="truncate text-sm font-medium">
-                    {user.displayName}
-                  </span>
-                  <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
-                  </span>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="p-0 text-foreground">
+                <div className="flex items-center gap-2 px-2 py-1.5">
+                  <Avatar className="size-8 shrink-0">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                      {initial}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid min-w-0 flex-1 leading-tight">
+                    <span className="truncate text-sm font-medium">
+                      {user.displayName}
+                    </span>
+                    <span className="text-muted-foreground truncate text-xs">
+                      {user.email}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void logout()}>
-              <LogOutIcon data-icon="inline-start" />
-              {t("feature.navBar.logout")}
-            </DropdownMenuItem>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => void logout()}>
+                <LogOutIcon data-icon="inline-start" />
+                {t("feature.navBar.logout")}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
