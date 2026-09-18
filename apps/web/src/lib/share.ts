@@ -18,7 +18,10 @@ export const shareLink = async (share: {
 }): Promise<ShareOutcome> => {
   if (!canShare()) return "unsupported";
   try {
-    await navigator.share(share);
+    await navigator.share({
+      title: share.title,
+      text: `${share.text}\n${share.url}`,
+    });
     return "shared";
   } catch (cause) {
     const name = cause instanceof DOMException ? cause.name : "";

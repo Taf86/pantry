@@ -1,5 +1,6 @@
 import {
   createUserInputSchema,
+  editUserInputSchema,
   listUsersInputSchema,
   setUserRoleInputSchema,
   setUserStatusInputSchema,
@@ -7,8 +8,10 @@ import {
 } from "@pantry/shared";
 import {
   createUser,
+  editUser,
   listUsers,
   regenerateInvite,
+  requireUser,
   setRole,
   setStatus,
 } from "../../services/admin/admin.service.js";
@@ -19,9 +22,16 @@ export const adminRouter = router({
     list: adminProcedure
       .input(listUsersInputSchema)
       .query(({ ctx, input }) => listUsers(ctx, input)),
+    get: adminProcedure
+      .input(userIdInputSchema)
+      .query(({ ctx, input }) => requireUser(ctx, input.userId)),
     create: adminProcedure
       .input(createUserInputSchema)
       .mutation(({ ctx, input }) => createUser(ctx, ctx.user.id, input)),
+
+    edit: adminProcedure
+      .input(editUserInputSchema)
+      .mutation(({ ctx, input }) => editUser(ctx, ctx.user.id, input)),
 
     regenerateInvite: adminProcedure
       .input(userIdInputSchema)

@@ -82,6 +82,15 @@ export const createUserInputSchema = z.object({
 });
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
 
+export const editUserInputSchema = z.object({
+  userId: z.uuid(),
+  email: emailSchema,
+  displayName: nameSchema,
+  role: userRoleSchema,
+  status: userStatusSchema,
+});
+export type EditUserInput = z.infer<typeof editUserInputSchema>;
+
 export const setUserStatusInputSchema = z.object({
   userId: z.uuid(),
   status: z.enum([UserStatus.active, UserStatus.suspended]),

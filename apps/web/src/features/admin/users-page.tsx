@@ -12,19 +12,9 @@ import {
 } from "@/components/data-table/data-table-core";
 import { DataTableFilters } from "@/components/data-table/data-table-filters";
 import { DataTableSort } from "@/components/data-table/data-table-sort";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
-import useErrorMessage from "@/hooks/use-error-message";
-import { inviteUrl } from "@/lib/invites";
 import { keys } from "@/lib/keys";
-import { copyToClipboard } from "@/lib/share";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
@@ -38,13 +28,8 @@ import {
   type UserSortField,
   type UserStatus as UserStatusValue,
 } from "@pantry/shared";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { PencilIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -54,8 +39,6 @@ const columnHelper = createDataTableColumnHelper<UserExtended>();
 
 export default function UsersPage() {
   const { t } = useTranslation();
-  const errorMessage = useErrorMessage();
-  const queryClient = useQueryClient();
   const table = useDataTableState<UserExtended>({
     sorting: [{ id: "displayName", desc: false }],
   });
@@ -70,39 +53,6 @@ export default function UsersPage() {
     queryKey: keys.adminUsersList(input),
     queryFn: () => trpc.admin.users.list.query(input),
     placeholderData: keepPreviousData,
-  });
-
-  const onError = (cause: unknown) =>
-    toast.add({ type: "error", description: errorMessage(cause) });
-
-  const refreshUsers = () =>
-    queryClient.invalidateQueries({ queryKey: keys.adminUsers() });
-
-  const setStatus = useMutation({
-    mutationFn: (input: { userId: string; status: UserStatusValue }) =>
-      trpc.admin.users.setStatus.mutate({
-        userId: input.userId,
-        status: input.status === "active" ? "active" : "suspended",
-      }),
-    networkMode: "online",
-    onSuccess: refreshUsers,
-    onError,
-  });
-
-  const regenerateInvite = useMutation({
-    mutationFn: (userId: string) =>
-      trpc.admin.users.regenerateInvite.mutate({ userId }),
-    networkMode: "online",
-    onSuccess: async (result) => {
-      await refreshUsers();
-      const url = inviteUrl(result.invite);
-      toast.add({
-        description: (await copyToClipboard(url))
-          ? t("feature.users.inviteCopied")
-          : t("feature.users.inviteLink", { url }),
-      });
-    },
-    onError,
   });
 
   const { desktopColumns, mobileColumns } = useMemo<{
@@ -137,40 +87,17 @@ export default function UsersPage() {
       id: "actions",
       header: t("feature.users.column.actions"),
       meta: { alignEnd: true },
-      cell: ({ row }) => {
-        const user = row.original;
-        const suspended = user.status === "suspended";
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon-xs" />}
-              aria-label={t("feature.users.action.menu")}
-            >
-              <MoreHorizontalIcon />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                variant={suspended ? "default" : "destructive"}
-                onClick={() =>
-                  setStatus.mutate({
-                    userId: user.id,
-                    status: suspended ? "active" : "suspended",
-                  })
-                }
-              >
-                {suspended
-                  ? t("feature.users.action.activate")
-                  : t("feature.users.action.suspend")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => regenerateInvite.mutate(user.id)}
-              >
-                {t("feature.users.action.regenerateInvite")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          nativeButton={false}
+          aria-label={t("feature.users.action.edit")}
+          render={<Link to={`/admin/users/${row.original.id}`} />}
+        >
+          <PencilIcon />
+        </Button>
+      ),
     });
 
     return {
@@ -189,7 +116,7 @@ export default function UsersPage() {
         actions,
       ]),
     };
-  }, [t, setStatus, regenerateInvite]);
+  }, [t]);
 
   const sortFields = useMemo<DataTableSortField<UserExtended>[]>(
     () => [

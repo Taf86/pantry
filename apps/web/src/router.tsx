@@ -11,7 +11,7 @@ import MainLayout from "./components/layout/main-layout";
 import ListsPage from "./features/lists/lists-page";
 import RequireAdmin from "./components/guards/require-admin";
 import UsersPage from "./features/admin/users-page";
-import CreateUserPage from "./features/admin/create-user-page";
+import UserPage from "./features/admin/user-page";
 import NotFoundPage from "./components/errors/not-found-page";
 import RequireGuest from "./components/guards/require-guest";
 import InvitesPage from "./features/admin/invites-page";
@@ -52,7 +52,8 @@ const router = createBrowserRouter([
                 children: [
                   { index: true, loader: () => redirect("/admin/users") },
                   { path: "users", element: <UsersPage /> },
-                  { path: "users/create", element: <CreateUserPage /> },
+                  { path: "users/create", element: <UserPage /> },
+                  { path: "users/:userId", element: <UserPage /> },
                   { path: "invites", element: <InvitesPage /> },
                   { path: "requests", element: <RequestsPage /> },
                 ],

@@ -1,5 +1,6 @@
 import {
   type CreateUserInput,
+  type EditUserInput,
   type InviteLink,
   type ListUsersFilters,
   type ListUsersInput,
@@ -85,6 +86,65 @@ export const regenerateInvite = async (
   const user = await requireUser(deps, userId);
   const invite = await issueInviteTx(deps.db, userId, actorId);
   return { user, invite };
+};
+
+export const editUser = async (
+  deps: AdminDeps,
+  actorId: string,
+  input: EditUserInput,
+): Promise<UserExtended> => {
+  const { userId, email, displayName, role, status } = input;
+  const target = await requireUser(deps, userId);
+
+  if (userId === actorId && status !== "active") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "You cannot suspend yourself.",
+    });
+  }
+
+  // Only the last active admin is protected: a user who is not one already
+  // cannot be the reason the system runs out of them.
+  const wasActiveAdmin = target.role === "admin" && target.status === "active";
+  const staysActiveAdmin = role === "admin" && status === "active";
+  if (
+    wasActiveAdmin &&
+    !staysActiveAdmin &&
+    (await countAdmins(deps, userId)) === 0
+  ) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "At least one admin must remain active",
+    });
+  }
+
+  await deps.db.transaction(async (tx) => {
+    if (email !== target.email) {
+      const [existing] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.email, email), ne(users.id, userId)))
+        .limit(1);
+
+      if (existing) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "There is another user with same email.",
+        });
+      }
+    }
+
+    await tx
+      .update(users)
+      .set({ email, displayName, role, status, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+
+    if (status !== "active") {
+      await tx.delete(sessions).where(eq(sessions.userId, userId));
+    }
+  });
+
+  return requireUser(deps, userId);
 };
 
 export const setStatus = async (
