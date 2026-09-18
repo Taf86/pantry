@@ -21,16 +21,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import useErrorMessage from "@/hooks/use-error-message";
+import { inviteUrl } from "@/lib/invites";
 import { keys } from "@/lib/keys";
+import { copyToClipboard } from "@/lib/share";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
-  UserRole,
   UserRoles,
   UserSortFields,
-  UserStatus,
   UserStatuses,
-  type InviteLink,
   type ListUsersFilters,
   type ListUsersInput,
   type UserExtended,
@@ -44,22 +43,13 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { MoreHorizontalIcon } from "lucide-react";
+import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { roleLabelKeys, statusLabelKeys } from "../../lib/user/user-labels";
 
 const columnHelper = createDataTableColumnHelper<UserExtended>();
-
-const statusLabelKeys = {
-  [UserStatus.unactivated]: "feature.users.status.unactivated",
-  [UserStatus.active]: "feature.users.status.active",
-  [UserStatus.suspended]: "feature.users.status.suspended",
-} as const;
-
-const roleLabelKeys = {
-  [UserRole.user]: "feature.users.role.user",
-  [UserRole.admin]: "feature.users.role.admin",
-} as const;
 
 export default function UsersPage() {
   const { t } = useTranslation();
@@ -255,6 +245,14 @@ export default function UsersPage() {
           {t("feature.users.title")}
         </h1>
         <div className="ms-auto flex items-center gap-2">
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={<Link to="/admin/users/create" />}
+          >
+            <PlusIcon data-icon="inline-start" />
+            {t("feature.users.action.create")}
+          </Button>
           <DataTableSort state={table} fields={sortFields} />
           <DataTableFilters state={table} fields={filterFields} />
         </div>
@@ -316,16 +314,4 @@ const toUserFilters = (
     ...(role.length > 0 && { role }),
     ...(status.length > 0 && { status }),
   };
-};
-
-const inviteUrl = (invite: InviteLink) =>
-  new URL(`/invite/${invite.token}`, window.location.origin).href;
-
-const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
 };

@@ -6,7 +6,7 @@ import {
   readLastUser,
   rememberLastUser,
   forgetLastUser,
-} from "@/lib/last-user";
+} from "@/lib/user/last-user";
 import SessionLoader from "../session-loader";
 import ServiceUnavailablePage from "../errors/service-unavailable-page";
 

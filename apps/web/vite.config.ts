@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-import { API_CACHE_NAME } from "./src/lib/pwa";
+import { API_CACHE_NAME } from "./src/lib/pwa.js";
 
 const API_TARGET = process.env["VITE_API_TARGET"] ?? "http://localhost:3000";
 

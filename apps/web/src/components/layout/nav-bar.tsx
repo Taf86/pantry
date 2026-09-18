@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearLocalUserData } from "@/lib/local-data";
-import { forgetLastUser } from "@/lib/last-user";
+import { forgetLastUser } from "@/lib/user/last-user";
 import type { ParseKeys } from "i18next";
 
 const adminPageNavItems = [
