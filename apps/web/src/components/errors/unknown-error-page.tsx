@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -18,9 +19,15 @@ export default function UnknownErrorPage() {
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <EmptyDescription>
-          <a href="/lists">{t("feature.notFound.home")}</a>
-        </EmptyDescription>
+        {/* Full reload on purpose: the app crashed, client-side navigation
+            would keep whatever broken state caused it. */}
+        <Button
+          variant="link"
+          nativeButton={false}
+          render={<a href="/lists" />}
+        >
+          {t("feature.notFound.home")}
+        </Button>
       </EmptyContent>
     </Empty>
   );

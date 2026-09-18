@@ -1,4 +1,6 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,7 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CheckIcon, FilterIcon } from "lucide-react";
+import { FilterIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -71,21 +73,23 @@ export function DataTableFilters<TData>({
           {t("feature.dataTable.filters")}
         </span>
         {activeCount > 0 && (
-          <span className="inline-flex size-4 items-center justify-center bg-primary text-[0.625rem] text-primary-foreground">
+          <Badge className="h-4 min-w-4 px-1 text-[0.625rem]">
             {activeCount}
-          </span>
+          </Badge>
         )}
       </PopoverTrigger>
 
       <PopoverContent
         align="end"
-        className="h-(--available-height) w-(--available-width) sm:h-auto sm:w-80"
+        className="max-h-(--available-height) w-(--available-width) sm:w-80"
       >
         <PopoverHeader>
           <PopoverTitle>{t("feature.dataTable.filters")}</PopoverTitle>
         </PopoverHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
+        {/* overflow-x-hidden: the checkboxes' extended hit area sticks out
+            sideways and would otherwise add a horizontal scrollbar. */}
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto">
           {fields.map((field) => (
             <FilterField
               key={field.columnId}
@@ -135,35 +139,43 @@ function FilterField<TData>({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-muted-foreground">
-        {field.label}
-      </Label>
       {field.filter.kind === "text" ? (
-        <Input
-          id={id}
-          value={typeof value === "string" ? value : ""}
-          placeholder={field.filter.placeholder}
-          onChange={(event) => onChange(event.target.value)}
-        />
+        <>
+          <Label htmlFor={id} className="text-muted-foreground">
+            {field.label}
+          </Label>
+          <Input
+            id={id}
+            value={typeof value === "string" ? value : ""}
+            placeholder={field.filter.placeholder}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </>
       ) : (
-        <OptionsField
-          id={id}
-          options={field.filter.options}
-          selected={Array.isArray(value) ? value : []}
-          onChange={onChange}
-        />
+        <>
+          {/* Not a <label>: it names a group of checkboxes, not a single control. */}
+          <span id={id} className="text-xs leading-none text-muted-foreground">
+            {field.label}
+          </span>
+          <OptionsField
+            labelledBy={id}
+            options={field.filter.options}
+            selected={Array.isArray(value) ? value : []}
+            onChange={onChange}
+          />
+        </>
       )}
     </div>
   );
 }
 
 function OptionsField({
-  id,
+  labelledBy,
   options,
   selected,
   onChange,
 }: {
-  id: string;
+  labelledBy: string;
   options: readonly DataTableFilterOption[];
   selected: string[];
   onChange: (value: string[]) => void;
@@ -176,25 +188,21 @@ function OptionsField({
     );
 
   return (
-    <div id={id} className="flex flex-col">
-      {options.map((option) => {
-        const checked = selected.includes(option.value);
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="checkbox"
-            aria-checked={checked}
-            onClick={() => toggle(option.value)}
-            className="flex items-center gap-2 px-1 py-1.5 text-start text-xs hover:bg-muted"
-          >
-            <span className="flex size-4 shrink-0 items-center justify-center border border-input">
-              {checked && <CheckIcon className="size-3" />}
-            </span>
-            {option.label}
-          </button>
-        );
-      })}
+    <div role="group" aria-labelledby={labelledBy} className="flex flex-col">
+      {options.map((option) => (
+        <Label
+          key={option.value}
+          // py-2 matches the checkbox's own 8px hit area: any less and it
+          // overflows the scroll container below.
+          className="gap-2 px-1 py-2 text-xs hover:bg-muted"
+        >
+          <Checkbox
+            checked={selected.includes(option.value)}
+            onCheckedChange={() => toggle(option.value)}
+          />
+          {option.label}
+        </Label>
+      ))}
     </div>
   );
 }

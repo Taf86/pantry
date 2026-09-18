@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -6,6 +7,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 export default function ErrorPage({
   title,
@@ -22,9 +24,13 @@ export default function ErrorPage({
         <EmptyDescription>{description}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <EmptyDescription>
-          <a href="/lists">{t("feature.notFound.home")}</a>
-        </EmptyDescription>
+        <Button
+          variant="link"
+          nativeButton={false}
+          render={<Link to="/lists" />}
+        >
+          {t("feature.notFound.home")}
+        </Button>
       </EmptyContent>
     </Empty>
   );

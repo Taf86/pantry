@@ -1,4 +1,12 @@
 import { Button } from "@/components/ui/button";
+import {
+  Item,
+  ItemActions,
+  ItemGroup,
+  ItemHeader,
+  ItemTitle,
+} from "@/components/ui/item";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useTable, type RowData } from "@tanstack/react-table";
@@ -83,79 +91,86 @@ export function MobileDataTable<TData extends RowData>({
         )}
       >
         {isPending ? (
-          <div className="flex h-24 items-center justify-center">
-            <Spinner />
-          </div>
+          <ItemGroup className="gap-0">
+            {Array.from({ length: 3 }, (_, index) => (
+              <Item key={index} className={rowClassName}>
+                <ItemHeader>
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-12" />
+                </ItemHeader>
+                <Skeleton className="h-3 w-full" />
+              </Item>
+            ))}
+          </ItemGroup>
         ) : rows.length === 0 ? (
           <div className="flex h-24 items-center justify-center text-muted-foreground">
             {emptyMessage ?? t("feature.dataTable.empty")}
           </div>
         ) : (
-          rows.map((row) => {
-            const cells = row.getAllCells();
-            const [title, ...rest] = cells;
-            const trailing = rest.filter(
-              (cell) => cell.column.columnDef.meta?.alignEnd,
-            );
-            const fields = rest.filter(
-              (cell) => !cell.column.columnDef.meta?.alignEnd,
-            );
+          <ItemGroup className="gap-0">
+            {rows.map((row) => {
+              const cells = row.getAllCells();
+              const [title, ...rest] = cells;
+              const trailing = rest.filter(
+                (cell) => cell.column.columnDef.meta?.alignEnd,
+              );
+              const fields = rest.filter(
+                (cell) => !cell.column.columnDef.meta?.alignEnd,
+              );
 
-            return (
-              <div
-                key={row.id}
-                className="flex flex-col gap-1.5 border-b border-border py-3 last:border-b-0"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  {title && (
-                    <span
-                      className={cn(
-                        "text-sm font-medium",
-                        title.column.columnDef.meta?.cellClassName,
-                      )}
-                    >
-                      <table.FlexRender cell={title} />
-                    </span>
-                  )}
-                  {trailing.length > 0 && (
-                    <span className="flex shrink-0 items-center gap-1">
-                      {trailing.map((cell) => (
-                        <table.FlexRender key={cell.id} cell={cell} />
-                      ))}
-                    </span>
-                  )}
-                </div>
+              return (
+                <Item key={row.id} className={rowClassName}>
+                  <ItemHeader className="items-start">
+                    {title && (
+                      <ItemTitle
+                        className={cn(
+                          "text-sm",
+                          title.column.columnDef.meta?.cellClassName,
+                        )}
+                      >
+                        <table.FlexRender cell={title} />
+                      </ItemTitle>
+                    )}
+                    {trailing.length > 0 && (
+                      <ItemActions className="gap-1">
+                        {trailing.map((cell) => (
+                          <table.FlexRender key={cell.id} cell={cell} />
+                        ))}
+                      </ItemActions>
+                    )}
+                  </ItemHeader>
 
-                {fields.length > 0 && (
-                  <dl className="flex flex-col gap-1">
-                    {fields.map((cell) => {
-                      const header = headers.get(cell.column.id);
-                      return (
-                        <div
-                          key={cell.id}
-                          className="flex items-baseline justify-between gap-3"
-                        >
-                          <dt className="text-muted-foreground">
-                            {header && !header.isPlaceholder && (
-                              <table.FlexRender header={header} />
-                            )}
-                          </dt>
-                          <dd
-                            className={cn(
-                              "text-end",
-                              cell.column.columnDef.meta?.cellClassName,
-                            )}
+                  {fields.length > 0 && (
+                    <dl className="flex w-full flex-col gap-1">
+                      {fields.map((cell) => {
+                        const header = headers.get(cell.column.id);
+                        return (
+                          <div
+                            key={cell.id}
+                            className="flex items-baseline justify-between gap-3"
                           >
-                            <table.FlexRender cell={cell} />
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
-                )}
-              </div>
-            );
-          })
+                            <dt className="text-muted-foreground">
+                              {header && !header.isPlaceholder && (
+                                <table.FlexRender header={header} />
+                              )}
+                            </dt>
+                            <dd
+                              className={cn(
+                                "text-end",
+                                cell.column.columnDef.meta?.cellClassName,
+                              )}
+                            >
+                              <table.FlexRender cell={cell} />
+                            </dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                  )}
+                </Item>
+              );
+            })}
+          </ItemGroup>
         )}
       </div>
 
@@ -178,6 +193,13 @@ export function MobileDataTable<TData extends RowData>({
     </div>
   );
 }
+
+// Rows read as a divided list, like the desktop table, not as separate cards.
+// Item draws a border on all four sides, transparent by default: the side ones
+// inset the content by a pixel and the top one stacks onto the row above's
+// divider, making it look thicker. Only the bottom border is kept.
+const rowClassName =
+  "gap-1.5 border-x-0 border-t-0 border-b border-border px-0 py-3 last:border-b-0";
 
 interface LoadedPages<TData> {
   signature: string;

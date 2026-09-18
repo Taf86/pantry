@@ -6,6 +6,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
@@ -66,8 +67,7 @@ export function DataTableSort<TData>({
           {fields.map((field) => {
             const current =
               active && active.id === field.columnId ? active : undefined;
-            const ascending = current !== undefined && !current.desc;
-            const descending = current?.desc === true;
+            const direction = current ? (current.desc ? "desc" : "asc") : null;
 
             return (
               <div
@@ -77,26 +77,33 @@ export function DataTableSort<TData>({
                 <span className={cn(current && "font-medium")}>
                   {field.label}
                 </span>
-                <span className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant={ascending ? "outline" : "ghost"}
-                    size="icon-xs"
-                    aria-pressed={ascending}
+                <ToggleGroup
+                  value={direction === null ? [] : [direction]}
+                  // Re-pressing the active direction clears the group value:
+                  // ignore it, the column stays sorted the way it is.
+                  onValueChange={(next: unknown[]) => {
+                    const [value] = next;
+                    if (value === "asc" || value === "desc") {
+                      sortBy(field.columnId, value === "desc");
+                    }
+                  }}
+                  size="sm"
+                  spacing={1}
+                  className="shrink-0"
+                >
+                  <ToggleGroupItem
+                    value="asc"
                     aria-label={`${field.label}: ${t("feature.dataTable.sortAscending")}`}
-                    onClick={() => sortBy(field.columnId, false)}
                   >
                     <ArrowUpIcon />
-                  </Button>
-                  <Button
-                    variant={descending ? "outline" : "ghost"}
-                    size="icon-xs"
-                    aria-pressed={descending}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="desc"
                     aria-label={`${field.label}: ${t("feature.dataTable.sortDescending")}`}
-                    onClick={() => sortBy(field.columnId, true)}
                   >
                     <ArrowDownIcon />
-                  </Button>
-                </span>
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
             );
           })}

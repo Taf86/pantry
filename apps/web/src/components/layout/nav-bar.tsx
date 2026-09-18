@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
@@ -23,7 +24,14 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import useRequireAuth from "@/hooks/use-require-auth";
 import type { User } from "@pantry/shared";
 import { signOut } from "@/lib/auth-client";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Separator } from "../ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
@@ -94,8 +102,8 @@ export default function NavBar() {
   return (
     <header className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-screen-2xl items-center gap-1 px-4">
-        <Popover open={navOpen} onOpenChange={setNavOpen} modal>
-          <PopoverTrigger
+        <Sheet open={navOpen} onOpenChange={setNavOpen}>
+          <SheetTrigger
             render={
               <Button
                 variant="ghost"
@@ -122,14 +130,11 @@ export default function NavBar() {
             <span className="flex h-8 items-center text-base leading-none font-medium">
               {t("feature.navBar.menu")}
             </span>
-          </PopoverTrigger>
-          <PopoverContent
-            align="start"
-            side="bottom"
-            alignOffset={-16}
-            sideOffset={14}
-            className="bg-background/90 h-(--available-height) w-(--available-width) overflow-y-auto rounded-none border-none ring-0 p-0 shadow-none backdrop-blur duration-100"
-          >
+          </SheetTrigger>
+          <SheetContent side="left" className="w-3/4 overflow-y-auto">
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("feature.navBar.menu")}</SheetTitle>
+            </SheetHeader>
             <nav
               aria-label="Navigazione principale"
               className="flex flex-col gap-6 px-6 py-8"
@@ -145,8 +150,8 @@ export default function NavBar() {
                 </Link>
               ))}
             </nav>
-          </PopoverContent>
-        </Popover>
+          </SheetContent>
+        </Sheet>
 
         <nav
           aria-label="Navigazione principale"
@@ -178,7 +183,7 @@ export default function NavBar() {
             ))}
         </div>
 
-        <div aria-hidden="true" className="bg-border mx-2 h-5 w-px" />
+        <Separator orientation="vertical" className="mx-2 h-5 self-auto" />
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -197,21 +202,23 @@ export default function NavBar() {
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={10} className="w-64">
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <Avatar className="size-8 shrink-0">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
-                  {initial}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid min-w-0 flex-1 leading-tight">
-                <span className="truncate text-sm font-medium">
-                  {user.displayName}
-                </span>
-                <span className="text-muted-foreground truncate text-xs">
-                  {user.email}
-                </span>
+            <DropdownMenuLabel className="p-0 text-foreground">
+              <div className="flex items-center gap-2 px-2 py-1.5">
+                <Avatar className="size-8 shrink-0">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                    {initial}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="grid min-w-0 flex-1 leading-tight">
+                  <span className="truncate text-sm font-medium">
+                    {user.displayName}
+                  </span>
+                  <span className="text-muted-foreground truncate text-xs">
+                    {user.email}
+                  </span>
+                </div>
               </div>
-            </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void logout()}>
               <LogOutIcon data-icon="inline-start" />

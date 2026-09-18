@@ -1,12 +1,17 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -25,7 +30,6 @@ import {
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
@@ -137,13 +141,15 @@ export function DesktopDataTable<TData extends RowData>({
           )}
         >
           {isPending ? (
-            <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={leafHeaders.length} className="h-24">
-                <div className="flex items-center justify-center">
-                  <Spinner />
-                </div>
-              </TableCell>
-            </TableRow>
+            Array.from({ length: Math.min(pageSize, 5) }, (_, index) => (
+              <TableRow key={index} className="hover:bg-transparent">
+                {leafHeaders.map((header) => (
+                  <TableCell key={header.id}>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
           ) : rows.length === 0 ? (
             <TableRow className="hover:bg-transparent">
               <TableCell
@@ -182,72 +188,81 @@ export function DesktopDataTable<TData extends RowData>({
         </span>
 
         <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="xs" />}
+          <Select
+            value={pageSize}
+            onValueChange={(value: unknown) => {
+              if (typeof value === "number") table.setPageSize(value);
+            }}
+          >
+            <SelectTrigger
+              size="sm"
+              className="w-auto border-transparent"
               aria-label={t("feature.dataTable.pageSize")}
             >
-              {t("feature.dataTable.pageSize")}: {pageSize}
-              <ChevronDownIcon data-icon="inline-end" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-auto min-w-24">
-              <DropdownMenuRadioGroup
-                value={pageSize}
-                onValueChange={(value: unknown) => {
-                  if (typeof value === "number") table.setPageSize(value);
-                }}
-              >
-                {pageSizeOptions.map((option) => (
-                  <DropdownMenuRadioItem key={option} value={option}>
-                    {option}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              {t("feature.dataTable.pageSize")}:
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end" className="w-auto min-w-24">
+              {pageSizeOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <span>
             {t("feature.dataTable.page", { page: pageIndex + 1, pageCount })}
           </span>
 
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-xs"
-              aria-label={t("feature.dataTable.firstPage")}
-              disabled={!table.getCanPreviousPage()}
-              onClick={() => table.firstPage()}
-            >
-              <ChevronsLeftIcon />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              aria-label={t("feature.dataTable.previousPage")}
-              disabled={!table.getCanPreviousPage()}
-              onClick={() => table.previousPage()}
-            >
-              <ChevronLeftIcon />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              aria-label={t("feature.dataTable.nextPage")}
-              disabled={!table.getCanNextPage()}
-              onClick={() => table.nextPage()}
-            >
-              <ChevronRightIcon />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-xs"
-              aria-label={t("feature.dataTable.lastPage")}
-              disabled={!table.getCanNextPage()}
-              onClick={() => table.lastPage()}
-            >
-              <ChevronsRightIcon />
-            </Button>
-          </div>
+          <Pagination className="mx-0 w-auto justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="icon-xs"
+                  aria-label={t("feature.dataTable.firstPage")}
+                  disabled={!table.getCanPreviousPage()}
+                  onClick={() => table.firstPage()}
+                >
+                  <ChevronsLeftIcon />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="icon-xs"
+                  aria-label={t("feature.dataTable.previousPage")}
+                  disabled={!table.getCanPreviousPage()}
+                  onClick={() => table.previousPage()}
+                >
+                  <ChevronLeftIcon />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="icon-xs"
+                  aria-label={t("feature.dataTable.nextPage")}
+                  disabled={!table.getCanNextPage()}
+                  onClick={() => table.nextPage()}
+                >
+                  <ChevronRightIcon />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="icon-xs"
+                  aria-label={t("feature.dataTable.lastPage")}
+                  disabled={!table.getCanNextPage()}
+                  onClick={() => table.lastPage()}
+                >
+                  <ChevronsRightIcon />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>

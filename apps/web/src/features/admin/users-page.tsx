@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import useErrorMessage from "@/hooks/use-error-message";
@@ -279,16 +280,12 @@ const noUsers: UserExtended[] = [];
 function StatusBadge({ status }: { status: UserStatusValue }) {
   const { t } = useTranslation();
   return (
-    <span
-      className={cn(
-        "inline-flex items-center px-1.5 py-0.5 text-xs ring-1 ring-inset",
-        status === "active" && "text-foreground ring-border",
-        status === "unactivated" && "text-muted-foreground ring-border",
-        status === "suspended" && "text-destructive ring-destructive/40",
-      )}
+    <Badge
+      variant={status === "suspended" ? "destructive" : "outline"}
+      className={cn(status === "unactivated" && "text-muted-foreground")}
     >
       {t(statusLabelKeys[status])}
-    </span>
+    </Badge>
   );
 }
 
