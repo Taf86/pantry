@@ -10,7 +10,7 @@ import RequireAuth from "./components/guards/require-auth/require-auth";
 import MainLayout from "./components/layout/main-layout";
 import ListsPage from "./features/lists/lists-page";
 import RequireAdmin from "./components/guards/require-admin";
-import UsersPage from "./features/admin/users-page";
+import UsersPage from "./features/admin/users/users-page";
 import UserPage from "./features/admin/user-page";
 import NotFoundPage from "./components/errors/not-found-page";
 import RequireGuest from "./components/guards/require-guest";

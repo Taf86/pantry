@@ -89,7 +89,16 @@
       },
       "action": {
         "edit": "Edit",
-        "create": "New user"
+        "create": "New user",
+        "delete": "Delete"
+      },
+      "delete": {
+        "title": "Delete {{displayName}}?",
+        "description": "The account, its sessions and every invite linked to it are removed for good. Invites this user issued to others are removed too. This cannot be undone.",
+        "confirm": "Delete",
+        "cancel": "Cancel",
+        "done": "{{displayName}} has been deleted.",
+        "notAllowed": "Not allowed: at least one active administrator must remain and you cannot delete your own account."
       },
       "form": {
         "createTitle": "New user",

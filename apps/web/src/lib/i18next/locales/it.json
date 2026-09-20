@@ -89,7 +89,16 @@
       },
       "action": {
         "edit": "Modifica",
-        "create": "Crea utente"
+        "create": "Crea utente",
+        "delete": "Elimina"
+      },
+      "delete": {
+        "title": "Eliminare {{displayName}}?",
+        "description": "L'account, le sue sessioni e tutti gli inviti collegati vengono rimossi definitivamente, compresi gli inviti che questo utente ha emesso per altri. L'operazione non è reversibile.",
+        "confirm": "Elimina",
+        "cancel": "Annulla",
+        "done": "{{displayName}} è stato eliminato.",
+        "notAllowed": "Operazione non consentita: deve restare almeno un amministratore attivo e non puoi eliminare il tuo account."
       },
       "form": {
         "createTitle": "Crea utente",

@@ -23,6 +23,7 @@ import {
   ilike,
   inArray,
   ne,
+  or,
   type SQL,
 } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
@@ -30,6 +31,8 @@ import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 import { issueInviteTx } from "./invites.service.js";
 import { sessions } from "../../db/schema/sessions.js";
+import { accounts } from "../../db/schema/accounts.js";
+import { invites } from "../../db/schema/invites.js";
 
 export const listUsers = async (
   deps: AdminDeps,
@@ -184,6 +187,47 @@ export const setStatus = async (
   });
 
   return requireUser(deps, userId);
+};
+
+export const deleteUser = async (
+  deps: AdminDeps,
+  actorId: string,
+  userId: string,
+): Promise<UserExtended> => {
+  if (userId === actorId) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "You cannot delete yourself.",
+    });
+  }
+
+  const target = await requireUser(deps, userId);
+
+  if (
+    target.role === "admin" &&
+    target.status === "active" &&
+    (await countAdmins(deps, userId)) === 0
+  ) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "At least one admin must remain active",
+    });
+  }
+
+  // Foreign keys already cascade, but Better Auth's own deleteUser wipes
+  // sessions and accounts explicitly; mirroring it keeps the behaviour the
+  // same if a table ever loses its cascade. Invites go both ways: the ones
+  // addressed to this user and the ones they issued to others.
+  await deps.db.transaction(async (tx) => {
+    await tx.delete(sessions).where(eq(sessions.userId, userId));
+    await tx.delete(accounts).where(eq(accounts.userId, userId));
+    await tx
+      .delete(invites)
+      .where(or(eq(invites.userId, userId), eq(invites.createdBy, userId)));
+    await tx.delete(users).where(eq(users.id, userId));
+  });
+
+  return target;
 };
 
 export const setRole = async (

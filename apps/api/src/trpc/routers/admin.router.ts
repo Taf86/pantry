@@ -8,6 +8,7 @@ import {
 } from "@pantry/shared";
 import {
   createUser,
+  deleteUser,
   editUser,
   listUsers,
   regenerateInvite,
@@ -32,6 +33,10 @@ export const adminRouter = router({
     edit: adminProcedure
       .input(editUserInputSchema)
       .mutation(({ ctx, input }) => editUser(ctx, ctx.user.id, input)),
+
+    delete: adminProcedure
+      .input(userIdInputSchema)
+      .mutation(({ ctx, input }) => deleteUser(ctx, ctx.user.id, input.userId)),
 
     regenerateInvite: adminProcedure
       .input(userIdInputSchema)

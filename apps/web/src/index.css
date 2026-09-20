@@ -130,4 +130,10 @@
   #root {
     @apply flex min-h-svh flex-col;
   }
+  /* Tailwind v4 dropped this from preflight to match the browser default.
+     Menu and select items opt back out with their own cursor-default. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }

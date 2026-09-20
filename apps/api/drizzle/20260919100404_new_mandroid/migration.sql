@@ -1,0 +1,1 @@
+ALTER TABLE "invites" DROP CONSTRAINT "invites_created_by_users_id_fkey", ADD CONSTRAINT "invites_created_by_users_id_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE CASCADE;
