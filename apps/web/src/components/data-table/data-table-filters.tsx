@@ -153,7 +153,6 @@ function FilterField<TData>({
         </>
       ) : (
         <>
-          {/* Not a <label>: it names a group of checkboxes, not a single control. */}
           <span id={id} className="text-xs leading-none text-muted-foreground">
             {field.label}
           </span>
@@ -192,8 +191,6 @@ function OptionsField({
       {options.map((option) => (
         <Label
           key={option.value}
-          // py-2 matches the checkbox's own 8px hit area: any less and it
-          // overflows the scroll container below.
           className="gap-2 px-1 py-2 text-xs hover:bg-muted"
         >
           <Checkbox

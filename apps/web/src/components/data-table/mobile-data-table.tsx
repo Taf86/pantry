@@ -197,9 +197,10 @@ export function MobileDataTable<TData extends RowData>({
 // Rows read as a divided list, like the desktop table, not as separate cards.
 // Item draws a border on all four sides, transparent by default: the side ones
 // inset the content by a pixel and the top one stacks onto the row above's
-// divider, making it look thicker. Only the bottom border is kept.
+// divider, making it look thicker. Only the bottom border is kept, on every row
+// including the last one, so the list closes the way the table's border-t opens it.
 const rowClassName =
-  "gap-1.5 border-x-0 border-t-0 border-b border-border px-0 py-3 last:border-b-0";
+  "gap-1.5 border-x-0 border-t-0 border-b border-border px-0 py-3";
 
 interface LoadedPages<TData> {
   signature: string;

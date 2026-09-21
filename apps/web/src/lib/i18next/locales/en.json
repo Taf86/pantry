@@ -138,6 +138,27 @@
         "mailBody": "Hi {{displayName}},\r\nyour Pantry account is ready. Activate it here:\r\n\r\n{{url}}\r\n\r\nThe link expires in a few days."
       }
     },
+    "invites": {
+      "title": "Invites",
+      "empty": "No invite yet.",
+      "column": {
+        "user": "User",
+        "usedAt": "Used at",
+        "expiresAt": "Expires at",
+        "createdBy": "Created by",
+        "actions": "Actions"
+      },
+      "action": {
+        "delete": "Delete"
+      },
+      "delete": {
+        "title": "Delete the invite for {{displayName}}?",
+        "description": "The link stops working right away. If the user hasn't activated the account yet, you will have to issue a new invite. This cannot be undone.",
+        "confirm": "Delete",
+        "cancel": "Cancel",
+        "done": "The invite for {{displayName}} has been deleted."
+      }
+    },
     "invite": {
       "signUp": "Sign up",
       "welcome": "Welcome {{displayName}}, choose a password for {{email}} account.",

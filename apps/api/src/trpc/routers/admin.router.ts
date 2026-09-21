@@ -1,11 +1,17 @@
 import {
   createUserInputSchema,
   editUserInputSchema,
+  inviteIdInputSchema,
+  listInvitesInputSchema,
   listUsersInputSchema,
   setUserRoleInputSchema,
   setUserStatusInputSchema,
   userIdInputSchema,
 } from "@pantry/shared";
+import {
+  deleteInvite,
+  listInvites,
+} from "../../services/admin/invites.service.js";
 import {
   createUser,
   deleteUser,
@@ -51,5 +57,15 @@ export const adminRouter = router({
     setRole: adminProcedure
       .input(setUserRoleInputSchema)
       .mutation(({ ctx, input }) => setRole(ctx, input)),
+  }),
+
+  invites: router({
+    list: adminProcedure
+      .input(listInvitesInputSchema)
+      .query(({ ctx, input }) => listInvites(ctx, input)),
+
+    delete: adminProcedure
+      .input(inviteIdInputSchema)
+      .mutation(({ ctx, input }) => deleteInvite(ctx, input.inviteId)),
   }),
 });

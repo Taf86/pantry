@@ -3,11 +3,27 @@ import {
   INVITE_TTL_DAYS,
   serializeDates,
   type AcceptInviteInput,
+  type InviteExtended,
   type InviteLink,
   type InvitePreview,
+  type InviteSort,
+  type InviteSortField,
+  type ListInvitesInput,
+  type ListInvitesResult,
   type PreviewInviteInput,
 } from "@pantry/shared";
-import { and, eq, gt, isNull, ne } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  isNull,
+  ne,
+  type SQL,
+} from "drizzle-orm";
+import { alias, type PgColumn } from "drizzle-orm/pg-core";
 
 import type { Database, Executor } from "../../db/client.js";
 import { invites } from "../../db/schema/invites.js";
@@ -38,6 +54,54 @@ export const issueInviteTx = async (
   });
 
   return { userId, token, expiresAt: expiresAt.toISOString() };
+};
+
+export const listInvites = async (
+  deps: InviteListDeps,
+  input: ListInvitesInput,
+): Promise<ListInvitesResult> => {
+  const { pageIndex, pageSize } = input.pagination;
+
+  const [rows, rowCount] = await Promise.all([
+    deps.db
+      .select(inviteSelection)
+      .from(invites)
+      .innerJoin(users, eq(users.id, invites.userId))
+      .innerJoin(creators, eq(creators.id, invites.createdBy))
+      .orderBy(...buildInviteOrder(input.sorting))
+      .limit(pageSize)
+      .offset(pageIndex * pageSize),
+    countInvites(deps),
+  ]);
+
+  return { rows: rows.map(serializeDates), rowCount };
+};
+
+export const requireInvite = async (
+  deps: InviteListDeps,
+  inviteId: string,
+): Promise<InviteExtended> => {
+  const [row] = await deps.db
+    .select(inviteSelection)
+    .from(invites)
+    .innerJoin(users, eq(users.id, invites.userId))
+    .innerJoin(creators, eq(creators.id, invites.createdBy))
+    .where(eq(invites.id, inviteId))
+    .limit(1);
+
+  if (!row) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Invite not existing." });
+  }
+  return serializeDates(row);
+};
+
+export const deleteInvite = async (
+  deps: InviteListDeps,
+  inviteId: string,
+): Promise<InviteExtended> => {
+  const invite = await requireInvite(deps, inviteId);
+  await deps.db.delete(invites).where(eq(invites.id, inviteId));
+  return invite;
 };
 
 export const previewInvite = async (
@@ -148,6 +212,53 @@ export const acceptInvite = async (
 
     return { email: user.email };
   });
+};
+
+interface InviteListDeps {
+  db: Database;
+}
+
+// The invite points at two users: the one it was addressed to and the one who
+// issued it, so the users table joins twice and the second join needs an alias.
+const creators = alias(users, "creators");
+
+const inviteSelection = {
+  id: invites.id,
+  user: {
+    id: users.id,
+    email: users.email,
+    displayName: users.displayName,
+    status: users.status,
+  },
+  createdBy: {
+    id: creators.id,
+    email: creators.email,
+    displayName: creators.displayName,
+  },
+  usedAt: invites.usedAt,
+  expiresAt: invites.expiresAt,
+  createdAt: invites.createdAt,
+};
+
+const sortableColumns = {
+  user: users.displayName,
+  usedAt: invites.usedAt,
+  expiresAt: invites.expiresAt,
+  createdBy: creators.displayName,
+} satisfies Record<InviteSortField, PgColumn>;
+
+const buildInviteOrder = (sorting: InviteSort[]): SQL[] => {
+  const order = sorting.map((sort) =>
+    sort.desc ? desc(sortableColumns[sort.id]) : asc(sortableColumns[sort.id]),
+  );
+  return order.length > 0
+    ? [...order, asc(invites.id)]
+    : [desc(invites.createdAt), asc(invites.id)];
+};
+
+const countInvites = async (deps: InviteListDeps) => {
+  const [row] = await deps.db.select({ value: count() }).from(invites);
+  return row?.value ?? 0;
 };
 
 const CREDENTIAL_PROVIDER = "credential";

@@ -138,6 +138,27 @@
         "mailBody": "Ciao {{displayName}},\r\nil tuo account Pantry è pronto. Attivalo qui:\r\n\r\n{{url}}\r\n\r\nIl link scade tra qualche giorno."
       }
     },
+    "invites": {
+      "title": "Inviti",
+      "empty": "Nessun invito presente.",
+      "column": {
+        "user": "Utente",
+        "usedAt": "Utilizzato il",
+        "expiresAt": "Scade il",
+        "createdBy": "Creato da",
+        "actions": "Azioni"
+      },
+      "action": {
+        "delete": "Elimina"
+      },
+      "delete": {
+        "title": "Eliminare l'invito per {{displayName}}?",
+        "description": "Il link smette di funzionare subito. Se l'utente non ha ancora attivato l'account, dovrai generargli un nuovo invito. L'operazione non è reversibile.",
+        "confirm": "Elimina",
+        "cancel": "Annulla",
+        "done": "L'invito per {{displayName}} è stato eliminato."
+      }
+    },
     "invite": {
       "signUp": "Registrati",
       "welcome": "Benvenuto/a {{displayName}}, scegli una password per l'account {{email}}.",

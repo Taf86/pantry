@@ -14,7 +14,7 @@ import UsersPage from "./features/admin/users/users-page";
 import UserPage from "./features/admin/user-page";
 import NotFoundPage from "./components/errors/not-found-page";
 import RequireGuest from "./components/guards/require-guest";
-import InvitesPage from "./features/admin/invites-page";
+import InvitesPage from "./features/admin/invites/invites-page";
 import RequestsPage from "./features/admin/requests-page";
 import ShoppingPage from "./features/shopping/shopping-page";
 import PantriesPage from "./features/pantries/pantries-page";
