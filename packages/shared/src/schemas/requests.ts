@@ -8,7 +8,7 @@ import {
 } from "./common.js";
 import type { UserExtended, UserRef } from "./users.js";
 import type { InviteLink } from "./invites.js";
-import { MAX_CONTACT_LENGTH, MAX_NOTE_LENGTH } from "../constants.js";
+import { MAX_CONTACT_LENGTH } from "../constants.js";
 
 export const RequestType = {
   signup: "signup",
@@ -34,15 +34,12 @@ export const RequestStatuses = [
 ] as const;
 export const requestStatusSchema = z.enum(RequestStatus);
 
-export const noteSchema = z.string().trim().max(MAX_NOTE_LENGTH);
-
 export type RequestExtended = {
   id: string;
   type: RequestType;
   status: RequestStatus;
   email: string;
   displayName: string | null;
-  note: string | null;
   user: UserRef | null;
   decidedBy: UserRef | null;
   decidedAt: string | null;
@@ -54,12 +51,10 @@ export const createRequestInputSchema = z.discriminatedUnion("type", [
     type: z.literal(RequestType.signup),
     email: emailSchema,
     displayName: nameSchema,
-    note: noteSchema.optional(),
   }),
   z.object({
     type: z.literal(RequestType.reset_password),
     email: emailSchema,
-    note: noteSchema.optional(),
   }),
 ]);
 export type CreateRequestInput = z.infer<typeof createRequestInputSchema>;

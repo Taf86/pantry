@@ -59,7 +59,6 @@ describe("requests", () => {
       type: "signup",
       email,
       displayName: "Newcomer",
-      note: "Let me in",
     });
 
   const reset = (email: string) =>
@@ -73,7 +72,6 @@ describe("requests", () => {
     expect(request.status).toBe("pending");
     expect(request.email).toBe("newcomer@example.com");
     expect(request.displayName).toBe("Newcomer");
-    expect(request.note).toBe("Let me in");
     expect(request.user).toBeNull();
     expect(request.decidedBy).toBeNull();
     expect(request.decidedAt).toBeNull();

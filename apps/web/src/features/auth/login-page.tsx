@@ -18,13 +18,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "@/components/form-field";
 import { useTranslation } from "react-i18next";
 import { requiredString } from "@/lib/zod";
 import useErrorMessage from "@/hooks/use-error-message";
+import { PasswordInput } from "@/components/password-input";
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -67,7 +68,11 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="w-full max-w-md">
+    <div className="flex w-full max-w-md flex-col gap-6">
+      <h1 className="font-heading text-2xl font-medium tracking-tight">
+        Pantry
+      </h1>
+
       <form onSubmit={(e) => void form.handleSubmit(onValid)(e)}>
         <FieldGroup>
           <FieldSet>
@@ -94,11 +99,11 @@ export default function LoginPage() {
                 label={t("feature.login.password")}
               >
                 {({ field, invalid }) => (
-                  <Input
+                  <PasswordInput
                     {...field}
                     id={field.name}
                     aria-invalid={invalid}
-                    type="password"
+                    autoComplete="current-password"
                   />
                 )}
               </FormField>
@@ -119,6 +124,27 @@ export default function LoginPage() {
           <Field orientation="horizontal">
             <Button type="submit" disabled={loading}>
               {t("feature.login.signIn")}
+            </Button>
+          </Field>
+
+          {/* No email goes out, so neither path is self-service: both open a
+              request an administrator answers by hand. */}
+          <Field orientation="horizontal" className="flex-wrap">
+            <Button
+              variant="link"
+              size="sm"
+              nativeButton={false}
+              render={<Link to="/signup" />}
+            >
+              {t("feature.login.requestAccount")}
+            </Button>
+            <Button
+              variant="link"
+              size="sm"
+              nativeButton={false}
+              render={<Link to="/reset" />}
+            >
+              {t("feature.login.forgotPassword")}
             </Button>
           </Field>
         </FieldGroup>

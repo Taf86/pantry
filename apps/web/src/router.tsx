@@ -1,3 +1,4 @@
+import { RequestType } from "@pantry/shared";
 import {
   createBrowserRouter,
   redirect,
@@ -15,7 +16,8 @@ import UserPage from "./features/admin/user-page";
 import NotFoundPage from "./components/errors/not-found-page";
 import RequireGuest from "./components/guards/require-guest";
 import InvitesPage from "./features/admin/invites/invites-page";
-import RequestsPage from "./features/admin/requests-page";
+import RequestsPage from "./features/admin/requests/requests-page";
+import RequestPage from "./features/auth/request-page";
 import ShoppingPage from "./features/shopping/shopping-page";
 import PantriesPage from "./features/pantries/pantries-page";
 import UnknownErrorPage from "./components/errors/unknown-error-page";
@@ -31,7 +33,17 @@ const router = createBrowserRouter([
         children: [
           {
             element: <Layout />,
-            children: [{ path: "login", element: <LoginPage /> }],
+            children: [
+              { path: "login", element: <LoginPage /> },
+              {
+                path: "signup",
+                element: <RequestPage type={RequestType.signup} />,
+              },
+              {
+                path: "reset",
+                element: <RequestPage type={RequestType.reset_password} />,
+              },
+            ],
           },
         ],
       },

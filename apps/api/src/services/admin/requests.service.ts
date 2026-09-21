@@ -59,7 +59,6 @@ export const createRequest = async (
       type: input.type,
       email: input.email,
       displayName: input.type === RequestType.signup ? input.displayName : null,
-      note: input.note ?? null,
     })
     .onConflictDoNothing({
       target: requests.email,
@@ -290,7 +289,6 @@ const requestSelection = {
   status: requests.status,
   email: requests.email,
   displayName: requests.displayName,
-  note: requests.note,
   user: {
     id: subjects.id,
     email: subjects.email,

@@ -1,6 +1,8 @@
 {
   "common": {
-    "submit": "Invia"
+    "submit": "Invia",
+    "showPassword": "Mostra la password",
+    "hidePassword": "Nascondi la password"
   },
   "error": {
     "auth": { "invalidCredentials": "Credenziali non valide" },
@@ -66,7 +68,9 @@
       "email": "Email",
       "password": "Password",
       "failed": "Accesso non riuscito",
-      "signIn": "Accedi"
+      "signIn": "Accedi",
+      "requestAccount": "Richiedi account",
+      "forgotPassword": "Ti sei dimenticato la password?"
     },
     "users": {
       "title": "Utenti",
@@ -109,13 +113,11 @@
         "email": "Email",
         "role": "Ruolo",
         "status": "Stato",
-        "link": "Link d'invito",
         "linkPendingCreate": "Generato dopo la creazione",
         "linkPendingEdit": "Nessun link generato",
         "generate": "Genera link",
         "linkWarningTitleCreate": "Utente creato",
         "linkWarningTitleEdit": "Nuovo link d'invito",
-        "linkWarning": "Questa è l'unica volta in cui il link d'invito viene mostrato. Non sarà più recuperabile: se lo perdi, generane uno nuovo.",
         "createFailed": "Creazione non riuscita",
         "editFailed": "Modifica non riuscita",
         "notFoundTitle": "Utente non trovato",
@@ -126,17 +128,21 @@
         "create": "Crea",
         "save": "Salva",
         "cancel": "Annulla",
-        "copy": "Copia",
-        "copied": "Link d'invito copiato negli appunti.",
-        "copyFailed": "Non è stato possibile copiare il link. Selezionalo e copialo a mano.",
-        "share": "Condividi",
-        "shareFailed": "Condivisione non riuscita.",
-        "sendEmail": "Email",
-        "close": "Chiudi",
-        "shareText": "Invito per {{displayName}} ({{email}}) su Pantry",
-        "mailSubject": "Il tuo invito a Pantry",
-        "mailBody": "Ciao {{displayName}},\r\nil tuo account Pantry è pronto. Attivalo qui:\r\n\r\n{{url}}\r\n\r\nIl link scade tra qualche giorno."
+        "close": "Chiudi"
       }
+    },
+    "inviteLink": {
+      "label": "Link d'invito",
+      "warning": "Questa è l'unica volta in cui il link d'invito viene mostrato. Non sarà più recuperabile: se lo perdi, generane uno nuovo.",
+      "copy": "Copia",
+      "copied": "Link d'invito copiato negli appunti.",
+      "copyFailed": "Non è stato possibile copiare il link. Selezionalo e copialo a mano.",
+      "share": "Condividi",
+      "shareFailed": "Condivisione non riuscita.",
+      "sendEmail": "Email",
+      "shareText": "Invito per {{displayName}} ({{email}}) su Pantry",
+      "mailSubject": "Il tuo invito a Pantry",
+      "mailBody": "Ciao {{displayName}},\r\nil tuo account Pantry è pronto. Attivalo qui:\r\n\r\n{{url}}\r\n\r\nIl link scade tra qualche giorno."
     },
     "invites": {
       "title": "Inviti",
@@ -172,6 +178,69 @@
       "manualLogin": "Account attivato, ora puoi accedere.",
       "password": "Password",
       "confirmation": "Conferma password"
+    },
+    "requests": {
+      "title": "Richieste",
+      "empty": "Nessuna richiesta corrisponde ai filtri.",
+      "column": {
+        "email": "Email",
+        "name": "Nome",
+        "type": "Tipo",
+        "status": "Stato",
+        "createdAt": "Ricevuta il",
+        "decidedBy": "Decisa da",
+        "actions": "Azioni"
+      },
+      "type": {
+        "signup": "Nuovo account",
+        "resetPassword": "Reset password"
+      },
+      "status": {
+        "pending": "Da decidere",
+        "approved": "Accettata",
+        "rejected": "Rifiutata"
+      },
+      "action": {
+        "accept": "Accetta",
+        "reject": "Rifiuta"
+      },
+      "accepted": {
+        "title": "Richiesta accettata",
+        "description": "Consegna questo link a {{displayName}} ({{email}}): la password la sceglie da sé.",
+        "warningTitle": "Link generato",
+        "close": "Chiudi"
+      },
+      "reject": {
+        "title": "Rifiutare la richiesta di {{email}}?",
+        "description": "Non viene creato nessun account e non viene generato nessun link. Lo stesso indirizzo potrà richiederlo di nuovo più avanti.",
+        "confirm": "Rifiuta",
+        "cancel": "Annulla",
+        "done": "La richiesta di {{email}} è stata rifiutata."
+      },
+      "error": {
+        "decided": "La richiesta è già stata decisa, oppure esiste già un utente con questa email.",
+        "noAccount": "Nessun account corrisponde a questo indirizzo, oppure la richiesta non esiste più.",
+        "suspended": "L'account è sospeso: riattivalo prima di generare un nuovo link."
+      }
+    },
+    "request": {
+      "signup": {
+        "title": "Richiedi un account",
+        "description": "Lascia nome ed email. Un amministratore valuta la richiesta e ti consegna il link di attivazione.",
+        "done": "La tua richiesta è stata registrata. Un amministratore ti contatterà con il link di attivazione."
+      },
+      "reset": {
+        "title": "Password dimenticata?",
+        "description": "Lascia la tua email. Se corrisponde a un account, un amministratore ti consegnerà un nuovo link per scegliere la password.",
+        "done": "Se l'indirizzo corrisponde a un account, un amministratore ti consegnerà un nuovo link."
+      },
+      "name": "Nome",
+      "email": "Email",
+      "submit": "Invia richiesta",
+      "sent": "Richiesta inviata",
+      "failed": "Richiesta non riuscita",
+      "tooMany": "Ci sono troppe richieste in attesa di risposta. Riprova più tardi.",
+      "backToLogin": "Torna all'accesso"
     }
   },
   "validation": {

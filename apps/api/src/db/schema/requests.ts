@@ -20,7 +20,6 @@ export const requests = pgTable(
       .default(RequestStatus.pending),
     email: text("email").notNull(),
     displayName: text("display_name"),
-    note: text("note"),
     userId: text("user_id").references(() => users.id, {
       onDelete: "set null",
     }),

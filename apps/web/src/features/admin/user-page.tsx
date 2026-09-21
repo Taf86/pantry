@@ -7,7 +7,6 @@ import {
   Field,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
   FieldSeparator,
   FieldSet,
 } from "@/components/ui/field";
@@ -23,7 +22,6 @@ import { toast } from "@/components/ui/toast";
 import useErrorMessage from "@/hooks/use-error-message";
 import { inviteUrl } from "@/lib/invites";
 import { keys } from "@/lib/keys";
-import { canShare, copyToClipboard, mailtoUrl, shareLink } from "@/lib/share";
 import { trpc, type ApiError } from "@/lib/trpc";
 import { requiredString } from "@/lib/zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,20 +35,14 @@ import {
   userStatusSchema,
 } from "@pantry/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircleIcon,
-  CopyIcon,
-  LinkIcon,
-  MailIcon,
-  Share2Icon,
-  TriangleAlertIcon,
-} from "lucide-react";
+import { AlertCircleIcon, LinkIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import z from "zod";
 import { roleLabelKeys, statusLabelKeys } from "../../lib/user/user-labels";
+import InviteLinkShare from "./invite-link-share";
 
 const usersPath = "/admin/users";
 
@@ -184,41 +176,6 @@ export default function UserPage() {
       create.mutate(data);
     }
   };
-
-  const copy = async () =>
-    toast.add(
-      (await copyToClipboard(url))
-        ? { description: t("feature.users.form.copied") }
-        : { type: "error", description: t("feature.users.form.copyFailed") },
-    );
-
-  const share = async () => {
-    const outcome = await shareLink({
-      title: t("feature.users.form.mailSubject"),
-      text: t("feature.users.form.shareText", {
-        displayName: shown?.displayName ?? "",
-        email: shown?.email ?? "",
-      }),
-      url,
-    });
-    if (outcome === "failed") {
-      toast.add({
-        type: "error",
-        description: t("feature.users.form.shareFailed"),
-      });
-    }
-  };
-
-  const mailHref = shown
-    ? mailtoUrl({
-        to: shown.email,
-        subject: t("feature.users.form.mailSubject"),
-        body: t("feature.users.form.mailBody", {
-          displayName: shown.displayName,
-          url,
-        }),
-      })
-    : "";
 
   if (editing && user.isPending) return <Loader />;
   if (editing && user.isError) {
@@ -379,91 +336,33 @@ export default function UserPage() {
 
           <FieldSeparator className="max-w-md" />
 
-          <FieldSet className="max-w-md">
-            <Field>
-              <FieldLabel htmlFor="inviteLink">
-                {t("feature.users.form.link")}
-              </FieldLabel>
-              <Input
-                id="inviteLink"
-                readOnly
-                value={url}
-                placeholder={t(
-                  editing
-                    ? "feature.users.form.linkPendingEdit"
-                    : "feature.users.form.linkPendingCreate",
-                )}
-                onFocus={(e) => e.currentTarget.select()}
-              />
-            </Field>
-
-            {url !== "" && (
-              <Alert>
-                <TriangleAlertIcon />
-                <AlertTitle>
-                  {t(
-                    editing
-                      ? "feature.users.form.linkWarningTitleEdit"
-                      : "feature.users.form.linkWarningTitleCreate",
-                  )}
-                </AlertTitle>
-                <AlertDescription>
-                  {t("feature.users.form.linkWarning")}
-                </AlertDescription>
-              </Alert>
+          <InviteLinkShare
+            className="max-w-md"
+            url={url}
+            recipient={shown}
+            placeholder={t(
+              editing
+                ? "feature.users.form.linkPendingEdit"
+                : "feature.users.form.linkPendingCreate",
             )}
-
-            <Field orientation="horizontal" className="flex-wrap">
-              {/* Only editing offers this: creating issues the first link. */}
-              {editing && (
-                <Button
-                  type="button"
-                  disabled={regenerateInvite.isPending}
-                  onClick={() => regenerateInvite.mutate()}
-                >
-                  <LinkIcon data-icon="inline-start" />
-                  {t("feature.users.form.generate")}
-                </Button>
-              )}
-
+            warningTitle={t(
+              editing
+                ? "feature.users.form.linkWarningTitleEdit"
+                : "feature.users.form.linkWarningTitleCreate",
+            )}
+          >
+            {/* Only editing offers this: creating issues the first link. */}
+            {editing && (
               <Button
                 type="button"
-                variant="outline"
-                disabled={url === ""}
-                onClick={() => void copy()}
+                disabled={regenerateInvite.isPending}
+                onClick={() => regenerateInvite.mutate()}
               >
-                <CopyIcon data-icon="inline-start" />
-                {t("feature.users.form.copy")}
+                <LinkIcon data-icon="inline-start" />
+                {t("feature.users.form.generate")}
               </Button>
-
-              {canShare() ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={url === ""}
-                  onClick={() => void share()}
-                >
-                  <Share2Icon data-icon="inline-start" />
-                  {t("feature.users.form.share")}
-                </Button>
-              ) : url === "" ? (
-                // A disabled anchor still navigates, so render a plain button.
-                <Button type="button" variant="outline" disabled>
-                  <MailIcon data-icon="inline-start" />
-                  {t("feature.users.form.sendEmail")}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  nativeButton={false}
-                  render={<a href={mailHref} />}
-                >
-                  <MailIcon data-icon="inline-start" />
-                  {t("feature.users.form.sendEmail")}
-                </Button>
-              )}
-            </Field>
-          </FieldSet>
+            )}
+          </InviteLinkShare>
 
           <Field orientation="horizontal">
             <Button

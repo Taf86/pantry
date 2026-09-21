@@ -1,4 +1,8 @@
-import type { ListInvitesInput, ListUsersInput } from "@pantry/shared";
+import type {
+  ListInvitesInput,
+  ListRequestsInput,
+  ListUsersInput,
+} from "@pantry/shared";
 
 export const keys = {
   me: () => ["me"] as const,
@@ -25,7 +29,9 @@ export const keys = {
   adminInvites: () => ["admin", "invites"] as const,
   adminInvitesList: (input: ListInvitesInput) =>
     ["admin", "invites", "list", input] as const,
-  // adminSignupRequests: () => ["admin", "signup-requests"] as const,
+  adminRequests: () => ["admin", "requests"] as const,
+  adminRequestsList: (input: ListRequestsInput) =>
+    ["admin", "requests", "list", input] as const,
   // userSearch: (query: string) => ["users", "search", query] as const,
   invitePreview: (token: string) => ["invite", token] as const,
   // signupInfo: () => ["signup", "info"] as const,

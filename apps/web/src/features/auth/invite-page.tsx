@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import z from "zod";
@@ -138,11 +138,11 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
                 label={t("feature.invite.password")}
               >
                 {({ field, invalid }) => (
-                  <Input
+                  <PasswordInput
                     {...field}
                     id={field.name}
                     aria-invalid={invalid}
-                    type="password"
+                    autoComplete="new-password"
                   />
                 )}
               </FormField>
@@ -153,11 +153,11 @@ function Form({ invite, token }: { invite: InvitePreview; token: string }) {
                 label={t("feature.invite.confirmation")}
               >
                 {({ field, invalid }) => (
-                  <Input
+                  <PasswordInput
                     {...field}
                     id={field.name}
                     aria-invalid={invalid}
-                    type="password"
+                    autoComplete="new-password"
                   />
                 )}
               </FormField>

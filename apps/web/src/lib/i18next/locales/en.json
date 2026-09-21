@@ -1,6 +1,8 @@
 {
   "common": {
-    "submit": "Submit"
+    "submit": "Submit",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "error": {
     "auth": { "invalidCredentials": "Invalid credentials" },
@@ -66,7 +68,9 @@
       "email": "Email",
       "password": "Password",
       "failed": "Login failed",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "requestAccount": "Request an account",
+      "forgotPassword": "Forgot your password?"
     },
     "users": {
       "title": "Users",
@@ -109,13 +113,11 @@
         "email": "Email",
         "role": "Role",
         "status": "Status",
-        "link": "Invite link",
         "linkPendingCreate": "Generated after submit",
         "linkPendingEdit": "No link generated",
         "generate": "Generate link",
         "linkWarningTitleCreate": "User created",
         "linkWarningTitleEdit": "New invite link",
-        "linkWarning": "This is the only time the invite link is shown. It cannot be retrieved later: if it is lost, generate a new one.",
         "createFailed": "Creation failed",
         "editFailed": "Update failed",
         "notFoundTitle": "User not found",
@@ -126,17 +128,21 @@
         "create": "Create",
         "save": "Save",
         "cancel": "Cancel",
-        "copy": "Copy",
-        "copied": "Invite link copied to the clipboard.",
-        "copyFailed": "Could not copy the link. Select it and copy it manually.",
-        "share": "Share",
-        "shareFailed": "Sharing failed.",
-        "sendEmail": "Email",
-        "close": "Close",
-        "shareText": "Invite for {{displayName}} ({{email}}) to Pantry",
-        "mailSubject": "Your invite to Pantry",
-        "mailBody": "Hi {{displayName}},\r\nyour Pantry account is ready. Activate it here:\r\n\r\n{{url}}\r\n\r\nThe link expires in a few days."
+        "close": "Close"
       }
+    },
+    "inviteLink": {
+      "label": "Invite link",
+      "warning": "This is the only time the invite link is shown. It cannot be retrieved later: if it is lost, generate a new one.",
+      "copy": "Copy",
+      "copied": "Invite link copied to the clipboard.",
+      "copyFailed": "Could not copy the link. Select it and copy it manually.",
+      "share": "Share",
+      "shareFailed": "Sharing failed.",
+      "sendEmail": "Email",
+      "shareText": "Invite for {{displayName}} ({{email}}) to Pantry",
+      "mailSubject": "Your invite to Pantry",
+      "mailBody": "Hi {{displayName}},\r\nyour Pantry account is ready. Activate it here:\r\n\r\n{{url}}\r\n\r\nThe link expires in a few days."
     },
     "invites": {
       "title": "Invites",
@@ -172,6 +178,69 @@
       "manualLogin": "Account activated, you can login now.",
       "password": "Password",
       "confirmation": "Confirm password"
+    },
+    "requests": {
+      "title": "Requests",
+      "empty": "No request matches the filters.",
+      "column": {
+        "email": "Email",
+        "name": "Name",
+        "type": "Type",
+        "status": "Status",
+        "createdAt": "Received at",
+        "decidedBy": "Decided by",
+        "actions": "Actions"
+      },
+      "type": {
+        "signup": "New account",
+        "resetPassword": "Password reset"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Accepted",
+        "rejected": "Rejected"
+      },
+      "action": {
+        "accept": "Accept",
+        "reject": "Reject"
+      },
+      "accepted": {
+        "title": "Request accepted",
+        "description": "Hand this link to {{displayName}} ({{email}}): they choose the password themselves.",
+        "warningTitle": "Link generated",
+        "close": "Close"
+      },
+      "reject": {
+        "title": "Reject the request from {{email}}?",
+        "description": "No account is created and no link is issued. The same address can ask again later.",
+        "confirm": "Reject",
+        "cancel": "Cancel",
+        "done": "The request from {{email}} has been rejected."
+      },
+      "error": {
+        "decided": "The request has already been decided, or an account with this email already exists.",
+        "noAccount": "No account matches this address, or the request no longer exists.",
+        "suspended": "That account is suspended: reactivate it before issuing a new link."
+      }
+    },
+    "request": {
+      "signup": {
+        "title": "Request an account",
+        "description": "Leave your name and email. An administrator reviews the request and hands you the activation link.",
+        "done": "Your request has been recorded. An administrator will get in touch with the activation link."
+      },
+      "reset": {
+        "title": "Forgot your password?",
+        "description": "Leave your email. If an account matches it, an administrator gives you a new link to choose a password.",
+        "done": "If an account matches that address, an administrator will hand over a new link."
+      },
+      "name": "Name",
+      "email": "Email",
+      "submit": "Send request",
+      "sent": "Request sent",
+      "failed": "Request failed",
+      "tooMany": "Too many requests are waiting for an answer. Try again later.",
+      "backToLogin": "Back to sign in"
     }
   },
   "validation": {

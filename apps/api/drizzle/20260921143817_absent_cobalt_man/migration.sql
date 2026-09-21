@@ -4,7 +4,6 @@ CREATE TABLE "requests" (
 	"status" text DEFAULT 'pending' NOT NULL,
 	"email" text NOT NULL,
 	"display_name" text,
-	"note" text,
 	"user_id" text,
 	"decided_by" text,
 	"decided_at" timestamp with time zone,
