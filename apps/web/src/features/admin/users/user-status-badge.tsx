@@ -1,10 +1,14 @@
-import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
+import { statusLabelKeys } from "@/lib/user/user-labels";
 import { cn } from "@/lib/utils";
 import { type UserStatus as UserStatusValue } from "@pantry/shared";
-import { Badge } from "@/components/ui/badge";
-import { statusLabelKeys } from "../../../lib/user/user-labels";
+import { useTranslation } from "react-i18next";
 
-export default function StatusBadge({ status }: { status: UserStatusValue }) {
+export default function UserStatusBadge({
+  status,
+}: {
+  status: UserStatusValue;
+}) {
   const { t } = useTranslation();
   return (
     <Badge

@@ -10,11 +10,13 @@ import {
   type DataTableSortingState,
 } from "@/components/data-table/data-table-core";
 import { Button } from "@/components/ui/button";
+import { roleLabelKeys, statusLabelKeys } from "@/lib/user/user-labels";
 import {
   UserRoles,
   UserSortFields,
   UserStatuses,
   type ListUsersFilters,
+  type ListUsersInput,
   type UserExtended,
   type UserSort,
   type UserSortField,
@@ -23,9 +25,8 @@ import { PencilIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { roleLabelKeys, statusLabelKeys } from "../../../lib/user/user-labels";
-import StatusBadge from "./status-badge";
 import DeleteUserAction from "./delete-user-action";
+import UserStatusBadge from "./user-status-badge";
 
 const columnHelper = createDataTableColumnHelper<UserExtended>();
 
@@ -57,7 +58,7 @@ export default function useUsersTable() {
 
     const status = columnHelper.accessor("status", {
       header: t("feature.users.column.status"),
-      cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      cell: ({ getValue }) => <UserStatusBadge status={getValue()} />,
     });
 
     const actions = columnHelper.display({
@@ -146,7 +147,23 @@ export default function useUsersTable() {
     [t],
   );
 
-  return { table, desktopColumns, mobileColumns, sortFields, filterFields };
+  const input = useMemo<ListUsersInput>(
+    () => ({
+      pagination: table.pagination,
+      sorting: toUserSorting(table.sorting),
+      filters: toUserFilters(table.columnFilters),
+    }),
+    [table],
+  );
+
+  return {
+    table,
+    input,
+    desktopColumns,
+    mobileColumns,
+    sortFields,
+    filterFields,
+  };
 }
 
 type UsersColumns = {
@@ -157,12 +174,12 @@ type UsersColumns = {
 const isUserSortField = (id: string): id is UserSortField =>
   (UserSortFields as readonly string[]).includes(id);
 
-export const toUserSorting = (
+const toUserSorting = (
   sorting: DataTableSortingState<UserExtended>,
 ): UserSort[] =>
   sorting.filter((sort): sort is UserSort => isUserSortField(sort.id));
 
-export const toUserFilters = (
+const toUserFilters = (
   columnFilters: DataTableFiltersState<UserExtended>,
 ): ListUsersFilters => {
   const displayName = textFilterValue(columnFilters, "displayName");

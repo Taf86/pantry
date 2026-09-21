@@ -4,23 +4,22 @@ import { DataTableSort } from "@/components/data-table/data-table-sort";
 import { Button } from "@/components/ui/button";
 import { keys } from "@/lib/keys";
 import { trpc } from "@/lib/trpc";
-import { type ListUsersInput } from "@pantry/shared";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import useUsersTable, { toUserFilters, toUserSorting } from "./use-users-table";
+import useUsersTable from "./use-users-table";
 
 export default function UsersPage() {
   const { t } = useTranslation();
-  const { table, desktopColumns, mobileColumns, sortFields, filterFields } =
-    useUsersTable();
-
-  const input: ListUsersInput = {
-    pagination: table.pagination,
-    sorting: toUserSorting(table.sorting),
-    filters: toUserFilters(table.columnFilters),
-  };
+  const {
+    table,
+    input,
+    desktopColumns,
+    mobileColumns,
+    sortFields,
+    filterFields,
+  } = useUsersTable();
 
   const users = useQuery({
     queryKey: keys.adminUsersList(input),
