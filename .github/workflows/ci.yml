@@ -1,9 +1,11 @@
 name: ci
 
+# Not main: a push there triggers deploy, which runs the same verify workflow
+# before it ships. Pull requests into main are covered whatever their target.
 on:
   pull_request:
   push:
-    branches: [main, develop]
+    branches: [develop]
 
 concurrency:
   group: ci-${{ github.ref }}
