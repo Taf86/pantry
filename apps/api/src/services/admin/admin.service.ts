@@ -250,7 +250,7 @@ export const setRole = async (
   return requireUser(deps, userId);
 };
 
-const createUserTx = async (
+export const createUserTx = async (
   tx: Executor,
   input: CreateUserInput,
 ): Promise<{ userId: string }> => {

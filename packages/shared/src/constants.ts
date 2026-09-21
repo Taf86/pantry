@@ -13,17 +13,17 @@ export const INVITE_RETENTION_DAYS = 30;
 /** Retention of the mutation deduplication rows. */
 export const APPLIED_MUTATION_TTL_DAYS = 30;
 
-/** Retention of signup requests that have already been decided. */
-export const SIGNUP_REQUEST_TTL_DAYS = 30;
+/** Retention of requests that have already been decided. */
+export const REQUEST_RETENTION_DAYS = 30;
 
 /**
- * Cap on the number of open signup requests.
+ * Cap on the number of open requests.
  *
  * This is the application's only unauthenticated public write: past this
  * threshold it stops accepting them, so an automated flow cannot fill up the
  * table nor swamp the backoffice queue.
  */
-export const MAX_OPEN_SIGNUP_REQUESTS = 50;
+export const MAX_OPEN_REQUESTS = 50;
 
 /** Default window for "expiring soon". */
 export const DEFAULT_EXPIRING_WITHIN_DAYS = 7;

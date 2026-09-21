@@ -5,8 +5,8 @@ import type { Logger } from "pino";
 import type { Database } from "../db/client.js";
 import { sessions } from "../db/schema/sessions.js";
 // import { appliedMutations } from "../db/schema/support.js";
-// import { sweepDecidedSignupRequests } from "../services/signup.service.js";
 import { sweepStaleInvites } from "../services/admin/invites.service.js";
+import { sweepDecidedRequests } from "../services/admin/requests.service.js";
 
 // const MS_PER_DAY = 86_400_000;
 const INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -28,14 +28,14 @@ const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
 
   const staleInvites = await sweepStaleInvites(db);
 
-  // const decidedRequests = await sweepDecidedSignupRequests(db);
+  const decidedRequests = await sweepDecidedRequests(db);
 
   logger.info(
     {
       // mutations: staleMutations.length,
       sessions: expiredSessions.length,
       invites: staleInvites,
-      // signupRequests: decidedRequests,
+      requests: decidedRequests,
     },
     "Cleanup completed.",
   );

@@ -3,7 +3,9 @@ import {
   editUserInputSchema,
   inviteIdInputSchema,
   listInvitesInputSchema,
+  listRequestsInputSchema,
   listUsersInputSchema,
+  requestIdInputSchema,
   setUserRoleInputSchema,
   setUserStatusInputSchema,
   userIdInputSchema,
@@ -12,6 +14,12 @@ import {
   deleteInvite,
   listInvites,
 } from "../../services/admin/invites.service.js";
+import {
+  approveRequest,
+  listRequests,
+  rejectRequest,
+  requireRequest,
+} from "../../services/admin/requests.service.js";
 import {
   createUser,
   deleteUser,
@@ -67,5 +75,27 @@ export const adminRouter = router({
     delete: adminProcedure
       .input(inviteIdInputSchema)
       .mutation(({ ctx, input }) => deleteInvite(ctx, input.inviteId)),
+  }),
+
+  requests: router({
+    list: adminProcedure
+      .input(listRequestsInputSchema)
+      .query(({ ctx, input }) => listRequests(ctx, input)),
+
+    get: adminProcedure
+      .input(requestIdInputSchema)
+      .query(({ ctx, input }) => requireRequest(ctx, input.requestId)),
+
+    approve: adminProcedure
+      .input(requestIdInputSchema)
+      .mutation(({ ctx, input }) =>
+        approveRequest(ctx, ctx.user.id, input.requestId),
+      ),
+
+    reject: adminProcedure
+      .input(requestIdInputSchema)
+      .mutation(({ ctx, input }) =>
+        rejectRequest(ctx, ctx.user.id, input.requestId),
+      ),
   }),
 });
