@@ -21,7 +21,7 @@ jobs:
         env:
           POSTGRES_USER: pantry
           POSTGRES_DB: pantry
-          POSTGRES_PASSWORD: pantry-ci
+          POSTGRES_PASSWORD: pantry
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U pantry -d pantry"
@@ -30,13 +30,6 @@ jobs:
           --health-retries 5
 
     env:
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: pantry
-      POSTGRES_DB: pantry
-      POSTGRES_PASSWORD: pantry-ci
-      BETTER_AUTH_SECRET: ci-secret-not-a-real-value
-      DOMAIN: localhost
       NODE_ENV: test
 
     steps:

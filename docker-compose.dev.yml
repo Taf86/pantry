@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: pantry
       POSTGRES_DB: pantry
-      POSTGRES_PASSWORD: pantry-dev
+      POSTGRES_PASSWORD: pantry
     ports:
       - "5432:5432"
     volumes:
