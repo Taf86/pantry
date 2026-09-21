@@ -3,6 +3,13 @@
 /** Lifetime of an invite token. */
 export const INVITE_TTL_DAYS = 7;
 
+/**
+ * Retention of invites that have been spent, counted from the moment they were
+ * used or expired. Until then they stay in the backoffice list as a record of
+ * who was invited by whom.
+ */
+export const INVITE_RETENTION_DAYS = 30;
+
 /** Retention of the mutation deduplication rows. */
 export const APPLIED_MUTATION_TTL_DAYS = 30;
 

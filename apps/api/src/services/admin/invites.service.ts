@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
+  INVITE_RETENTION_DAYS,
   INVITE_TTL_DAYS,
   serializeDates,
   type AcceptInviteInput,
@@ -20,7 +21,9 @@ import {
   eq,
   gt,
   isNull,
+  lt,
   ne,
+  or,
   type SQL,
 } from "drizzle-orm";
 import { alias, type PgColumn } from "drizzle-orm/pg-core";
@@ -102,6 +105,17 @@ export const deleteInvite = async (
   const invite = await requireInvite(deps, inviteId);
   await deps.db.delete(invites).where(eq(invites.id, inviteId));
   return invite;
+};
+
+export const sweepStaleInvites = async (db: Database): Promise<number> => {
+  const cutoff = new Date(Date.now() - INVITE_RETENTION_DAYS * MS_PER_DAY);
+
+  const removed = await db
+    .delete(invites)
+    .where(or(lt(invites.usedAt, cutoff), lt(invites.expiresAt, cutoff)))
+    .returning({ id: invites.id });
+
+  return removed.length;
 };
 
 export const previewInvite = async (
