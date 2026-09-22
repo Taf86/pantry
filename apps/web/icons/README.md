@@ -3,16 +3,18 @@
 Sorgenti vettoriali delle icone PWA. I PNG in `public/` sono generati da qui e
 versionati, così la build non ha bisogno di un rasterizzatore.
 
-- `public/favicon.svg` — icona `any`: quadrato arrotondato, usata anche come favicon.
-- `maskable-icon.svg` — icona `maskable`: stesso glifo ma a tutto campo e con il
-  margine di sicurezza del 20% richiesto da Android, che ritaglia l'icona a piacere.
+- `icon.svg` — icona `any`, quadrata piena. Niente angoli trasparenti: i launcher
+  Android e iOS applicano già la loro maschera, e chi non la applica renderebbe
+  bianco il canale alfa.
+- `maskable-icon.svg` — icona `maskable`: stesso glifo, con il margine di
+  sicurezza del 20% che Android si riserva di ritagliare.
+- `../public/favicon.svg` — solo per la scheda del browser, con gli angoli
+  arrotondati, da cui esce anche `favicon-32x32.png`.
 
 Per rigenerare i PNG dopo aver modificato un SVG (sharp non è una dipendenza del
-progetto, si usa una tantum):
+progetto, si usa una tantum). I PNG del launcher vanno appiattiti su `#18181b`,
+senza canale alfa:
 
 ```bash
-pnpm dlx sharp-cli --input public/favicon.svg --output public/pwa-192x192.png resize 192 192
-pnpm dlx sharp-cli --input public/favicon.svg --output public/pwa-512x512.png resize 512 512
-pnpm dlx sharp-cli --input public/favicon.svg --output public/apple-touch-icon-180x180.png resize 180 180
-pnpm dlx sharp-cli --input icons/maskable-icon.svg --output public/maskable-icon-512x512.png resize 512 512
+pnpm dlx sharp-cli -i icons/icon.svg -o public/pwa-192x192.png resize 192 192 -- flatten --background "#18181b"
 ```

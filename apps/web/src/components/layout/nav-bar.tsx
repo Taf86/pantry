@@ -25,7 +25,6 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import useRequireAuth from "@/hooks/use-require-auth";
 import type { User } from "@pantry/shared";
 import { signOut } from "@/lib/auth-client";
-import { Separator } from "../ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -183,8 +182,6 @@ export default function NavBar() {
               </Button>
             ))}
         </div>
-
-        <Separator orientation="vertical" className="mx-2" />
 
         <DropdownMenu>
           <DropdownMenuTrigger
