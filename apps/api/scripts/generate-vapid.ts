@@ -1,7 +1,8 @@
-import { generateVAPIDKeys } from "web-push";
+// Default import: see the note in src/services/push/webpush.ts.
+import webpush from "web-push";
 
 const main = (): void => {
-  const { publicKey, privateKey } = generateVAPIDKeys();
+  const { publicKey, privateKey } = webpush.generateVAPIDKeys();
 
   process.stdout.write(
     [

@@ -1,4 +1,4 @@
-import { generateRequestDetails } from "web-push";
+import webpush from "web-push";
 
 import type { PushConfig } from "../../config/env.js";
 
@@ -59,7 +59,7 @@ export const sendWebPush: PushSender = async (
     return { endpoint: target.endpoint, status: 403 };
   }
 
-  const details = generateRequestDetails(
+  const details = webpush.generateRequestDetails(
     {
       endpoint: target.endpoint,
       keys: { p256dh: target.p256dh, auth: target.auth },

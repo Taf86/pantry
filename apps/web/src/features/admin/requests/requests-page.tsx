@@ -8,7 +8,6 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AcceptedRequestDialog from "./accepted-request-dialog";
-import PushToggle from "./push-toggle";
 import useRequestsTable from "./use-requests-table";
 
 export default function RequestsPage() {
@@ -59,8 +58,6 @@ export default function RequestsPage() {
         isFetching={requests.isFetching}
         emptyMessage={t("feature.requests.empty")}
       />
-
-      <PushToggle />
 
       <AcceptedRequestDialog
         approved={approved}

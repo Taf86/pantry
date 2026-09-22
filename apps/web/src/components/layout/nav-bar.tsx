@@ -33,6 +33,7 @@ import {
   SheetTrigger,
 } from "../ui/sheet";
 import { cn } from "@/lib/utils";
+import PushToggle from "./push-toggle";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearLocalUserData } from "@/lib/local-data";
@@ -183,6 +184,7 @@ export default function NavBar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
+          {isAdminPage && <PushToggle />}
           {!isAdminPage &&
             quickActions.map(({ id, icon: Icon, key }) => (
               <Button

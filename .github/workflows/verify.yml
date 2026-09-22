@@ -41,6 +41,9 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      - name: Smoke the built modules
+        run: pnpm --filter pantry-api smoke
+
       - name: Type check
         run: pnpm check-types
 

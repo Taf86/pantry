@@ -245,15 +245,14 @@
       "backToLogin": "Back to sign in"
     },
     "push": {
-      "title": "Notifications",
-      "on": "On for this device. You will hear about new requests.",
-      "off": "Off for this device. Turn them on to hear about new requests.",
-      "enable": "Turn on",
-      "disable": "Turn off",
-      "denied": "Notifications are blocked for this site. Unblock them in your browser settings first.",
-      "installFirst": "On iPhone and iPad, add Pantry to the Home Screen to receive notifications.",
-      "unavailable": "Notifications are not configured on the server.",
-      "error": "Notifications could not be changed. Try again."
+      "label": "Notifications",
+      "enabled": "On for this device. You will hear about new requests.",
+      "disabled": "Off for this device. This browser will stay quiet.",
+      "unavailable": "Not configured on the server: no VAPID keys.",
+      "denied": "Blocked for this site. Unblock them in your browser settings first.",
+      "installFirst": "On iPhone and iPad, add Pantry to the Home Screen first.",
+      "unsupported": "This browser cannot show push notifications.",
+      "error": "Could not be changed. Try again."
     }
   },
   "validation": {

@@ -29,12 +29,10 @@ const PUBLIC_KEY =
 
 const ENDPOINT = "https://fcm.googleapis.com/fcm/send/abc";
 
-const PushToggle = (await import("@/features/admin/requests/push-toggle"))
-  .default;
+const PushToggle = (await import("@/components/layout/push-toggle")).default;
+const { Toaster } = await import("@/components/ui/toast");
 
-const requestPermission = vi.fn(() =>
-  Promise.resolve<NotificationPermission>("granted"),
-);
+const requestPermission = vi.fn<() => Promise<NotificationPermission>>();
 const pushSubscribe = vi.fn();
 const getSubscription = vi.fn<() => Promise<PushSubscription | null>>(() =>
   Promise.resolve(null),
@@ -53,13 +51,23 @@ const fakeSubscription = {
 const givenBrowser = (
   options: {
     permission?: NotificationPermission;
+    prompt?: NotificationPermission;
     pushManager?: boolean;
+    serviceWorker?: boolean;
     existing?: PushSubscription | null;
   } = {},
 ) => {
   const permission = options.permission ?? "default";
+  requestPermission.mockResolvedValue(options.prompt ?? "granted");
   getSubscription.mockResolvedValue(options.existing ?? null);
-  pushSubscribe.mockResolvedValue(fakeSubscription);
+  pushSubscribe.mockImplementation(() => {
+    getSubscription.mockResolvedValue(fakeSubscription);
+    return Promise.resolve(fakeSubscription);
+  });
+  subscriptionUnsubscribe.mockImplementation(() => {
+    getSubscription.mockResolvedValue(null);
+    return Promise.resolve(true);
+  });
 
   window.Notification = { permission, requestPermission } as never;
   if (options.pushManager !== false) {
@@ -67,15 +75,16 @@ const givenBrowser = (
   }
   vi.stubGlobal("navigator", {
     userAgent: "test-agent",
-    serviceWorker: {
-      getRegistration: () =>
-        Promise.resolve({
-          pushManager: {
-            getSubscription,
-            subscribe: pushSubscribe,
+    ...(options.serviceWorker === false
+      ? {}
+      : {
+          serviceWorker: {
+            getRegistration: () =>
+              Promise.resolve({
+                pushManager: { getSubscription, subscribe: pushSubscribe },
+              }),
           },
         }),
-    },
   });
 };
 
@@ -87,8 +96,25 @@ const renderToggle = (ui: ReactElement) =>
       }
     >
       {ui}
+      <Toaster />
     </QueryClientProvider>,
   );
+
+const bell = () => screen.findByRole("button", { name: /notif/i });
+
+const settledBell = async () => {
+  const button = await bell();
+  await waitFor(() => {
+    expect(button).toBeEnabled();
+  });
+  return button;
+};
+
+const pressAndRead = async (): Promise<string> => {
+  await userEvent.click(await settledBell());
+  const toast = await screen.findByRole("dialog");
+  return toast.textContent ?? "";
+};
 
 beforeEach(async () => {
   await import("@/lib/i18next");
@@ -107,19 +133,62 @@ describe("PushToggle", () => {
     givenBrowser();
     renderToggle(<PushToggle />);
 
-    await screen.findByRole("button");
+    await screen.findByRole("button", { name: /notif/i });
     expect(requestPermission).not.toHaveBeenCalled();
   });
 
-  it("asks, subscribes and registers, in that order, on a click", async () => {
+  it("shows one control, labelled Notifiche", async () => {
     givenBrowser();
     renderToggle(<PushToggle />);
 
-    await userEvent.click(await screen.findByRole("button"));
+    const buttons = await screen.findAllByRole("button");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toHaveTextContent(/notifiche|notifications/i);
+  });
+
+  it("reports its state through aria-pressed, not just the icon", async () => {
+    givenBrowser();
+    renderToggle(<PushToggle />);
+
+    const button = await settledBell();
+    expect(button).toHaveAttribute("aria-pressed", "false");
+
+    await pressAndRead();
 
     await waitFor(() => {
-      expect(subscribe).toHaveBeenCalled();
+      expect(button).toHaveAttribute("aria-pressed", "true");
     });
+  });
+
+  it("claims nothing until it knows, and cannot be pressed meanwhile", async () => {
+    let resolveConfig: (value: { publicKey: string | null }) => void = () =>
+      undefined;
+    config.mockReturnValue(
+      new Promise((resolve) => {
+        resolveConfig = resolve;
+      }),
+    );
+    givenBrowser({ permission: "granted", existing: fakeSubscription });
+    renderToggle(<PushToggle />);
+
+    const button = await bell();
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
+
+    resolveConfig({ publicKey: PUBLIC_KEY });
+
+    await waitFor(() => {
+      expect(button).toHaveAttribute("aria-pressed", "true");
+    });
+    expect(button).toBeEnabled();
+  });
+
+  it("asks, subscribes, registers and says so", async () => {
+    givenBrowser();
+    renderToggle(<PushToggle />);
+
+    expect(await pressAndRead()).toMatch(/attive|on for this device/i);
+
     expect(requestPermission).toHaveBeenCalledTimes(1);
     expect(pushSubscribe).toHaveBeenCalledWith(
       expect.objectContaining({ userVisibleOnly: true }),
@@ -129,23 +198,46 @@ describe("PushToggle", () => {
     );
   });
 
-  it("stops at the browser's refusal without registering anything", async () => {
-    givenBrowser();
-    requestPermission.mockResolvedValue("denied");
+  it("releases the device on both sides and says so", async () => {
+    givenBrowser({ permission: "granted", existing: fakeSubscription });
     renderToggle(<PushToggle />);
 
-    await userEvent.click(await screen.findByRole("button"));
+    await waitFor(() => {
+      expect(subscribe).toHaveBeenCalled();
+    });
+
+    expect(await pressAndRead()).toMatch(/disattivate|off for this device/i);
+
+    expect(unsubscribe).toHaveBeenCalledWith({ endpoint: ENDPOINT });
+    expect(subscriptionUnsubscribe).toHaveBeenCalled();
+  });
+
+  it("reports a refusal without registering anything", async () => {
+    givenBrowser({ prompt: "denied" });
+    renderToggle(<PushToggle />);
+
+    expect(await pressAndRead()).toMatch(/bloccate|blocked/i);
 
     expect(pushSubscribe).not.toHaveBeenCalled();
     expect(subscribe).not.toHaveBeenCalled();
   });
 
-  it("explains a blocked origin instead of offering a button", async () => {
+  it("does not re-prompt an origin that is already blocked", async () => {
     givenBrowser({ permission: "denied" });
     renderToggle(<PushToggle />);
 
-    expect(await screen.findByText(/bloccate|blocked/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(await pressAndRead()).toMatch(/bloccate|blocked/i);
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+
+  it("says when the server has no keys configured", async () => {
+    givenBrowser();
+    config.mockResolvedValue({ publicKey: null });
+    renderToggle(<PushToggle />);
+
+    expect(await pressAndRead()).toMatch(
+      /non sono configurate|not configured/i,
+    );
     expect(requestPermission).not.toHaveBeenCalled();
   });
 
@@ -153,42 +245,30 @@ describe("PushToggle", () => {
     givenBrowser({ pushManager: false });
     renderToggle(<PushToggle />);
 
-    expect(
-      await screen.findByText(/schermata home|home screen/i),
-    ).toBeInTheDocument();
+    expect(await pressAndRead()).toMatch(/schermata home|home screen/i);
   });
 
-  it("says so when the server has no keys configured", async () => {
+  it("reports a failure instead of pretending it worked", async () => {
     givenBrowser();
-    config.mockResolvedValue({ publicKey: null });
+    pushSubscribe.mockRejectedValue(new Error("no registration"));
     renderToggle(<PushToggle />);
 
-    expect(
-      await screen.findByText(/non sono configurate|not configured/i),
-    ).toBeInTheDocument();
-  });
-
-  it("releases the device on both sides when turned off", async () => {
-    givenBrowser({ permission: "granted", existing: fakeSubscription });
-    renderToggle(<PushToggle />);
-
-    const button = await screen.findByRole("button");
-    await waitFor(() => {
-      expect(button).toHaveTextContent(/disattiva|turn off/i);
-    });
-
-    await userEvent.click(button);
-
-    await waitFor(() => {
-      expect(unsubscribe).toHaveBeenCalledWith({ endpoint: ENDPOINT });
-    });
-    expect(subscriptionUnsubscribe).toHaveBeenCalled();
+    expect(await pressAndRead()).toMatch(/riprova|try again/i);
   });
 
   it("renders nothing at all where push does not exist", () => {
-    vi.stubGlobal("navigator", { userAgent: "test-agent" });
+    givenBrowser({ serviceWorker: false });
     const { container } = renderToggle(<PushToggle />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByRole("button", { name: /notif/i })).toBeNull();
+    expect(container).not.toHaveTextContent(/notifiche/i);
+  });
+
+  it("distinguishes an unreachable server from one without keys", async () => {
+    givenBrowser();
+    config.mockRejectedValue(new Error("offline"));
+    renderToggle(<PushToggle />);
+
+    expect(await pressAndRead()).toMatch(/riprova|try again/i);
   });
 });

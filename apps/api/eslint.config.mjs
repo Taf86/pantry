@@ -29,4 +29,12 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ["scripts/**/*.mjs"],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: { process: "readonly", URL: "readonly" },
+      parserOptions: { project: null, projectService: false },
+    },
+  },
 );

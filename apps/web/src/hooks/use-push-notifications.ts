@@ -11,22 +11,27 @@ import { trpc } from "@/lib/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
+export type PushOutcome =
+  | "enabled"
+  | "disabled"
+  | "unavailable"
+  | "denied"
+  | "install-first"
+  | "unsupported"
+  | "error";
+
 export interface PushNotificationsState {
   support: PushSupport;
   permission: NotificationPermission;
-  enabled: boolean;
+  enabled: boolean | null;
   isPending: boolean;
-  unavailable: boolean;
-  failed: boolean;
-  enable: () => Promise<void>;
-  disable: () => Promise<void>;
+  toggle: () => Promise<PushOutcome>;
 }
 
 export default function usePushNotifications(): PushNotificationsState {
   const support = pushSupport();
   const [permission, setPermission] = useState(notificationPermission);
-  const [enabled, setEnabled] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [subscribed, setSubscribed] = useState<boolean | null>(null);
 
   const config = useQuery({
     queryKey: keys.pushConfig(),
@@ -35,6 +40,7 @@ export default function usePushNotifications(): PushNotificationsState {
     staleTime: Infinity,
   });
   const publicKey = config.data?.publicKey ?? null;
+  const configSettled = config.isSuccess || config.isError;
 
   const subscribe = useMutation({
     mutationFn: (subscription: PushSubscription) =>
@@ -45,66 +51,87 @@ export default function usePushNotifications(): PushNotificationsState {
       trpc.push.unsubscribe.mutate({ endpoint }),
   });
 
+  const possible =
+    support === "supported" && publicKey !== null && permission === "granted";
+
+  const enabled: boolean | null =
+    support !== "supported"
+      ? false
+      : !configSettled
+        ? null
+        : !possible
+          ? false
+          : subscribed;
+
   useEffect(() => {
-    if (support !== "supported" || publicKey === null) return;
-    if (notificationPermission() !== "granted") return;
+    if (!possible) return;
 
     let cancelled = false;
     void (async () => {
-      const subscription = await getSubscription();
-      if (cancelled || !subscription) return;
-      setEnabled(true);
+      let subscription: PushSubscription | null = null;
+      try {
+        subscription = await getSubscription();
+      } catch {
+        //
+      }
+      if (cancelled) return;
+
+      setSubscribed(subscription !== null);
+      if (!subscription) return;
       try {
         await trpc.push.subscribe.mutate(toSubscribeInput(subscription));
       } catch {
-        // A refresh that fails changes nothing the user can act on.
+        //
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [support, publicKey]);
+  }, [possible]);
 
-  const enable = useCallback(async () => {
-    setFailed(false);
-    if (publicKey === null) return;
+  const enable = useCallback(async (): Promise<PushOutcome> => {
+    if (publicKey === null) return config.isError ? "error" : "unavailable";
 
     try {
       const granted = await Notification.requestPermission();
       setPermission(granted);
-      if (granted !== "granted") return;
+      if (granted !== "granted") return "denied";
 
       const subscription = await subscribeToPush(publicKey);
       await subscribe.mutateAsync(subscription);
-      setEnabled(true);
+      setSubscribed(true);
+      return "enabled";
     } catch {
-      setFailed(true);
+      return "error";
     }
-  }, [publicKey, subscribe]);
+  }, [publicKey, config.isError, subscribe]);
 
-  const disable = useCallback(async () => {
-    setFailed(false);
+  const disable = useCallback(async (): Promise<PushOutcome> => {
     try {
       const subscription = await getSubscription();
       if (subscription) {
         await unsubscribe.mutateAsync(subscription.endpoint);
         await subscription.unsubscribe();
       }
-      setEnabled(false);
+      setSubscribed(false);
+      return "disabled";
     } catch {
-      setFailed(true);
+      return "error";
     }
   }, [unsubscribe]);
+
+  const toggle = useCallback((): Promise<PushOutcome> => {
+    if (support !== "supported") return Promise.resolve(support);
+    if (permission === "denied") return Promise.resolve("denied");
+    return enabled === true ? disable() : enable();
+  }, [support, permission, enabled, disable, enable]);
 
   return {
     support,
     permission,
     enabled,
     isPending: subscribe.isPending || unsubscribe.isPending,
-    unavailable: config.isSuccess && publicKey === null,
-    failed,
-    enable,
-    disable,
+    toggle,
   };
 }

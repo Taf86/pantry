@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateVAPIDKeys } from "web-push";
+import webpush from "web-push";
 
 import { loadConfig } from "../src/config/env.js";
 
@@ -62,7 +62,7 @@ describe("loadConfig", () => {
   });
 });
 
-const generated = generateVAPIDKeys();
+const generated = webpush.generateVAPIDKeys();
 const VAPID = {
   VAPID_PUBLIC_KEY: generated.publicKey,
   VAPID_PRIVATE_KEY: generated.privateKey,
