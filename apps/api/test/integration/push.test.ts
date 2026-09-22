@@ -111,7 +111,11 @@ describe("push", () => {
 
     it("updates the same endpoint instead of duplicating it", async () => {
       await registerSubscription(deps(), admin, subscription("a"));
-      const [first] = await rows();
+      const before = new Date(Date.now() - 60_000);
+      await harness.db
+        .update(pushSubscriptions)
+        .set({ lastSeenAt: before })
+        .where(eq(pushSubscriptions.endpoint, endpointFor("a")));
 
       await registerSubscription(deps(), admin, {
         endpoint: endpointFor("a"),
@@ -121,9 +125,7 @@ describe("push", () => {
       const stored = await rows();
       expect(stored).toHaveLength(1);
       expect(stored[0]?.p256dh).toBe("rotated");
-      expect(stored[0]?.lastSeenAt.getTime()).toBeGreaterThanOrEqual(
-        first?.lastSeenAt.getTime() ?? 0,
-      );
+      expect(stored[0]?.lastSeenAt.getTime()).toBeGreaterThan(before.getTime());
     });
 
     it("re-points a device where someone else signs in", async () => {

@@ -37,7 +37,7 @@ export default function usePushNotifications(): PushNotificationsState {
     queryKey: keys.pushConfig(),
     queryFn: () => trpc.push.config.query(),
     enabled: support === "supported",
-    staleTime: Infinity,
+    staleTime: 30_000,
   });
   const publicKey = config.data?.publicKey ?? null;
   const configSettled = config.isSuccess || config.isError;

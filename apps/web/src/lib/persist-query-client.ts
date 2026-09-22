@@ -41,7 +41,7 @@ const idbPersister = createAsyncStoragePersister({
 export const persistOptions: Omit<PersistQueryClientOptions, "queryClient"> = {
   persister: idbPersister,
   maxAge: WEEK_IN_MS,
-  buster: "v1",
+  buster: "v2",
   dehydrateOptions: {
     shouldDehydrateMutation: (mutation) => mutation.state.isPaused,
     shouldDehydrateQuery: (query) => query.state.status === "success",
