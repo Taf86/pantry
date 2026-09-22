@@ -13,7 +13,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg"],
+      includeAssets: ["favicon.svg", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "Pantry",
         short_name: "Pantry",
@@ -21,12 +21,30 @@ export default defineConfig({
         lang: "it",
         start_url: "/",
         display: "standalone",
+        // Uguali a --background: la barra di sistema deve sparire nella pagina.
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
         icons: [
+          // Android ignora le icone SVG: senza PNG l'installazione mostra un
+          // segnaposto vuoto. `maskable` va tenuta separata da `any` perché ha
+          // il margine di sicurezza e verrebbe ritagliata male come icona piena.
           {
-            src: "/favicon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any maskable",
+            src: "/pwa-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/maskable-icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
       },
