@@ -183,7 +183,7 @@ export default function NavBar() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto mr-2 flex items-center gap-1">
           {isAdminPage && <PushToggle />}
           {!isAdminPage &&
             quickActions.map(({ id, icon: Icon, key }) => (
