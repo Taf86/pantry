@@ -1,10 +1,12 @@
 import { createTRPCClient, httpBatchLink, TRPCClientError } from "@trpc/client";
+import { MAX_TRPC_BATCH_SIZE } from "@pantry/shared";
 import type { AppRouter } from "pantry-api";
 
 export const trpc = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: "/api/trpc",
+      maxItems: MAX_TRPC_BATCH_SIZE,
       fetch: (input, init) =>
         fetch(input, { ...init, credentials: "include" } as RequestInit),
     }),

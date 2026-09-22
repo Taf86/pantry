@@ -36,6 +36,8 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearLocalUserData } from "@/lib/local-data";
+import { getSubscription } from "@/lib/push";
+import { trpc } from "@/lib/trpc";
 import { forgetLastUser } from "@/lib/user/last-user";
 import type { ParseKeys } from "i18next";
 
@@ -76,6 +78,17 @@ const quickActions = [
   key: ParseKeys;
 }[];
 
+const releasePushSubscription = async (): Promise<void> => {
+  try {
+    const subscription = await getSubscription();
+    if (!subscription) return;
+    await trpc.push.unsubscribe.mutate({ endpoint: subscription.endpoint });
+    await subscription.unsubscribe();
+  } catch {
+    // Offline, or no permission to begin with. Logging out still has to work.
+  }
+};
+
 export default function NavBar() {
   const { t } = useTranslation();
   const isAdminPage = useMatch("/admin/*");
@@ -93,6 +106,7 @@ export default function NavBar() {
       : homeNavItems;
 
   const logout = async () => {
+    await releasePushSubscription();
     await signOut();
     forgetLastUser();
     await clearLocalUserData(queryClient);

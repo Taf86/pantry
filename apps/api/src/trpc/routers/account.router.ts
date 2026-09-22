@@ -9,7 +9,8 @@ import {
   previewInvite,
 } from "../../services/admin/invites.service.js";
 import { createRequest } from "../../services/admin/requests.service.js";
-import { publicProcedure, router } from "../trpc.js";
+import { hashClientIp } from "../../server/rate-limit.js";
+import { publicProcedure, rateLimited, router } from "../trpc.js";
 
 export const accountRouter = router({
   me: publicProcedure.query(({ ctx }) => ctx.user),
@@ -22,9 +23,25 @@ export const accountRouter = router({
     .input(acceptInviteInputSchema)
     .mutation(({ ctx, input }) => acceptInvite(ctx, input)),
 
-  // The only unauthenticated write: it queues a signup or a password reset for
-  // an admin to decide on, and answers the same way whatever the address is.
   createRequest: publicProcedure
+    .use(rateLimited((ctx) => ctx.limits.createRequest))
+    .use(
+      rateLimited(
+        (ctx) => ctx.limits.createRequestGlobal,
+        () => "all",
+      ),
+    )
     .input(createRequestInputSchema)
-    .mutation(({ ctx, input }) => createRequest(ctx, input)),
+    .mutation(({ ctx, input }) =>
+      createRequest(
+        {
+          ...ctx,
+          requesterHash: hashClientIp(
+            ctx.clientIp,
+            ctx.config.BETTER_AUTH_SECRET,
+          ),
+        },
+        input,
+      ),
+    ),
 });

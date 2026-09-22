@@ -6,6 +6,7 @@ import type { AppServices } from "../context.js";
 export interface RequestContext extends AppServices {
   user: User | null;
   headers: Headers;
+  clientIp: string;
 }
 
 const toHeaders = (
@@ -54,5 +55,10 @@ export const createContextFactory =
   (services: AppServices) =>
   async ({ req }: CreateFastifyContextOptions): Promise<RequestContext> => {
     const headers = toHeaders(req.headers);
-    return { ...services, headers, user: await resolveUser(services, headers) };
+    return {
+      ...services,
+      headers,
+      clientIp: req.ip,
+      user: await resolveUser(services, headers),
+    };
   };

@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import {
   MAX_OPEN_REQUESTS,
+  MAX_OPEN_REQUESTS_PER_IP,
+  REQUEST_PENDING_TTL_DAYS,
   REQUEST_RETENTION_DAYS,
   RequestStatus,
   RequestType,
@@ -29,23 +31,24 @@ import {
 } from "drizzle-orm";
 import { alias, type PgColumn } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
+import type { Logger } from "pino";
 
 import type { Database, Executor } from "../../db/client.js";
 import { requests } from "../../db/schema/requests.js";
 import { users } from "../../db/schema/users.js";
+import type { AdminNotifier } from "../notifications/admin-notifier.js";
 import { createUserTx, requireUser } from "./admin.service.js";
 import { issueInviteTx } from "./invites.service.js";
 
-/**
- * Queues a request. Unauthenticated, so it says as little as possible: asking
- * twice for the same address is not an error and never reveals whether that
- * address has an account behind it.
- */
 export const createRequest = async (
   deps: RequestDeps,
   input: CreateRequestInput,
 ): Promise<{ id: string }> => {
-  if ((await countOpenRequests(deps)) >= MAX_OPEN_REQUESTS) {
+  const open = await countOpenRequests(deps, deps.requesterHash);
+  if (
+    open.total >= MAX_OPEN_REQUESTS ||
+    open.mine >= MAX_OPEN_REQUESTS_PER_IP
+  ) {
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: "Too many requests are waiting for an answer.",
@@ -59,6 +62,7 @@ export const createRequest = async (
       type: input.type,
       email: input.email,
       displayName: input.type === RequestType.signup ? input.displayName : null,
+      requesterHash: deps.requesterHash ?? null,
     })
     .onConflictDoNothing({
       target: requests.email,
@@ -66,11 +70,12 @@ export const createRequest = async (
     })
     .returning({ id: requests.id });
 
-  if (inserted) return { id: inserted.id };
+  if (inserted) {
+    notifyQueued(deps);
+    return { id: inserted.id };
+  }
 
-  // Something is already open for this address — possibly of the other kind.
-  // The caller learns nothing more than that their ask is on the queue.
-  const [open] = await deps.db
+  const [existing] = await deps.db
     .select({ id: requests.id })
     .from(requests)
     .where(
@@ -81,13 +86,21 @@ export const createRequest = async (
     )
     .limit(1);
 
-  if (!open) {
+  if (!existing) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Request not stored.",
     });
   }
-  return { id: open.id };
+  return { id: existing.id };
+};
+
+const notifyQueued = (deps: RequestDeps): void => {
+  try {
+    deps.notifier?.requestQueued();
+  } catch (error: unknown) {
+    deps.logger?.error({ error }, "Admin notification could not be started.");
+  }
 };
 
 export const listRequests = async (
@@ -134,19 +147,12 @@ export const requireRequest = async (
   return serializeDates(row);
 };
 
-/**
- * Accepts a request. A signup creates the account, a reset points at the one
- * that is already there; either way the answer is a fresh invite link, which
- * the admin hands over out of band.
- */
 export const approveRequest = async (
   deps: RequestDeps,
   actorId: string,
   requestId: string,
 ): Promise<ApproveRequestResult> => {
   const { userId, invite } = await deps.db.transaction(async (tx) => {
-    // Claiming the row first is what makes a double approval impossible: the
-    // second one finds nothing pending and rolls back before issuing a link.
     const decided = await decideTx(
       tx,
       requestId,
@@ -196,8 +202,30 @@ export const sweepDecidedRequests = async (db: Database): Promise<number> => {
   return removed.length;
 };
 
+export const sweepStalePendingRequests = async (
+  db: Database,
+): Promise<number> => {
+  const cutoff = new Date(Date.now() - REQUEST_PENDING_TTL_DAYS * MS_PER_DAY);
+
+  const expired = await db
+    .update(requests)
+    .set({ status: RequestStatus.rejected, decidedAt: new Date() })
+    .where(
+      and(
+        eq(requests.status, RequestStatus.pending),
+        lt(requests.createdAt, cutoff),
+      ),
+    )
+    .returning({ id: requests.id });
+
+  return expired.length;
+};
+
 interface RequestDeps {
   db: Database;
+  requesterHash?: string;
+  notifier?: AdminNotifier;
+  logger?: Logger;
 }
 
 const decideTx = async (
@@ -278,8 +306,6 @@ const resolveResetTarget = async (
   return user.id;
 };
 
-// The request points at two users: the account the decision produced or
-// targeted, and the admin who decided, so the users table joins twice.
 const subjects = alias(users, "subjects");
 const deciders = alias(users, "deciders");
 
@@ -343,17 +369,23 @@ const countRequests = async (deps: RequestDeps, where: SQL | undefined) => {
   return row?.value ?? 0;
 };
 
-const countOpenRequests = async (deps: RequestDeps) => {
+export const countOpenRequests = async (
+  deps: RequestDeps,
+  requesterHash?: string,
+): Promise<{ total: number; mine: number }> => {
   const [row] = await deps.db
-    .select({ value: count() })
+    .select({
+      total: count(),
+      mine: sql<number>`count(*) filter (
+        where ${requests.requesterHash} is not distinct from ${requesterHash ?? null}
+      )`.mapWith(Number),
+    })
     .from(requests)
     .where(eq(requests.status, RequestStatus.pending));
-  return row?.value ?? 0;
+
+  return { total: row?.total ?? 0, mine: row?.mine ?? 0 };
 };
 
-// Postgres only matches a partial index when the predicate it is given is the
-// same expression, literal included: a bound parameter here would leave the
-// conflict target unmatched.
 const openIndexPredicate = sql`${requests.status} = ${sql.raw(
   `'${RequestStatus.pending}'`,
 )}`;

@@ -5,6 +5,8 @@ import { createDatabase } from "./db/client.js";
 import { runMigrations } from "./db/migrate.js";
 import { startCleanupJob } from "./jobs/cleanup.js";
 import { createLogger } from "./logger.js";
+import { createAdminNotifier } from "./services/notifications/admin-notifier.js";
+import { createAppLimits } from "./server/rate-limit.js";
 import { buildServer } from "./server/server.js";
 
 const SHUTDOWN_TIMEOUT_MS = 8_000;
@@ -14,10 +16,14 @@ const main = async (): Promise<void> => {
   const logger = createLogger(config);
   const { db, close: closeDb } = createDatabase(config, logger);
   await runMigrations(db, logger);
+  const limits = createAppLimits();
+  const notifier = createAdminNotifier({ db, config, logger });
   const services: AppServices = {
     config,
     db,
     logger,
+    limits,
+    notifier,
     auth: createAuth(db, config),
     // events: nullEventBus,
   };
@@ -46,6 +52,8 @@ const main = async (): Promise<void> => {
     try {
       logger.info({ signal }, "Shutting down.");
       await stopCleanup();
+      await notifier.stop();
+      limits.stop();
       // await realtime.close();
       await app.close();
       await closeDb();

@@ -4,6 +4,7 @@ import {
   fastifyTRPCPlugin,
   type FastifyTRPCPluginOptions,
 } from "@trpc/server/adapters/fastify";
+import { MAX_TRPC_BATCH_SIZE } from "@pantry/shared";
 import { appRouter, type AppRouter } from "../../trpc/routers/index.js";
 import { createContextFactory } from "../../trpc/context.js";
 
@@ -16,6 +17,7 @@ export const registerTRPCRoutes = async (
     trpcOptions: {
       router: appRouter,
       createContext: createContextFactory(services),
+      maxBatchSize: MAX_TRPC_BATCH_SIZE,
       onError({ error, path }) {
         if (error.code === "INTERNAL_SERVER_ERROR") {
           services.logger.error({ error, path }, "unhandled tRPC error");

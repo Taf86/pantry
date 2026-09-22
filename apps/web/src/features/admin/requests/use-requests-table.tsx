@@ -79,7 +79,6 @@ export default function useRequestsTable({
       meta: { alignEnd: true },
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
-          {/* A decided request is history: there is nothing left to do to it. */}
           {row.original.status === RequestStatus.pending && (
             <RequestActions request={row.original} onApproved={onApproved} />
           )}

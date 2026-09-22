@@ -1,5 +1,6 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import z, { ZodError } from "zod";
+import type { Limiter } from "../server/rate-limit.js";
 import type { RequestContext } from "./context.js";
 
 const t = initTRPC.context<RequestContext>().create({
@@ -21,7 +22,25 @@ const t = initTRPC.context<RequestContext>().create({
 
 export const router = t.router;
 export const middleware = t.middleware;
-export const publicProcedure = t.procedure;
+
+export const rateLimited = (
+  pick: (ctx: RequestContext) => Limiter,
+  keyOf: (ctx: RequestContext) => string = (ctx) => ctx.clientIp,
+) =>
+  middleware(({ ctx, next, path }) => {
+    const { ok, retryAfter } = pick(ctx).take(`${path}:${keyOf(ctx)}`);
+    if (!ok) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: `Too many requests. Retry in ${String(retryAfter)}s.`,
+      });
+    }
+    return next();
+  });
+
+export const publicProcedure = t.procedure.use(
+  rateLimited((ctx) => ctx.limits.procedure),
+);
 
 export const authedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {

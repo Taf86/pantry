@@ -34,5 +34,6 @@ export const keys = {
     ["admin", "requests", "list", input] as const,
   // userSearch: (query: string) => ["users", "search", query] as const,
   invitePreview: (token: string) => ["invite", token] as const,
+  pushConfig: () => ["push", "config"] as const,
   // signupInfo: () => ["signup", "info"] as const,
 } as const;

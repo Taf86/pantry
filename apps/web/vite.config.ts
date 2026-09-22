@@ -21,13 +21,9 @@ export default defineConfig({
         lang: "it",
         start_url: "/",
         display: "standalone",
-        // Uguali a --background: la barra di sistema deve sparire nella pagina.
         theme_color: "#ffffff",
         background_color: "#ffffff",
         icons: [
-          // Android ignora le icone SVG: senza PNG l'installazione mostra un
-          // segnaposto vuoto. `maskable` va tenuta separata da `any` perché ha
-          // il margine di sicurezza e verrebbe ritagliata male come icona piena.
           {
             src: "/pwa-192x192.png",
             sizes: "192x192",
@@ -56,6 +52,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        importScripts: ["/push-sw.js"],
+        globIgnores: ["push-sw.js"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
         runtimeCaching: [

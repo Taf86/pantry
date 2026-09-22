@@ -20,6 +20,7 @@ export const requests = pgTable(
       .default(RequestStatus.pending),
     email: text("email").notNull(),
     displayName: text("display_name"),
+    requesterHash: text("requester_hash"),
     userId: text("user_id").references(() => users.id, {
       onDelete: "set null",
     }),
@@ -50,5 +51,8 @@ export const requests = pgTable(
       .on(table.email)
       .where(sql`${table.status} = ${RequestStatus.pending}`),
     index("idx_requests_status").on(table.status),
+    index("idx_requests_requester")
+      .on(table.requesterHash)
+      .where(sql`${table.status} = ${RequestStatus.pending}`),
   ],
 );

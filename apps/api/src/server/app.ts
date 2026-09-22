@@ -4,9 +4,8 @@ import type { AppServices } from "../context.js";
 export const createApp = (services: AppServices) =>
   Fastify({
     loggerInstance: services.logger,
-    trustProxy: true,
+    trustProxy: 1,
     bodyLimit: 1_048_576,
-
     logController: new LogController({
       disableRequestLogging: !services.config.isProduction,
     }),

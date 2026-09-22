@@ -1,5 +1,6 @@
 export * from "./accounts.js";
 export * from "./invites.js";
+export * from "./push-subscriptions.js";
 export * from "./requests.js";
 export * from "./sessions.js";
 export * from "./users.js";

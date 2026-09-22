@@ -120,3 +120,26 @@ la prossima scansione della storia torni pulita: se restituisse sempre tre risul
 giorno in cui ne comparisse un quarto non se ne accorgerebbe nessuno.
 
 Vale la pena rifarla dopo ogni import di codice da fuori.
+
+---
+
+## 4. Rotazione
+
+`POSTGRES_PASSWORD` e `BETTER_AUTH_SECRET` si ruotano quando serve: la prima richiede di
+aggiornare anche il ruolo Postgres, la seconda invalida le sessioni e basta.
+
+Le chiavi **VAPID no**, e non è ovvio. Una `PushSubscription` nasce legata crittograficamente
+all'`applicationServerKey` con cui è stata creata: cambiare la coppia non rende le vecchie
+iscrizioni "da rinnovare", le rende **inutilizzabili**, e il servizio push risponde 403 invece dei
+404/410 che l'applicazione sa interpretare come "dispositivo sparito". Le righe resterebbero lì
+per sempre a fallire.
+
+Ruotare VAPID significa quindi, nell'ordine:
+
+1. scrivere le nuove chiavi in `/opt/pantry/.env` e riavviare `api`;
+2. `TRUNCATE push_subscriptions;`
+3. avvisare gli admin che devono riattivare le notifiche a mano, su ogni dispositivo.
+
+Non è un motivo per non ruotarle se sono trapelate — una chiave privata VAPID in mani altrui
+permette di inviare notifiche a nome dell'applicazione — ma è un motivo per non ruotarle per
+abitudine.

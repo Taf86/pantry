@@ -5,7 +5,9 @@
     "hidePassword": "Nascondi la password"
   },
   "error": {
-    "auth": { "invalidCredentials": "Credenziali non valide" },
+    "auth": {
+      "invalidCredentials": "Credenziali non valide"
+    },
     "unknown": "Errore sconosciuto"
   },
   "feature": {
@@ -241,6 +243,17 @@
       "failed": "Richiesta non riuscita",
       "tooMany": "Ci sono troppe richieste in attesa di risposta. Riprova più tardi.",
       "backToLogin": "Torna all'accesso"
+    },
+    "push": {
+      "title": "Notifiche",
+      "on": "Attive su questo dispositivo. Ti avvisiamo delle nuove richieste.",
+      "off": "Disattivate su questo dispositivo. Attivale per sapere delle nuove richieste.",
+      "enable": "Attiva",
+      "disable": "Disattiva",
+      "denied": "Le notifiche sono bloccate per questo sito. Sbloccale prima dalle impostazioni del browser.",
+      "installFirst": "Su iPhone e iPad aggiungi Pantry alla schermata Home per ricevere le notifiche.",
+      "unavailable": "Le notifiche non sono configurate sul server.",
+      "error": "Non è stato possibile cambiare le notifiche. Riprova."
     }
   },
   "validation": {

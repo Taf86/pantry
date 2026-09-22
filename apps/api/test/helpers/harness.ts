@@ -6,6 +6,10 @@ import { PgTable } from "drizzle-orm/pg-core";
 import postgres from "postgres";
 
 import { createAuth, type Auth } from "../../src/auth.js";
+import type { AppServices } from "../../src/context.js";
+import { createLimiter, type AppLimits } from "../../src/server/rate-limit.js";
+import { buildServer } from "../../src/server/server.js";
+import type { AppServer } from "../../src/server/app.js";
 import { buildDbUrl } from "../../src/config/db.js";
 import { loadConfig, type AppConfig } from "../../src/config/env.js";
 import { createDatabase, type Database } from "../../src/db/client.js";
@@ -115,6 +119,67 @@ export const createHarness = async (): Promise<Harness> => {
     close: handle.close,
   };
 };
+
+export interface ServerHarness extends Harness {
+  app: Awaited<AppServer>;
+  services: AppServices;
+}
+
+export const createServerHarness = async (
+  overrides: { httpLimit?: { windowMs: number; max: number } } = {},
+): Promise<ServerHarness> => {
+  const harness = await createHarness();
+
+  const httpLimit = overrides.httpLimit ?? { windowMs: 60_000, max: 1000 };
+  const limiters = {
+    http: createLimiter(httpLimit),
+    procedure: createLimiter({ windowMs: 60_000, max: 1000 }),
+    createRequest: createLimiter({ windowMs: 60_000, max: 1000 }),
+    createRequestGlobal: createLimiter({ windowMs: 60_000, max: 1000 }),
+  };
+  const limits: AppLimits = {
+    ...limiters,
+    stop: () => {
+      for (const limiter of Object.values(limiters)) limiter.stop();
+    },
+  };
+
+  const services: AppServices = {
+    config: harness.config,
+    db: harness.db,
+    auth: harness.auth,
+    logger: silentLogger(),
+    limits,
+    notifier: { requestQueued: () => undefined, stop: () => Promise.resolve() },
+  };
+
+  const app = await buildServer(services);
+  await app.ready();
+
+  return {
+    ...harness,
+    app,
+    services,
+    close: async () => {
+      await app.close();
+      limits.stop();
+      await harness.close();
+    },
+  };
+};
+
+const silentLogger = () =>
+  ({
+    level: "silent",
+    fatal: () => undefined,
+    error: () => undefined,
+    warn: () => undefined,
+    info: () => undefined,
+    debug: () => undefined,
+    trace: () => undefined,
+    silent: () => undefined,
+    child: () => silentLogger(),
+  }) as never;
 
 export const makeUser = async (
   harness: Harness,

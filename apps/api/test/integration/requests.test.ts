@@ -1,11 +1,21 @@
 import {
   MAX_OPEN_REQUESTS,
+  MAX_OPEN_REQUESTS_PER_IP,
+  REQUEST_PENDING_TTL_DAYS,
   REQUEST_RETENTION_DAYS,
   type ListRequestsInput,
 } from "@pantry/shared";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import { requests } from "../../src/db/schema/requests.js";
 import { users } from "../../src/db/schema/users.js";
@@ -21,6 +31,7 @@ import {
   rejectRequest,
   requireRequest,
   sweepDecidedRequests,
+  sweepStalePendingRequests,
 } from "../../src/services/admin/requests.service.js";
 import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
 
@@ -278,5 +289,196 @@ describe("requests", () => {
     const left = await listRequests(deps(), PAGE);
     expect(left.rowCount).toBe(1);
     expect(left.rows[0]?.status).toBe("pending");
+  });
+
+  describe("abuse controls", () => {
+    const fromIp = (hash: string) => ({ db: harness.db, requesterHash: hash });
+
+    it("caps the open requests a single caller may hold", async () => {
+      for (let i = 0; i < MAX_OPEN_REQUESTS_PER_IP; i += 1) {
+        await createRequest(fromIp("caller-a"), {
+          type: "signup",
+          email: `queued-${String(i)}@example.com`,
+          displayName: "Queued",
+        });
+      }
+
+      await expect(
+        createRequest(fromIp("caller-a"), {
+          type: "signup",
+          email: "one-too-many@example.com",
+          displayName: "Queued",
+        }),
+      ).rejects.toThrow(/too many/i);
+    });
+
+    it("lets another caller through while one is capped", async () => {
+      for (let i = 0; i < MAX_OPEN_REQUESTS_PER_IP; i += 1) {
+        await createRequest(fromIp("caller-a"), {
+          type: "signup",
+          email: `queued-${String(i)}@example.com`,
+          displayName: "Queued",
+        });
+      }
+
+      const { id } = await createRequest(fromIp("caller-b"), {
+        type: "signup",
+        email: "someone-else@example.com",
+        displayName: "Someone",
+      });
+
+      expect(id).toBeTruthy();
+    });
+
+    it("frees a caller's quota once their requests are decided", async () => {
+      const held: string[] = [];
+      for (let i = 0; i < MAX_OPEN_REQUESTS_PER_IP; i += 1) {
+        const { id } = await createRequest(fromIp("caller-a"), {
+          type: "signup",
+          email: `queued-${String(i)}@example.com`,
+          displayName: "Queued",
+        });
+        held.push(id);
+      }
+      await rejectRequest(deps(), admin, held[0] ?? "");
+
+      const { id } = await createRequest(fromIp("caller-a"), {
+        type: "signup",
+        email: "next@example.com",
+        displayName: "Next",
+      });
+
+      expect(id).toBeTruthy();
+    });
+
+    it("expires a request nobody answered, so the queue can drain", async () => {
+      const { id } = await signup();
+      await reset("recent@example.com");
+
+      expect(await sweepStalePendingRequests(harness.db)).toBe(0);
+
+      await harness.db
+        .update(requests)
+        .set({
+          createdAt: new Date(
+            Date.now() - (REQUEST_PENDING_TTL_DAYS + 1) * MS_PER_DAY,
+          ),
+        })
+        .where(eq(requests.id, id));
+
+      expect(await sweepStalePendingRequests(harness.db)).toBe(1);
+
+      const expired = await requireRequest(deps(), id);
+      expect(expired.status).toBe("rejected");
+      // A null decider is what tells an expiry apart from a real refusal,
+      // which is why no new status was needed.
+      expect(expired.decidedBy).toBeNull();
+      expect(expired.decidedAt).not.toBeNull();
+    });
+
+    it("frees the address again once its request has expired", async () => {
+      const { id } = await signup();
+      await harness.db
+        .update(requests)
+        .set({
+          createdAt: new Date(
+            Date.now() - (REQUEST_PENDING_TTL_DAYS + 1) * MS_PER_DAY,
+          ),
+        })
+        .where(eq(requests.id, id));
+      await sweepStalePendingRequests(harness.db);
+
+      const second = await signup();
+
+      expect(second.id).not.toBe(id);
+    });
+  });
+
+  describe("admin notification", () => {
+    const withNotifier = () => {
+      const requestQueued = vi.fn();
+      return {
+        requestQueued,
+        deps: {
+          db: harness.db,
+          notifier: { requestQueued, stop: () => Promise.resolve() },
+        },
+      };
+    };
+
+    it("notifies once for a request that was actually queued", async () => {
+      const { requestQueued, deps: withSpy } = withNotifier();
+
+      await createRequest(withSpy, {
+        type: "signup",
+        email: "newcomer@example.com",
+        displayName: "Newcomer",
+      });
+
+      expect(requestQueued).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays silent on a repeat of an address already in the queue", async () => {
+      const { requestQueued, deps: withSpy } = withNotifier();
+
+      await createRequest(withSpy, {
+        type: "signup",
+        email: "newcomer@example.com",
+        displayName: "Newcomer",
+      });
+      await createRequest(withSpy, {
+        type: "signup",
+        email: "newcomer@example.com",
+        displayName: "Newcomer",
+      });
+      await createRequest(withSpy, {
+        type: "reset_password",
+        email: "newcomer@example.com",
+      });
+
+      expect(requestQueued).toHaveBeenCalledTimes(1);
+    });
+
+    it("stays silent when the queue refuses the request", async () => {
+      await harness.db.insert(requests).values(
+        Array.from({ length: MAX_OPEN_REQUESTS }, (_, index) => ({
+          id: crypto.randomUUID(),
+          type: "signup" as const,
+          email: `queued-${String(index)}@example.com`,
+          displayName: `Queued ${String(index)}`,
+        })),
+      );
+      const { requestQueued, deps: withSpy } = withNotifier();
+
+      await expect(
+        createRequest(withSpy, {
+          type: "signup",
+          email: "newcomer@example.com",
+          displayName: "Newcomer",
+        }),
+      ).rejects.toThrow(/too many/i);
+
+      expect(requestQueued).not.toHaveBeenCalled();
+    });
+
+    it("still stores the request when notifying throws", async () => {
+      const requestQueued = vi.fn(() => {
+        throw new Error("notifier exploded");
+      });
+
+      const { id } = await createRequest(
+        {
+          db: harness.db,
+          notifier: { requestQueued, stop: () => Promise.resolve() },
+        },
+        {
+          type: "signup",
+          email: "newcomer@example.com",
+          displayName: "Newcomer",
+        },
+      );
+
+      expect((await requireRequest(deps(), id)).status).toBe("pending");
+    });
   });
 });

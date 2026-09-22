@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { generateVAPIDKeys } from "web-push";
 
 import { loadConfig } from "../src/config/env.js";
 
@@ -58,5 +59,76 @@ describe("loadConfig", () => {
 
   it("rejects a port outside the valid range", () => {
     expect(() => loadConfig({ ...base, PORT: "70000" })).toThrow(/PORT/);
+  });
+});
+
+const generated = generateVAPIDKeys();
+const VAPID = {
+  VAPID_PUBLIC_KEY: generated.publicKey,
+  VAPID_PRIVATE_KEY: generated.privateKey,
+};
+
+const TRUNCATED = Buffer.from("too short").toString("base64url");
+
+describe("loadConfig: push", () => {
+  it("leaves push off when no keys are given", () => {
+    expect(loadConfig(base).push).toBeNull();
+  });
+
+  it("treats the empty strings Compose passes as absent", () => {
+    const config = loadConfig({
+      ...base,
+      VAPID_PUBLIC_KEY: "",
+      VAPID_PRIVATE_KEY: "",
+      VAPID_SUBJECT: "",
+    });
+
+    expect(config.push).toBeNull();
+  });
+
+  it("builds the push config when both keys are present", () => {
+    const config = loadConfig({ ...base, ...VAPID });
+
+    expect(config.push).toEqual({
+      publicKey: VAPID.VAPID_PUBLIC_KEY,
+      privateKey: VAPID.VAPID_PRIVATE_KEY,
+      subject: "mailto:admin@pantry.example.com",
+    });
+  });
+
+  it("keeps an explicit subject", () => {
+    const config = loadConfig({
+      ...base,
+      ...VAPID,
+      VAPID_SUBJECT: "https://pantry.example.com",
+    });
+
+    expect(config.push?.subject).toBe("https://pantry.example.com");
+  });
+
+  it("refuses a subject that is neither mailto: nor https:", () => {
+    expect(() =>
+      loadConfig({ ...base, ...VAPID, VAPID_SUBJECT: "admin@example.com" }),
+    ).toThrow(/VAPID_SUBJECT/);
+  });
+
+  it("refuses half a configuration, naming the missing half", () => {
+    expect(() =>
+      loadConfig({ ...base, VAPID_PUBLIC_KEY: VAPID.VAPID_PUBLIC_KEY }),
+    ).toThrow(/VAPID_PRIVATE_KEY/);
+
+    expect(() =>
+      loadConfig({ ...base, VAPID_PRIVATE_KEY: VAPID.VAPID_PRIVATE_KEY }),
+    ).toThrow(/VAPID_PUBLIC_KEY/);
+  });
+
+  it("refuses a key of the wrong shape, rather than a 401 months later", () => {
+    expect(() =>
+      loadConfig({ ...base, ...VAPID, VAPID_PUBLIC_KEY: TRUNCATED }),
+    ).toThrow(/VAPID_PUBLIC_KEY/);
+
+    expect(() =>
+      loadConfig({ ...base, ...VAPID, VAPID_PRIVATE_KEY: TRUNCATED }),
+    ).toThrow(/VAPID_PRIVATE_KEY/);
   });
 });

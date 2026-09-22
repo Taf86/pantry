@@ -492,6 +492,20 @@ Indicatore di stato sempre visibile: `online` / `offline, N modifiche in coda` /
 `NetworkFirst` sulle API con fallback alla cache. **Escludere `/api/auth/*`** dal
 caching per non servire risposte di sessione stantie.
 
+`generateSW` non può ospitare listener nostri, quindi gli handler `push` e
+`notificationclick` stanno in `apps/web/public/push-sw.js`, caricato via
+`workbox.importScripts`. L'alternativa (`injectManifest` con un service worker
+in TypeScript) obbligherebbe a riscrivere a mano tutto il `runtimeCaching`,
+dove Workbox confronta le RegExp con l'href completo mentre la
+`navigateFallbackDenylist` vede solo il path — asimmetria che è già costata una
+diagnosi. Per quaranta righe di handler non vale il rischio.
+
+Al tocco della notifica il service worker mette a fuoco la finestra esistente e
+le manda un `postMessage`, invece di `client.navigate()`: quest'ultima è una
+navigazione di documento, quindi rigioca bundle, `i18n.init()` e reidratazione
+della cache — secondi di schermata bianca — e rifiuta per i client non
+controllati, che sono proprio quelli che `includeUncontrolled` include.
+
 ---
 
 ## 8. Real-time
@@ -620,7 +634,9 @@ Il primo admin si crea con uno script di seed eseguito una volta
 ```
 Internet
    │
-   ├── Cloudflare (DNS, free plan) — nasconde l'IP, DDoS
+   ├── Cloudflare (DNS only, nuvola grigia)
+   │     nessun proxy: niente protezione DDoS, IP di origine in chiaro.
+   │     Scelta consapevole, motivi e costo del ritorno in docs/deploy.md §4.2
    │
    └── VPS Hetzner CX22 (2 vCPU, 4 GB, 40 GB NVMe)
          └── Docker Compose
@@ -773,8 +789,9 @@ Nel repo pubblico va solo `.env.example` con le chiavi e valori fittizi.
 # /opt/pantry/.env
 POSTGRES_PASSWORD=          # openssl rand -base64 32
 BETTER_AUTH_SECRET=         # openssl rand -base64 32
-VAPID_PUBLIC_KEY=           # npx web-push generate-vapid-keys
-VAPID_PRIVATE_KEY=
+VAPID_PUBLIC_KEY=           # pnpm --filter pantry-api vapid
+VAPID_PRIVATE_KEY=          # (facoltativi: senza, le push sono un no-op)
+VAPID_SUBJECT=              # mailto: oppure https:, default mailto:admin@$DOMAIN
 DOMAIN=pantry.dominio.it
 ```
 
@@ -875,9 +892,9 @@ criterio.
 
 **Totale realistico: ~6-7 €/mese IVA inclusa**, circa 80 € l'anno.
 
-Gratis a questa scala: TLS (Let's Encrypt), DNS/CDN/DDoS (Cloudflare free), backup
-off-site (R2 10 GB), CI (Actions su repo pubblico), error tracking (Sentry free),
-uptime (UptimeRobot), Web Push (VAPID, nessun servizio).
+Gratis a questa scala: TLS (Let's Encrypt), DNS (Cloudflare free, **senza** proxy: niente
+CDN né DDoS, vedi §11), backup off-site (R2 10 GB), CI (Actions su repo pubblico),
+error tracking (Sentry free), uptime (UptimeRobot), Web Push (VAPID, nessun servizio).
 
 **Costo non monetario**: mezza giornata di setup iniziale, poi circa un'ora al mese di
 manutenzione tra patch di sistema e verifica dei backup. È la differenza reale rispetto

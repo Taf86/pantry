@@ -5,7 +5,9 @@
     "hidePassword": "Hide password"
   },
   "error": {
-    "auth": { "invalidCredentials": "Invalid credentials" },
+    "auth": {
+      "invalidCredentials": "Invalid credentials"
+    },
     "unknown": "Unknown error"
   },
   "feature": {
@@ -241,6 +243,17 @@
       "failed": "Request failed",
       "tooMany": "Too many requests are waiting for an answer. Try again later.",
       "backToLogin": "Back to sign in"
+    },
+    "push": {
+      "title": "Notifications",
+      "on": "On for this device. You will hear about new requests.",
+      "off": "Off for this device. Turn them on to hear about new requests.",
+      "enable": "Turn on",
+      "disable": "Turn off",
+      "denied": "Notifications are blocked for this site. Unblock them in your browser settings first.",
+      "installFirst": "On iPhone and iPad, add Pantry to the Home Screen to receive notifications.",
+      "unavailable": "Notifications are not configured on the server.",
+      "error": "Notifications could not be changed. Try again."
     }
   },
   "validation": {

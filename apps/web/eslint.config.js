@@ -46,4 +46,12 @@ export default tseslint.config(
     files: ["src/components/ui/**"],
     rules: { "react-refresh/only-export-components": "off" },
   },
+  {
+    files: ["public/**/*.js"],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: { ...globals.serviceworker },
+      parserOptions: { project: null, projectService: false },
+    },
+  },
 );

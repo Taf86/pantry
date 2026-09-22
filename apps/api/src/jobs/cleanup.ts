@@ -6,7 +6,11 @@ import type { Database } from "../db/client.js";
 import { sessions } from "../db/schema/sessions.js";
 // import { appliedMutations } from "../db/schema/support.js";
 import { sweepStaleInvites } from "../services/admin/invites.service.js";
-import { sweepDecidedRequests } from "../services/admin/requests.service.js";
+import {
+  sweepDecidedRequests,
+  sweepStalePendingRequests,
+} from "../services/admin/requests.service.js";
+import { sweepStalePushSubscriptions } from "../services/push/push.service.js";
 
 // const MS_PER_DAY = 86_400_000;
 const INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -28,7 +32,10 @@ const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
 
   const staleInvites = await sweepStaleInvites(db);
 
+  const expiredRequests = await sweepStalePendingRequests(db);
   const decidedRequests = await sweepDecidedRequests(db);
+
+  const stalePushSubscriptions = await sweepStalePushSubscriptions(db);
 
   logger.info(
     {
@@ -36,6 +43,8 @@ const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
       sessions: expiredSessions.length,
       invites: staleInvites,
       requests: decidedRequests,
+      expiredRequests,
+      pushSubscriptions: stalePushSubscriptions,
     },
     "Cleanup completed.",
   );

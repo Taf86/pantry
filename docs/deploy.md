@@ -412,6 +412,31 @@ Better Auth e l'unica origin accettata. `CADDY_SITE_ADDRESS` con l'hostname nudo
 ascoltare su 80 e 443, ottenere il certificato e redirigere HTTP su HTTPS. `EXTRA_ORIGINS` resta
 vuoto: in produzione SPA e API stanno sulla stessa origin.
 
+Le chiavi delle notifiche push sono **facoltative** e vanno generate una volta sola, dal laptop:
+
+```
+pnpm --filter pantry-api vapid
+```
+
+```
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:tu@esempio.it
+```
+
+Senza, l'API parte lo stesso e le notifiche sono un no-op silenzioso — è il modo consigliato di
+fare il primo deploy della funzionalità, per verificare che non rompa niente prima di accenderla.
+Con **una sola** delle due chiavi l'API si rifiuta di partire: mezza configurazione è sempre un
+errore, ed è meglio scoprirlo al boot che alla prima notifica. `VAPID_SUBJECT` accetta solo
+`mailto:` o `https:` (RFC 8292) e senza di esso vale `mailto:admin@$DOMAIN`.
+
+**Rotazione**: vedi [secrets.md](secrets.md) — non è gratuita come le altre due.
+
+> **Da sapere:** il container `api` deve poter uscire verso `fcm.googleapis.com`,
+> `*.push.services.mozilla.com` e `web.push.apple.com`. `ufw` filtra solo l'ingresso e il bridge
+> Docker lascia uscire, quindi oggi non c'è niente da fare — ma un domani che si stringa l'uscita,
+> le notifiche smettono di funzionare senza un errore evidente.
+
 ### 4.4 Il compose **[locale]**
 
 ```
