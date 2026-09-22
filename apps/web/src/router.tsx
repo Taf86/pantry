@@ -1,9 +1,5 @@
 import { RequestType } from "@pantry/shared";
-import {
-  createBrowserRouter,
-  replace,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, replace, RouterProvider } from "react-router-dom";
 import Layout from "./components/layout/layout";
 import LoginPage from "./features/auth/login-page";
 import InvitePage from "./features/auth/invite-page";
@@ -54,9 +50,6 @@ const router = createBrowserRouter([
           {
             element: <MainLayout />,
             children: [
-              // `replace` e non `redirect`: quest'ultimo impila una voce di
-              // cronologia, quindi la PWA aperta su "/" partiva già con un
-              // indietro di troppo prima di chiudersi.
               { index: true, loader: () => replace("/lists") },
               { path: "lists", element: <ListsPage /> },
               { path: "shopping", element: <ShoppingPage /> },
