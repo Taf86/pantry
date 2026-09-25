@@ -157,6 +157,16 @@ export const MAX_LISTS_PER_USER = 50;
 export const MAX_LIST_MEMBERS = 20;
 export const MAX_ITEMS_PER_LIST = 500;
 
+/**
+ * The path the realtime transport is served on.
+ *
+ * Deliberately not the default /socket.io. This does NOT hide which library
+ * is in use — the Engine.IO handshake payload and the client bundle both say
+ * so plainly — it only keeps the app out of the first sweep of scanners that
+ * probe for that path by name, which buys a little time if a CVE ever gets
+ * mass-scanned. Client and server must agree, hence a shared constant.
+ */
+export const REALTIME_PATH = "/ws";
 /** Prefix of the Socket.IO rooms. */
 export const listRoom = (listId: string): string => `list:${listId}`;
 export const pantryRoom = (pantryId: string): string => `pantry:${pantryId}`;

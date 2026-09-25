@@ -180,7 +180,7 @@ export const createServerHarness = async (
   };
 };
 
-const silentLogger = () =>
+export const silentLogger = () =>
   ({
     level: "silent",
     fatal: () => undefined,

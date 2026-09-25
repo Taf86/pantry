@@ -7,6 +7,7 @@ import { seedCategories } from "./db/seed/categories.js";
 import { startCleanupJob } from "./jobs/cleanup.js";
 import { createLogger } from "./logger.js";
 import { nullEventBus } from "./realtime/events.js";
+import { createRealtime } from "./realtime/io.js";
 import { createAdminNotifier } from "./services/notifications/admin-notifier.js";
 import { createAppLimits } from "./server/rate-limit.js";
 import { buildServer } from "./server/server.js";
@@ -33,8 +34,11 @@ const main = async (): Promise<void> => {
   const app = await buildServer(services);
   await app.ready();
 
-  // const realtime = createRealtime(app.server, services);
-  // services.events = realtime.bus;
+  // The bus is swapped in after the HTTP server exists. Until then services
+  // publish into the null bus, which is exactly right: nobody can be listening
+  // before the server is up.
+  const realtime = createRealtime(app.server, services);
+  services.events = realtime.bus;
 
   const stopCleanup = startCleanupJob(db, logger);
   await app.listen({ port: config.PORT, host: config.HOST });
@@ -57,7 +61,7 @@ const main = async (): Promise<void> => {
       await stopCleanup();
       await notifier.stop();
       limits.stop();
-      // await realtime.close();
+      await realtime.close();
       await app.close();
       await closeDb();
     } catch (error) {

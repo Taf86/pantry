@@ -3,9 +3,17 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { REALTIME_PATH } from "@pantry/shared";
 import { API_CACHE_NAME } from "./src/lib/pwa.js";
 
 const API_TARGET = process.env["VITE_API_TARGET"] ?? "http://localhost:3000";
+
+/**
+ * Built from the shared constant so the service worker, the dev proxy and the
+ * server cannot drift apart. The denylist sees only the path, not the full
+ * href, which is why this is anchored and not a substring match.
+ */
+const REALTIME_ROUTE = new RegExp(`^${REALTIME_PATH}(/|$)`);
 
 export default defineConfig({
   plugins: [
@@ -55,7 +63,7 @@ export default defineConfig({
         importScripts: ["/push-sw.js"],
         globIgnores: ["push-sw.js"],
         navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
+        navigateFallbackDenylist: [/^\/api/, REALTIME_ROUTE],
         runtimeCaching: [
           {
             urlPattern: ({ url, sameOrigin }) =>
@@ -83,7 +91,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": { target: API_TARGET, changeOrigin: false },
-      "/socket.io": { target: API_TARGET, ws: true, changeOrigin: false },
+      [REALTIME_PATH]: { target: API_TARGET, ws: true, changeOrigin: false },
     },
   },
   build: {

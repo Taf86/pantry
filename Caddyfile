@@ -25,6 +25,16 @@
 		}
 	}
 
+	# Realtime handshakes and the WebSocket upgrade, on REALTIME_PATH rather
+	# than the transport default. Without this the path falls through to the
+	# SPA block below and the handshake is answered with index.html: fine in
+	# dev, where Vite proxies it, broken in production.
+	handle /ws/* {
+		reverse_proxy {$API_UPSTREAM:api:3000} {
+			header_up X-Forwarded-For {client_ip}
+		}
+	}
+
 	handle /assets/* {
 		root * /srv
 		header Cache-Control "public, max-age=31536000, immutable"
