@@ -18,7 +18,7 @@ import { AlertCircleIcon } from "lucide-react";
 import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import z from "zod";
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "@/components/form-field";
 import { useTranslation } from "react-i18next";

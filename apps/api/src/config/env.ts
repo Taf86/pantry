@@ -1,4 +1,4 @@
-import z from "zod";
+import * as z from "zod";
 import { buildDbUrl, rawDbEnvSchema } from "./db.js";
 import { parseEnvOrThrow } from "./parse-env.js";
 

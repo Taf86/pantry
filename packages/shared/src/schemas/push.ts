@@ -1,4 +1,4 @@
-import z from "zod";
+import * as z from "zod";
 
 export const ADMIN_REQUESTS_PATH = "/admin/requests";
 

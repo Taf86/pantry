@@ -30,7 +30,7 @@ import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import z from "zod";
+import * as z from "zod";
 
 /**
  * The public side of the queue: it asks for an account or for a new password

@@ -40,7 +40,7 @@ import { useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import z from "zod";
+import * as z from "zod";
 import { roleLabelKeys, statusLabelKeys } from "../../lib/user/user-labels";
 import InviteLinkShare from "./invite-link-share";
 

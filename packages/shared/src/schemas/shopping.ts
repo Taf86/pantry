@@ -1,4 +1,4 @@
-import z from "zod";
+import * as z from "zod";
 
 import { entityIdSchema, isoDateTimeSchema, userIdSchema } from "./common.js";
 import { userRefSchema } from "./users.js";
