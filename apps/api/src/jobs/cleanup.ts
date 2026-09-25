@@ -10,6 +10,10 @@ import {
   sweepStalePendingRequests,
 } from "../services/admin/requests.service.js";
 import { sweepStalePushSubscriptions } from "../services/push/push.service.js";
+import {
+  sweepEndedShoppingSessions,
+  sweepExpiredShoppingSessions,
+} from "../services/shopping/sessions.service.js";
 
 const INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -28,6 +32,9 @@ const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
 
   const staleMutations = await sweepAppliedMutations(db);
 
+  const expiredLeases = await sweepExpiredShoppingSessions(db);
+  const endedLeases = await sweepEndedShoppingSessions(db);
+
   logger.info(
     {
       mutations: staleMutations,
@@ -36,6 +43,8 @@ const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
       requests: decidedRequests,
       expiredRequests,
       pushSubscriptions: stalePushSubscriptions,
+      expiredLeases,
+      endedLeases,
     },
     "Cleanup completed.",
   );

@@ -24,6 +24,7 @@ import { listMembers } from "../../db/schema/list-members.js";
 import { lists } from "../../db/schema/lists.js";
 import { users } from "../../db/schema/users.js";
 import type { EventBus } from "../../realtime/events.js";
+import { endSessionsForList } from "../shopping/sessions.service.js";
 import { claimMutation } from "./mutations.js";
 
 export interface ListDeps {
@@ -220,7 +221,12 @@ export const deleteList = async (
       .where(and(eq(lists.id, input.listId), isNull(lists.deletedAt)))
       .returning({ id: lists.id });
 
-    return row !== undefined;
+    if (row === undefined) return false;
+
+    // A lease must not outlive the list it was taken on, or the partial unique
+    // index keeps a row alive for something nobody can open any more.
+    await endSessionsForList(tx, input.listId);
+    return true;
   });
 
   if (deleted) {
