@@ -253,6 +253,20 @@
       "installFirst": "On iPhone and iPad, add Pantry to the Home Screen first.",
       "unsupported": "This browser cannot show push notifications.",
       "error": "Could not be changed. Try again."
+    },
+    "lists": {
+      "item": {
+        "overwritten": "Someone changed this product while you were offline: their version was kept.",
+        "queued": "Queued"
+      }
+    },
+    "sync": {
+      "online": "Online",
+      "syncing": "Syncing…",
+      "offline": "Offline",
+      "needsNetwork": "This needs a network connection.",
+      "pending_one": "Offline · {{count}} change queued",
+      "pending_other": "Offline · {{count}} changes queued"
     }
   },
   "validation": {

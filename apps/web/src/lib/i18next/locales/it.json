@@ -253,6 +253,20 @@
       "installFirst": "Su iPhone e iPad aggiungi prima Pantry alla schermata Home.",
       "unsupported": "Questo browser non supporta le notifiche push.",
       "error": "Non è stato possibile cambiarle. Riprova."
+    },
+    "lists": {
+      "item": {
+        "overwritten": "Qualcuno ha modificato questo prodotto mentre eri offline: ho tenuto la sua versione.",
+        "queued": "In coda"
+      }
+    },
+    "sync": {
+      "online": "Online",
+      "syncing": "Sincronizzazione…",
+      "offline": "Offline",
+      "needsNetwork": "Serve la rete per questa operazione.",
+      "pending_one": "Offline · {{count}} modifica in coda",
+      "pending_other": "Offline · {{count}} modifiche in coda"
     }
   },
   "validation": {
