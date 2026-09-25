@@ -4,6 +4,7 @@ import {
   emailSchema,
   nameSchema,
   paginationSchema,
+  userIdSchema,
   type Page,
 } from "./common.js";
 import { MAX_CONTACT_LENGTH, MAX_NAME_LENGTH } from "../constants.js";
@@ -34,6 +35,13 @@ export type UserRef = {
   email: string;
   displayName: string;
 };
+
+/** Zod form of {@link UserRef}, for DTOs that embed a user. */
+export const userRefSchema = z.object({
+  id: userIdSchema,
+  email: z.string(),
+  displayName: z.string(),
+}) satisfies z.ZodType<UserRef>;
 export type User = UserRef & {
   role: UserRole;
   status: UserStatus;

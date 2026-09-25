@@ -118,6 +118,45 @@ export const MAX_CONTACT_LENGTH = 200;
 /** Minimum length of the password chosen during activation. */
 export const MIN_PASSWORD_LENGTH = 10;
 
+/**
+ * How long a shopping lease survives without a heartbeat.
+ *
+ * Long on purpose. Whoever is actually in the supermarket is offline, so their
+ * heartbeat does not arrive: with a short TTL they would show up as expired
+ * within minutes and be overtaken without a confirmation, which is the exact
+ * opposite of what taking charge of a list is for. Takeover stays available at
+ * any moment behind a dialog that names the holder, so a forgotten lease costs
+ * one extra tap rather than a wrong outcome.
+ */
+export const SHOPPING_LEASE_TTL_MS = 3 * 60 * 60_000;
+
+/** Renewal interval while online and shopping. */
+export const SHOPPING_HEARTBEAT_MS = 5 * 60_000;
+
+/** Retention of shopping sessions that have ended. */
+export const SHOPPING_SESSION_RETENTION_DAYS = 30;
+
+/** Length limit of the free text a single item is typed from. */
+export const MAX_RAW_TEXT_LENGTH = 200;
+
+/** Suggestions a single lookup may return. */
+export const MAX_SUGGESTIONS = 8;
+
+/** Catalogue rows shipped to the client so suggestions work offline. */
+export const MAX_CATALOG_ROWS = 400;
+
+/**
+ * Items with no category sort after every real one.
+ *
+ * A sentinel rather than a NULLS LAST clause, because the same ordering has to
+ * be reproduced client-side over the merged cache, where there is no SQL.
+ */
+export const UNCATEGORIZED_SORT_ORDER = 999_999;
+
+export const MAX_LISTS_PER_USER = 50;
+export const MAX_LIST_MEMBERS = 20;
+export const MAX_ITEMS_PER_LIST = 500;
+
 /** Prefix of the Socket.IO rooms. */
 export const listRoom = (listId: string): string => `list:${listId}`;
 export const pantryRoom = (pantryId: string): string => `pantry:${pantryId}`;

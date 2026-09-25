@@ -1,30 +1,19 @@
 import { lt } from "drizzle-orm";
-// import { APPLIED_MUTATION_TTL_DAYS } from "@pantry/shared";
 import type { Logger } from "pino";
 
 import type { Database } from "../db/client.js";
 import { sessions } from "../db/schema/sessions.js";
-// import { appliedMutations } from "../db/schema/support.js";
 import { sweepStaleInvites } from "../services/admin/invites.service.js";
+import { sweepAppliedMutations } from "../services/lists/mutations.js";
 import {
   sweepDecidedRequests,
   sweepStalePendingRequests,
 } from "../services/admin/requests.service.js";
 import { sweepStalePushSubscriptions } from "../services/push/push.service.js";
 
-// const MS_PER_DAY = 86_400_000;
 const INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
-  // const mutationCutoff = new Date(
-  //   Date.now() - APPLIED_MUTATION_TTL_DAYS * MS_PER_DAY,
-  // );
-
-  // const staleMutations = await db
-  //   .delete(appliedMutations)
-  //   .where(lt(appliedMutations.appliedAt, mutationCutoff))
-  //   .returning({ id: appliedMutations.id });
-
   const expiredSessions = await db
     .delete(sessions)
     .where(lt(sessions.expiresAt, new Date()))
@@ -37,9 +26,11 @@ const runCleanup = async (db: Database, logger: Logger): Promise<void> => {
 
   const stalePushSubscriptions = await sweepStalePushSubscriptions(db);
 
+  const staleMutations = await sweepAppliedMutations(db);
+
   logger.info(
     {
-      // mutations: staleMutations.length,
+      mutations: staleMutations,
       sessions: expiredSessions.length,
       invites: staleInvites,
       requests: decidedRequests,

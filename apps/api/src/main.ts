@@ -3,8 +3,10 @@ import { loadConfig } from "./config/env.js";
 import type { AppServices } from "./context.js";
 import { createDatabase } from "./db/client.js";
 import { runMigrations } from "./db/migrate.js";
+import { seedCategories } from "./db/seed/categories.js";
 import { startCleanupJob } from "./jobs/cleanup.js";
 import { createLogger } from "./logger.js";
+import { nullEventBus } from "./realtime/events.js";
 import { createAdminNotifier } from "./services/notifications/admin-notifier.js";
 import { createAppLimits } from "./server/rate-limit.js";
 import { buildServer } from "./server/server.js";
@@ -16,6 +18,7 @@ const main = async (): Promise<void> => {
   const logger = createLogger(config);
   const { db, close: closeDb } = createDatabase(config, logger);
   await runMigrations(db, logger);
+  await seedCategories(db);
   const limits = createAppLimits();
   const notifier = createAdminNotifier({ db, config, logger });
   const services: AppServices = {
@@ -25,7 +28,7 @@ const main = async (): Promise<void> => {
     limits,
     notifier,
     auth: createAuth(db, config),
-    // events: nullEventBus,
+    events: nullEventBus,
   };
   const app = await buildServer(services);
   await app.ready();
