@@ -20,6 +20,7 @@ import { lists } from "../../db/schema/lists.js";
 import type { EventBus } from "../../realtime/events.js";
 import { clampToNow } from "./clock.js";
 import { claimMutation } from "./mutations.js";
+import { resolveProduct } from "./products.service.js";
 
 export interface ItemDeps {
   db: Database;
@@ -144,6 +145,14 @@ export const addItem = async (
       throw new TRPCError({ code: "BAD_REQUEST", message: "List is full." });
     }
 
+    const product = await resolveProduct(tx, input.listId, {
+      name: input.name,
+      quantity: input.quantity,
+      unit: input.unit,
+      unitText: input.unitText,
+      at,
+    });
+
     const [inserted] = await tx
       .insert(listItems)
       .values({
@@ -155,7 +164,10 @@ export const addItem = async (
         unit: input.unit,
         unitText: input.unitText,
         note: input.note,
-        categoryId: input.categoryId,
+        // What the client picked wins; the catalogue only fills a gap, so a
+        // deliberate choice is never quietly overwritten by a remembered one.
+        categoryId: input.categoryId ?? product?.categoryId ?? null,
+        productId: product?.id ?? null,
         contentUpdatedAt: at,
         checkUpdatedAt: at,
         createdBy: actorId,
@@ -213,6 +225,14 @@ export const updateItem = async (
       };
     }
 
+    const product = await resolveProduct(tx, input.listId, {
+      name: input.name,
+      quantity: input.quantity,
+      unit: input.unit,
+      unitText: input.unitText,
+      at,
+    });
+
     const [updated] = await tx
       .update(listItems)
       .set({
@@ -222,7 +242,8 @@ export const updateItem = async (
         unit: input.unit,
         unitText: input.unitText,
         note: input.note,
-        categoryId: input.categoryId,
+        categoryId: input.categoryId ?? product?.categoryId ?? null,
+        productId: product?.id ?? null,
         contentUpdatedAt: at,
         updatedAt: now,
       })
