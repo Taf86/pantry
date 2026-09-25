@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { listItems } from "../../src/db/schema/list-items.js";
+import { users } from "../../src/db/schema/users.js";
 import { listMembers } from "../../src/db/schema/list-members.js";
 import { lists } from "../../src/db/schema/lists.js";
 import {
@@ -136,7 +137,7 @@ describe("lists", () => {
       expect(seen?.openItemCount).toBe(1);
     });
 
-    it("hides a soft deleted list from every member", async () => {
+    it("takes a deleted list away from every member", async () => {
       const list = await newList();
       await deleteList(deps(), owner, { ...mutation(), listId: list.id });
 
@@ -290,5 +291,89 @@ describe("lists", () => {
 
       expect(events.events).toEqual([]);
     });
+  });
+});
+
+describe("a list and the account that made it", () => {
+  let harness: Harness;
+  let events: RecordingEventBus;
+
+  const deps = () => ({ db: harness.db, events });
+  const mutation = () => ({ mutationId: crypto.randomUUID() });
+
+  beforeAll(async () => {
+    harness = await createHarness();
+  });
+
+  afterAll(async () => {
+    await harness.close();
+  });
+
+  beforeEach(async () => {
+    await harness.reset();
+    events = createRecordingEventBus();
+  });
+
+  it("goes when the creator's account goes, even for the others on it", async () => {
+    const creator = await makeUser(harness, { status: "active" });
+    const guest = await makeUser(harness, { status: "active" });
+    const list = await createList(deps(), creator, {
+      ...mutation(),
+      id: crypto.randomUUID(),
+      name: "Spesa",
+    });
+    await setMember(deps(), creator, {
+      ...mutation(),
+      listId: list.id,
+      userId: guest,
+      permissions: Role.Owner,
+    });
+
+    await harness.db.delete(users).where(eq(users.id, creator));
+
+    // Creating a list confers no permission, but it does confer lifetime:
+    // the guest could manage this list, and it is gone anyway.
+    expect(await listLists(deps(), guest)).toEqual([]);
+    expect(await harness.db.select().from(lists)).toEqual([]);
+  });
+
+  it("survives losing a member who merely belonged to it", async () => {
+    const creator = await makeUser(harness, { status: "active" });
+    const guest = await makeUser(harness, { status: "active" });
+    const list = await createList(deps(), creator, {
+      ...mutation(),
+      id: crypto.randomUUID(),
+      name: "Spesa",
+    });
+    await setMember(deps(), creator, {
+      ...mutation(),
+      listId: list.id,
+      userId: guest,
+      permissions: Role.Editor,
+    });
+
+    await harness.db.delete(users).where(eq(users.id, guest));
+
+    expect(await listLists(deps(), creator)).toHaveLength(1);
+  });
+
+  it("cannot be left with members but nobody able to manage it", async () => {
+    // The invariant the cascade buys: the only account that could strand a
+    // list this way is the creator, and deleting it deletes the list.
+    const creator = await makeUser(harness, { status: "active" });
+    const list = await createList(deps(), creator, {
+      ...mutation(),
+      id: crypto.randomUUID(),
+      name: "Spesa",
+    });
+
+    await harness.db.delete(users).where(eq(users.id, creator));
+
+    expect(
+      await harness.db
+        .select()
+        .from(listMembers)
+        .where(eq(listMembers.listId, list.id)),
+    ).toEqual([]);
   });
 });

@@ -16,7 +16,6 @@ import { and, asc, count, eq, isNull, lte, sql } from "drizzle-orm";
 import type { Database, Executor } from "../../db/client.js";
 import { categories } from "../../db/schema/categories.js";
 import { listItems } from "../../db/schema/list-items.js";
-import { lists } from "../../db/schema/lists.js";
 import type { EventBus } from "../../realtime/events.js";
 import { clampToNow } from "./clock.js";
 import { claimMutation } from "./mutations.js";
@@ -178,7 +177,6 @@ export const addItem = async (
       .returning();
 
     if (inserted) {
-      await touchList(tx, input.listId, now);
       return { outcome: WriteOutcome.applied, row: inserted };
     }
 
@@ -260,7 +258,6 @@ export const updateItem = async (
       .returning();
 
     if (updated) {
-      await touchList(tx, input.listId, now);
       return { outcome: WriteOutcome.applied, row: updated };
     }
 
@@ -320,7 +317,6 @@ export const deleteItem = async (
       .returning();
 
     if (deleted) {
-      await touchList(tx, input.listId, now);
       return { outcome: WriteOutcome.applied, row: deleted };
     }
     return {
@@ -337,13 +333,4 @@ export const deleteItem = async (
     });
   }
   return result(outcome.outcome, outcome.row, now);
-};
-
-/** Keeps the list index ordered by when anything in it last moved. */
-const touchList = async (
-  tx: Executor,
-  listId: string,
-  now: Date,
-): Promise<void> => {
-  await tx.update(lists).set({ updatedAt: now }).where(eq(lists.id, listId));
 };

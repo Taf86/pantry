@@ -62,13 +62,11 @@ describe("list membership", () => {
     expect(await getListMembership(harness.db, listId, stranger)).toBeNull();
   });
 
-  it("grants nothing on a list that has been soft deleted", async () => {
-    await harness.db
-      .update(lists)
-      .set({ deletedAt: new Date() })
-      .where(eq(lists.id, listId));
+  it("grants nothing once the list is gone, because the membership went with it", async () => {
+    await harness.db.delete(lists).where(eq(lists.id, listId));
 
     expect(await getListMembership(harness.db, listId, member)).toBeNull();
+    expect(await harness.db.select().from(listMembers)).toEqual([]);
   });
 
   it("denies a member whose mask lacks one of the required bits", async () => {

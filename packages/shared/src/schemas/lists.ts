@@ -15,13 +15,12 @@ export const listSchema = z.object({
   id: entityIdSchema,
   name: z.string(),
   /**
-   * Provenance only, and deliberately so: authorization lives entirely in
-   * `list_members`. Two sources of truth for "who may manage this" is how you
-   * end up with a list nobody can administer.
+   * Who made the list. Authorization still lives entirely in `list_members` —
+   * creating a list confers no permission on its own — but the row does not
+   * outlive its creator: deleting that account deletes the list, for every
+   * member of it.
    */
   createdBy: userIdSchema.nullable(),
-  createdAt: isoDateTimeSchema,
-  updatedAt: isoDateTimeSchema,
 });
 export type List = z.infer<typeof listSchema>;
 

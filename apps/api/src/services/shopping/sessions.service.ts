@@ -293,25 +293,6 @@ export const releaseSession = async (
   return toDto(deps.db, ended);
 };
 
-/** Ends the session of a list being deleted, so its lease does not outlive it. */
-export const endSessionsForList = async (
-  tx: Executor,
-  listId: string,
-): Promise<void> => {
-  await tx
-    .update(shoppingSessions)
-    .set({
-      endedAt: new Date(),
-      endReason: SessionEndReason.list_deleted,
-    })
-    .where(
-      and(
-        eq(shoppingSessions.listId, listId),
-        isNull(shoppingSessions.endedAt),
-      ),
-    );
-};
-
 /**
  * Closes leases nobody has renewed for a full TTL beyond their expiry.
  *

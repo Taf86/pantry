@@ -217,6 +217,78 @@ describe("the realtime bus", () => {
     });
   });
 
+  describe("the user room", () => {
+    const memberChanged = (userId: string, permissions: number | null) =>
+      ({ type: "list.member.changed", listId, userId, permissions }) as const;
+
+    it("tells a member they were added to a list whose room they never joined", async () => {
+      const newcomer = await makeUser(harness, { status: "active" });
+      const socket = await rt.open(newcomer);
+      const received = collect(socket);
+      await settle();
+
+      rt.realtime.bus.publish(memberChanged(newcomer, Role.Shopper));
+      await settle();
+
+      expect(received).toEqual([memberChanged(newcomer, Role.Shopper)]);
+    });
+
+    it("delivers once to a member who is in both rooms", async () => {
+      const socket = await rt.open(anna);
+      const received = collect(socket);
+      socket.emit(JOIN_EVENT, { lists: [listId] });
+      await settle();
+
+      rt.realtime.bus.publish(memberChanged(anna, Role.Owner));
+      await settle();
+
+      expect(received).toEqual([memberChanged(anna, Role.Owner)]);
+    });
+
+    it("reaches every socket of that user", async () => {
+      const phone = await rt.open(anna);
+      const laptop = await rt.open(anna);
+      const a = collect(phone);
+      const b = collect(laptop);
+      await settle();
+
+      rt.realtime.bus.publish(memberChanged(anna, null));
+      await settle();
+
+      expect([a, b]).toEqual([
+        [memberChanged(anna, null)],
+        [memberChanged(anna, null)],
+      ]);
+    });
+
+    it("keeps a change about someone else away from a user outside the list", async () => {
+      const stranger = await makeUser(harness, { status: "active" });
+      const socket = await rt.open(stranger);
+      const received = collect(socket);
+      await settle();
+
+      rt.realtime.bus.publish(memberChanged(anna, Role.Owner));
+      await settle();
+
+      expect(received).toEqual([]);
+    });
+
+    it("still reaches the removed member after their list room is revoked", async () => {
+      const socket = await rt.open(anna);
+      const received = collect(socket);
+      socket.emit(JOIN_EVENT, { lists: [listId] });
+      await settle();
+
+      rt.realtime.bus.publish(memberChanged(anna, null));
+      rt.realtime.bus.revoke(listId, anna);
+      await settle();
+      rt.realtime.bus.publish(anEvent(listId));
+      await settle();
+
+      expect(received).toEqual([memberChanged(anna, null)]);
+    });
+  });
+
   describe("what the bus is", () => {
     it("names the room after the list", () => {
       expect(listRoom(listId)).toBe(`list:${listId}`);

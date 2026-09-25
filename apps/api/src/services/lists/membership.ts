@@ -1,10 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { can } from "@pantry/shared";
 
 import type { Executor } from "../../db/client.js";
 import { listMembers } from "../../db/schema/list-members.js";
-import { lists } from "../../db/schema/lists.js";
 
 export interface Membership {
   permissions: number;
@@ -13,9 +12,8 @@ export interface Membership {
 /**
  * Resolves a membership once, for the tRPC middleware.
  *
- * The join on `lists` is not decoration: a soft-deleted list must grant
- * nothing to anybody, and without it the tombstone would be invisible to
- * authorization.
+ * No join on `lists` is needed to know the list still exists: `list_members`
+ * cascades from it, so a membership row cannot outlive the list it is about.
  */
 export const getListMembership = async (
   db: Executor,
@@ -25,14 +23,7 @@ export const getListMembership = async (
   const [row] = await db
     .select({ permissions: listMembers.permissions })
     .from(listMembers)
-    .innerJoin(lists, eq(lists.id, listMembers.listId))
-    .where(
-      and(
-        eq(listMembers.listId, listId),
-        eq(listMembers.userId, userId),
-        isNull(lists.deletedAt),
-      ),
-    )
+    .where(and(eq(listMembers.listId, listId), eq(listMembers.userId, userId)))
     .limit(1);
 
   return row ?? null;
@@ -73,13 +64,8 @@ export const assertListPermissions = async (
       permissions: listMembers.permissions,
     })
     .from(listMembers)
-    .innerJoin(lists, eq(lists.id, listMembers.listId))
     .where(
-      and(
-        inArray(listMembers.listId, unique),
-        eq(listMembers.userId, userId),
-        isNull(lists.deletedAt),
-      ),
+      and(inArray(listMembers.listId, unique), eq(listMembers.userId, userId)),
     );
 
   const granted = new Map(rows.map((row) => [row.listId, row.permissions]));

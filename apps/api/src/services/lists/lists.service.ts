@@ -16,7 +16,7 @@ import {
   type UpdateListInput,
 } from "@pantry/shared";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 
 import type { Database, Executor } from "../../db/client.js";
 import { listItems } from "../../db/schema/list-items.js";
@@ -24,7 +24,6 @@ import { listMembers } from "../../db/schema/list-members.js";
 import { lists } from "../../db/schema/lists.js";
 import { users } from "../../db/schema/users.js";
 import type { EventBus } from "../../realtime/events.js";
-import { endSessionsForList } from "../shopping/sessions.service.js";
 import { claimMutation } from "./mutations.js";
 
 export interface ListDeps {
@@ -48,8 +47,6 @@ const listSelection = {
   id: lists.id,
   name: lists.name,
   createdBy: lists.createdBy,
-  createdAt: lists.createdAt,
-  updatedAt: lists.updatedAt,
   permissions: listMembers.permissions,
   memberCount,
   openItemCount,
@@ -58,7 +55,13 @@ const listSelection = {
 const asMember = (userId: string) =>
   and(eq(listMembers.listId, lists.id), eq(listMembers.userId, userId));
 
-/** Every list the caller belongs to, most recently touched first. */
+/**
+ * Every list the caller belongs to, oldest first.
+ *
+ * Ordering by id, because a UUID v7 leads with the millisecond it was minted.
+ * A fixed order on purpose: ordering by last activity would make lists jump
+ * around under the thumb whenever an offline queue drains.
+ */
 export const listLists = async (
   deps: ListDeps,
   userId: string,
@@ -67,8 +70,7 @@ export const listLists = async (
     .select(listSelection)
     .from(lists)
     .innerJoin(listMembers, asMember(userId))
-    .where(isNull(lists.deletedAt))
-    .orderBy(desc(lists.updatedAt));
+    .orderBy(asc(lists.id));
 
   return rows.map(serializeDates);
 };
@@ -80,7 +82,7 @@ export const requireList = async (
   const [row] = await db
     .select()
     .from(lists)
-    .where(and(eq(lists.id, listId), isNull(lists.deletedAt)))
+    .where(eq(lists.id, listId))
     .limit(1);
 
   if (!row) {
@@ -98,7 +100,7 @@ const summaryFor = async (
     .select(listSelection)
     .from(lists)
     .innerJoin(listMembers, asMember(userId))
-    .where(and(eq(lists.id, listId), isNull(lists.deletedAt)))
+    .where(eq(lists.id, listId))
     .limit(1);
 
   if (!row) {
@@ -160,7 +162,7 @@ export const createList = async (
       .select({ total: count() })
       .from(listMembers)
       .innerJoin(lists, eq(lists.id, listMembers.listId))
-      .where(and(eq(listMembers.userId, userId), isNull(lists.deletedAt)));
+      .where(eq(listMembers.userId, userId));
 
     if ((owned?.total ?? 0) >= MAX_LISTS_PER_USER) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "Too many lists." });
@@ -192,8 +194,8 @@ export const updateList = async (
 
     const [updated] = await tx
       .update(lists)
-      .set({ name: input.name, updatedAt: new Date() })
-      .where(and(eq(lists.id, input.listId), isNull(lists.deletedAt)))
+      .set({ name: input.name })
+      .where(eq(lists.id, input.listId))
       .returning();
 
     if (!updated) {
@@ -215,18 +217,14 @@ export const deleteList = async (
   const deleted = await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, input.mutationId, userId))) return false;
 
+    // The foreign keys cascade: members, items, per-list catalogue usage and
+    // any lease still standing go with it, in this one statement.
     const [row] = await tx
-      .update(lists)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(lists.id, input.listId), isNull(lists.deletedAt)))
+      .delete(lists)
+      .where(eq(lists.id, input.listId))
       .returning({ id: lists.id });
 
-    if (row === undefined) return false;
-
-    // A lease must not outlive the list it was taken on, or the partial unique
-    // index keeps a row alive for something nobody can open any more.
-    await endSessionsForList(tx, input.listId);
-    return true;
+    return row !== undefined;
   });
 
   if (deleted) {
@@ -359,7 +357,7 @@ const lockList = async (tx: Executor, listId: string): Promise<void> => {
   const [row] = await tx
     .select({ id: lists.id })
     .from(lists)
-    .where(and(eq(lists.id, listId), isNull(lists.deletedAt)))
+    .where(eq(lists.id, listId))
     .for("update")
     .limit(1);
 
@@ -410,6 +408,4 @@ const toList = (row: typeof lists.$inferSelect): List =>
     id: row.id,
     name: row.name,
     createdBy: row.createdBy,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
   });

@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "d040261f-a08d-4c76-a7d6-0bbfb4546c83",
+  "id": "e1703ecf-ae63-4e6d-88fb-471cdeb8a9db",
   "prevIds": [
     "ee796fe7-92be-434f-a9aa-beeed1344c8f"
   ],
@@ -924,45 +924,6 @@
       "generated": null,
       "identity": null,
       "name": "created_by",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lists"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lists"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lists"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deleted_at",
       "entityType": "columns",
       "schema": "public",
       "table": "lists"
@@ -2516,7 +2477,7 @@
         "id"
       ],
       "onUpdate": "NO ACTION",
-      "onDelete": "SET NULL",
+      "onDelete": "CASCADE",
       "name": "lists_created_by_users_id_fkey",
       "entityType": "fks",
       "schema": "public",

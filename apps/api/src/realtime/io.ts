@@ -9,6 +9,7 @@ import {
   can,
   joinPayloadSchema,
   listRoom,
+  userRoom,
 } from "@pantry/shared";
 import { Server, type Socket } from "socket.io";
 
@@ -16,7 +17,7 @@ import type { AppServices } from "../context.js";
 import { getListMembership } from "../services/lists/membership.js";
 import { resolveUser } from "../trpc/context.js";
 import type { EventBus } from "./events.js";
-import { roomOf } from "./routing.js";
+import { roomsOf } from "./routing.js";
 
 interface SocketData {
   userId: string;
@@ -31,7 +32,7 @@ export interface Realtime {
 const userIdOf = (socket: Socket): string => (socket.data as SocketData).userId;
 
 /**
- * Socket.IO: one namespace, one room per list.
+ * Socket.IO: one namespace, one room per list, one room per user.
  *
  * Chosen over bare `ws` for exactly one reason — reconnection with backoff on
  * an unstable mobile network, handled properly. That is literally the
@@ -94,6 +95,11 @@ export const createRealtime = (
   };
 
   io.on("connection", (socket) => {
+    // Joined by the server, never on request: the identity came from the
+    // session, so there is nothing to authorize, and no client payload can name
+    // another user's room.
+    void socket.join(userRoom(userIdOf(socket)));
+
     socket.on(JOIN_EVENT, (payload: unknown) => {
       void joinRooms(socket, payload).catch((error: unknown) => {
         services.logger.warn({ error }, "Joining a room failed.");
@@ -111,7 +117,7 @@ export const createRealtime = (
 
   const bus: EventBus = {
     publish: (event) => {
-      io.to(roomOf(event)).emit(SERVER_EVENT, event);
+      io.to(roomsOf(event)).emit(SERVER_EVENT, event);
     },
 
     /**

@@ -64,10 +64,7 @@ CREATE TABLE "list_products" (
 CREATE TABLE "lists" (
 	"id" text PRIMARY KEY,
 	"name" text NOT NULL,
-	"created_by" text,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"deleted_at" timestamp with time zone
+	"created_by" text
 );
 --> statement-breakpoint
 CREATE TABLE "products" (
@@ -120,7 +117,7 @@ ALTER TABLE "list_members" ADD CONSTRAINT "list_members_invited_by_users_id_fkey
 ALTER TABLE "list_products" ADD CONSTRAINT "list_products_list_id_lists_id_fkey" FOREIGN KEY ("list_id") REFERENCES "lists"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "list_products" ADD CONSTRAINT "list_products_product_id_products_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "list_products" ADD CONSTRAINT "list_products_category_id_categories_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE SET NULL;--> statement-breakpoint
-ALTER TABLE "lists" ADD CONSTRAINT "lists_created_by_users_id_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "lists" ADD CONSTRAINT "lists_created_by_users_id_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_category_id_categories_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "shopping_sessions" ADD CONSTRAINT "shopping_sessions_list_id_lists_id_fkey" FOREIGN KEY ("list_id") REFERENCES "lists"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "shopping_sessions" ADD CONSTRAINT "shopping_sessions_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;

@@ -241,15 +241,17 @@ describe("the shopping lease", () => {
       });
     });
 
-    it("leaves no lease standing when the list is deleted", async () => {
+    it("leaves no lease behind when the list is deleted", async () => {
       await claimSession(deps(), marco, { listId });
       await deleteList(deps(), marco, {
         mutationId: crypto.randomUUID(),
         listId,
       });
 
-      const [row] = await harness.db.select().from(shoppingSessions);
-      expect(row?.endReason).toBe(SessionEndReason.list_deleted);
+      // The cascade takes it: nothing has to remember to end it, and the
+      // partial unique index cannot be left holding a slot for a list nobody
+      // can open any more.
+      expect(await harness.db.select().from(shoppingSessions)).toEqual([]);
     });
   });
 

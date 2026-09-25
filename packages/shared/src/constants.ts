@@ -169,4 +169,10 @@ export const MAX_ITEMS_PER_LIST = 500;
 export const REALTIME_PATH = "/ws";
 /** Prefix of the Socket.IO rooms. */
 export const listRoom = (listId: string): string => `list:${listId}`;
+/**
+ * Every socket of one user, joined by the server at connection. It carries the
+ * changes to which lists that user can see, which a list room cannot: someone
+ * just added to a list is not in its room yet, and does not know its id.
+ */
+export const userRoom = (userId: string): string => `user:${userId}`;
 export const pantryRoom = (pantryId: string): string => `pantry:${pantryId}`;
