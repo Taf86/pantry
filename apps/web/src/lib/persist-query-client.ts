@@ -41,7 +41,10 @@ const idbPersister = createAsyncStoragePersister({
 export const persistOptions: Omit<PersistQueryClientOptions, "queryClient"> = {
   persister: idbPersister,
   maxAge: WEEK_IN_MS,
-  buster: "v2",
+  // Bumped with the shape of what is persisted. List items gained two
+  // last-write-wins clocks; rehydrating a week-old cache written before them
+  // would feed NaN into every comparison, and NaN loses silently to everything.
+  buster: "v3",
   dehydrateOptions: {
     shouldDehydrateMutation: (mutation) => mutation.state.isPaused,
     shouldDehydrateQuery: (query) => query.state.status === "success",

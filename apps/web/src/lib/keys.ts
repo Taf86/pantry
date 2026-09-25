@@ -4,23 +4,29 @@ import type {
   ListUsersInput,
 } from "@pantry/shared";
 
+/**
+ * Query keys, in one place.
+ *
+ * These are persisted to IndexedDB, so a key is a durable contract: a cache
+ * written by yesterday's build is rehydrated by today's.
+ *
+ * Note the deliberate split between `lists()` and `list(id)`. The index and a
+ * single list are separate roots — ["lists"] is NOT a prefix of ["list", id] —
+ * so invalidating the index after a rename cannot drag every list's items and
+ * catalogue down with it. Within one list the nesting IS a prefix, which is
+ * what makes "forget everything about this list" a single call.
+ */
 export const keys = {
   me: () => ["me"] as const,
-  // categories: () => ["categories"] as const,
+  categories: () => ["categories"] as const,
 
-  // lists: () => ["lists"] as const,
-  // list: (listId: string) => ["lists", listId] as const,
-  // listItems: (listId: string) => ["lists", listId, "items"] as const,
+  /** The index: summaries of every list the user belongs to. */
+  lists: () => ["lists"] as const,
 
-  // pantries: () => ["pantries"] as const,
-  // pantry: (pantryId: string) => ["pantries", pantryId] as const,
-  // pantryNodes: (pantryId: string) => ["pantries", pantryId, "nodes"] as const,
-  // pantryMissing: (pantryId: string) =>
-  //   ["pantries", pantryId, "missing"] as const,
-  // pantryExpiring: (pantryId: string, withinDays: number) =>
-  //   ["pantries", pantryId, "expiring", withinDays] as const,
-
-  // shoppingSession: () => ["shopping", "session"] as const,
+  list: (listId: string) => ["list", listId] as const,
+  listItems: (listId: string) => ["list", listId, "items"] as const,
+  catalog: (listId: string) => ["list", listId, "catalog"] as const,
+  claim: (listId: string) => ["list", listId, "claim"] as const,
 
   adminUsers: () => ["admin", "users"] as const,
   adminUsersList: (input: ListUsersInput) =>
@@ -32,8 +38,6 @@ export const keys = {
   adminRequests: () => ["admin", "requests"] as const,
   adminRequestsList: (input: ListRequestsInput) =>
     ["admin", "requests", "list", input] as const,
-  // userSearch: (query: string) => ["users", "search", query] as const,
   invitePreview: (token: string) => ["invite", token] as const,
   pushConfig: () => ["push", "config"] as const,
-  // signupInfo: () => ["signup", "info"] as const,
 } as const;
