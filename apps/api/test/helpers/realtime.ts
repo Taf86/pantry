@@ -35,15 +35,32 @@ export const TEST_COOKIE = "pantry-test-user";
  * test Better Auth, which already tests itself, and would make the interesting
  * assertions harder to read.
  */
-const stubAuth = (statusOf: (id: string) => string): Auth =>
+/** When a session expires, or `null` once it no longer exists. */
+export type SessionOf = (sessionId: string) => { expiresAt: Date } | null;
+
+const FAR_FUTURE = new Date("2100-01-01T00:00:00Z");
+
+/** The cookie carries `userId:sessionId`, so one user can hold two sessions. */
+const stubAuth = (
+  statusOf: (id: string) => string,
+  sessionOf: SessionOf,
+): Auth =>
   ({
     api: {
       getSession: ({ headers }: { headers: Headers }) => {
         const cookie = headers.get("cookie") ?? "";
-        const match = new RegExp(`${TEST_COOKIE}=([^;]+)`).exec(cookie);
+        const match = new RegExp(`${TEST_COOKIE}=([^:;]+):([^;]+)`).exec(
+          cookie,
+        );
         if (!match) return Promise.resolve(null);
         const id = match[1]!;
+        const sessionId = match[2]!;
+        const session = sessionOf(sessionId);
+        if (!session || session.expiresAt.getTime() <= Date.now()) {
+          return Promise.resolve(null);
+        }
         return Promise.resolve({
+          session: { id: sessionId, expiresAt: session.expiresAt },
           user: {
             id,
             email: `${id}@example.com`,
@@ -59,8 +76,11 @@ const stubAuth = (statusOf: (id: string) => string): Auth =>
 export interface RealtimeHarness {
   realtime: Realtime;
   url: string;
-  /** Opens a client socket authenticated as `userId`, already connected. */
-  open: (userId: string) => Promise<Socket>;
+  /**
+   * Opens a client socket authenticated as `userId`, already connected. The
+   * session defaults to one per user.
+   */
+  open: (userId: string, sessionId?: string) => Promise<Socket>;
   /** Opens a client socket with no session at all. */
   openAnonymous: () => Socket;
   close: () => Promise<void>;
@@ -68,7 +88,7 @@ export interface RealtimeHarness {
 
 export const createRealtimeHarness = async (
   harness: Harness,
-  options: { statusOf?: (id: string) => string } = {},
+  options: { statusOf?: (id: string) => string; sessionOf?: SessionOf } = {},
 ): Promise<RealtimeHarness> => {
   const limiter = createLimiter({ windowMs: 60_000, max: 1000 });
   const limits: AppLimits = {
@@ -84,7 +104,10 @@ export const createRealtimeHarness = async (
   const services: AppServices = {
     config: harness.config,
     db: harness.db,
-    auth: stubAuth(options.statusOf ?? (() => "active")),
+    auth: stubAuth(
+      options.statusOf ?? (() => "active"),
+      options.sessionOf ?? (() => ({ expiresAt: FAR_FUTURE })),
+    ),
     logger: silentLogger(),
     limits,
     events: nullEventBus,
@@ -109,12 +132,12 @@ export const createRealtimeHarness = async (
     realtime,
     url,
 
-    open: async (userId) => {
+    open: async (userId, sessionId = `${userId}-session`) => {
       const socket = track(
         connect(url, {
           path: REALTIME_PATH,
           transports: ["polling"],
-          extraHeaders: { cookie: `${TEST_COOKIE}=${userId}` },
+          extraHeaders: { cookie: `${TEST_COOKIE}=${userId}:${sessionId}` },
           reconnection: false,
         }),
       );

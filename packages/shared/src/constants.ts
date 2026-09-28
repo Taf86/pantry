@@ -175,4 +175,10 @@ export const listRoom = (listId: string): string => `list:${listId}`;
  * just added to a list is not in its room yet, and does not know its id.
  */
 export const userRoom = (userId: string): string => `user:${userId}`;
+/**
+ * The sockets opened with one session, so that signing out on one device
+ * closes that device's sockets and leaves the others alone.
+ */
+export const sessionRoom = (sessionId: string): string =>
+  `session:${sessionId}`;
 export const pantryRoom = (pantryId: string): string => `pantry:${pantryId}`;

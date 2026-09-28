@@ -33,6 +33,7 @@ import { issueInviteTx } from "./invites.service.js";
 import { sessions } from "../../db/schema/sessions.js";
 import { accounts } from "../../db/schema/accounts.js";
 import { invites } from "../../db/schema/invites.js";
+import type { EventBus } from "../../realtime/events.js";
 
 export const listUsers = async (
   deps: AdminDeps,
@@ -147,6 +148,7 @@ export const editUser = async (
     }
   });
 
+  if (status !== "active") deps.events?.disconnectUser(userId);
   return requireUser(deps, userId);
 };
 
@@ -186,6 +188,7 @@ export const setStatus = async (
     }
   });
 
+  if (status !== "active") deps.events?.disconnectUser(userId);
   return requireUser(deps, userId);
 };
 
@@ -227,6 +230,7 @@ export const deleteUser = async (
     await tx.delete(users).where(eq(users.id, userId));
   });
 
+  deps.events?.disconnectUser(userId);
   return target;
 };
 
@@ -281,6 +285,11 @@ export const createUserTx = async (
 
 interface AdminDeps {
   db: Database;
+  /**
+   * The sessions deleted here bypass Better Auth, and with it the hook that
+   * closes their sockets: this is how those sockets are closed instead.
+   */
+  events?: Pick<EventBus, "disconnectUser">;
 }
 
 const userSelection = {

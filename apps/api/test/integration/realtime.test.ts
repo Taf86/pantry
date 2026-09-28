@@ -8,6 +8,7 @@ import {
   expect,
   it,
 } from "vitest";
+import type { Socket } from "socket.io-client";
 
 import { listMembers } from "../../src/db/schema/list-members.js";
 import { lists } from "../../src/db/schema/lists.js";
@@ -286,6 +287,99 @@ describe("the realtime bus", () => {
       await settle();
 
       expect(received).toEqual([memberChanged(anna, null)]);
+    });
+  });
+
+  describe("closing sockets when a session ends", () => {
+    /** Resolves with the reason once the server has closed the socket. */
+    const closed = (socket: Socket): Promise<string> =>
+      new Promise((resolve) => {
+        socket.once("disconnect", (reason) => {
+          resolve(reason);
+        });
+      });
+
+    it("closes every socket of a user, and only theirs", async () => {
+      const phone = await rt.open(anna, "phone");
+      const laptop = await rt.open(anna, "laptop");
+      const other = await rt.open(marco);
+      const reasons = Promise.all([closed(phone), closed(laptop)]);
+
+      rt.realtime.bus.disconnectUser(anna);
+
+      expect(await reasons).toEqual([
+        "io server disconnect",
+        "io server disconnect",
+      ]);
+      await settle();
+      expect(other.connected).toBe(true);
+    });
+
+    it("closes the sockets of one session and leaves the user's others open", async () => {
+      const phone = await rt.open(anna, "phone");
+      const laptop = await rt.open(anna, "laptop");
+      const reason = closed(phone);
+
+      rt.realtime.bus.disconnectSession("phone");
+
+      expect(await reason).toBe("io server disconnect");
+      await settle();
+      expect(laptop.connected).toBe(true);
+    });
+
+    it("stops delivering list events to a socket it closed", async () => {
+      const socket = await rt.open(anna);
+      const received = collect(socket);
+      socket.emit(JOIN_EVENT, { lists: [listId] });
+      await settle();
+
+      rt.realtime.bus.disconnectUser(anna);
+      await settle();
+      rt.realtime.bus.publish(anEvent(listId));
+      await settle();
+
+      expect(received).toEqual([]);
+    });
+
+    describe("on expiry", () => {
+      const sessions = new Map<string, Date | null>();
+
+      beforeEach(async () => {
+        sessions.clear();
+        await rt.close();
+        rt = await createRealtimeHarness(harness, {
+          sessionOf: (id) => {
+            const expiresAt = sessions.get(id);
+            return expiresAt ? { expiresAt } : null;
+          },
+        });
+      });
+
+      const inMs = (ms: number) => new Date(Date.now() + ms);
+
+      it("closes the socket when its session runs out", async () => {
+        sessions.set("short", inMs(300));
+        const socket = await rt.open(anna, "short");
+
+        expect(await closed(socket)).toBe("io server disconnect");
+      });
+
+      it("keeps the socket open when the session was refreshed meanwhile", async () => {
+        sessions.set("refreshed", inMs(300));
+        const socket = await rt.open(anna, "refreshed");
+        // What an HTTP request does to a session in use.
+        sessions.set("refreshed", inMs(60_000));
+
+        await settle(600);
+
+        expect(socket.connected).toBe(true);
+      });
+
+      it("refuses a socket whose session has already run out", async () => {
+        sessions.set("stale", inMs(-1000));
+
+        await expect(rt.open(anna, "stale")).rejects.toThrow(/unauthorized/i);
+      });
     });
   });
 

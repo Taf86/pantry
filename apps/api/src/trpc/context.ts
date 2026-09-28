@@ -42,14 +42,39 @@ const toUser = (user: {
   status: asStatus(user.status),
 });
 
+export interface ResolvedSession {
+  user: User;
+  sessionId: string;
+  expiresAt: Date;
+}
+
+/**
+ * `refresh: false` checks the session without extending it. The socket needs
+ * that: it cannot carry the refreshed cookie back to the browser, and an open
+ * socket must not keep a session alive that the user has stopped using.
+ */
+export const resolveSession = async (
+  services: AppServices,
+  headers: Headers,
+  { refresh = true }: { refresh?: boolean } = {},
+): Promise<ResolvedSession | null> => {
+  const session = await services.auth.api.getSession({
+    headers,
+    query: { disableRefresh: !refresh },
+  });
+  if (!session?.user) return null;
+  return {
+    user: toUser(session.user),
+    sessionId: session.session.id,
+    expiresAt: new Date(session.session.expiresAt),
+  };
+};
+
 export const resolveUser = async (
   services: AppServices,
   headers: Headers,
-): Promise<User | null> => {
-  const session = await services.auth.api.getSession({ headers });
-  if (!session?.user) return null;
-  return toUser(session.user);
-};
+): Promise<User | null> =>
+  (await resolveSession(services, headers))?.user ?? null;
 
 export const createContextFactory =
   (services: AppServices) =>

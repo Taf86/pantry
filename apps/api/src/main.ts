@@ -28,7 +28,12 @@ const main = async (): Promise<void> => {
     logger,
     limits,
     notifier,
-    auth: createAuth(db, config),
+    // Read at call time: the realtime bus replaces the null one further down.
+    auth: createAuth(db, config, {
+      onSessionDeleted: (sessionId) => {
+        services.events.disconnectSession(sessionId);
+      },
+    }),
     events: nullEventBus,
   };
   const app = await buildServer(services);
