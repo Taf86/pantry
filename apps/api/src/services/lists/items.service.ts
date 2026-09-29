@@ -1,5 +1,6 @@
 import {
   MAX_ITEMS_PER_LIST,
+  Permission,
   UNCATEGORIZED_SORT_ORDER,
   WriteOutcome,
   serializeDates,
@@ -18,6 +19,7 @@ import { categories } from "../../db/schema/categories.js";
 import { listItems } from "../../db/schema/list-items.js";
 import type { EventBus } from "../../realtime/events.js";
 import { clampToNow } from "./clock.js";
+import { lockListPermission, requireListPermission } from "./membership.js";
 import { claimMutation } from "./mutations.js";
 import { resolveProduct } from "./products.service.js";
 
@@ -81,8 +83,11 @@ export const requireItem = async (
  */
 export const listItemsOf = async (
   deps: ItemDeps,
+  actorId: string,
   input: ListItemsInput,
 ): Promise<ListItem[]> => {
+  await requireListPermission(deps.db, input.listId, actorId, Permission.Read);
+
   const rows = await deps.db
     .select({ item: listItems })
     .from(listItems)
@@ -132,6 +137,8 @@ export const addItem = async (
         row: await requireItem(tx, input.listId, input.id),
       };
     }
+
+    await lockListPermission(tx, input.listId, actorId, Permission.Write);
 
     const [items] = await tx
       .select({ total: count() })
@@ -223,6 +230,8 @@ export const updateItem = async (
       };
     }
 
+    await lockListPermission(tx, input.listId, actorId, Permission.Write);
+
     const product = await resolveProduct(tx, input.listId, {
       name: input.name,
       quantity: input.quantity,
@@ -303,6 +312,8 @@ export const deleteItem = async (
         row: await requireItem(tx, input.listId, input.id),
       };
     }
+
+    await lockListPermission(tx, input.listId, actorId, Permission.Write);
 
     const [deleted] = await tx
       .update(listItems)

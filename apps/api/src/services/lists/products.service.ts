@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import {
   MAX_CATALOG_ROWS,
+  Permission,
   normalizeProductName,
   serializeDates,
   type Suggestion,
@@ -12,6 +13,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import type { Database, Executor } from "../../db/client.js";
 import { listProducts } from "../../db/schema/list-products.js";
 import { products } from "../../db/schema/products.js";
+import { requireListPermission } from "./membership.js";
 
 export interface ResolvedProduct {
   id: string;
@@ -134,7 +136,10 @@ export const resolveProduct = async (
 export const catalogForList = async (
   db: Database,
   listId: string,
+  userId: string,
 ): Promise<Suggestion[]> => {
+  await requireListPermission(db, listId, userId, Permission.Read);
+
   const rows = await db
     .select({
       name: products.displayName,

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import {
   ConflictCode,
+  Permission,
   SHOPPING_LEASE_TTL_MS,
   SHOPPING_SESSION_RETENTION_DAYS,
   SessionEndReason,
@@ -18,6 +19,10 @@ import type { Database, Executor } from "../../db/client.js";
 import { isUniqueViolation } from "../../db/errors.js";
 import { shoppingSessions } from "../../db/schema/shopping-sessions.js";
 import { users } from "../../db/schema/users.js";
+import {
+  lockListPermission,
+  requireListPermission,
+} from "../lists/membership.js";
 import type { EventBus } from "../../realtime/events.js";
 
 export interface SessionDeps {
@@ -98,7 +103,9 @@ const conflict = async (
 export const activeSession = async (
   db: Database,
   listId: string,
+  userId: string,
 ): Promise<ShoppingSession | null> => {
+  await requireListPermission(db, listId, userId, Permission.Read);
   const row = await findActive(db, listId);
   return row === null ? null : toDto(db, row);
 };
@@ -131,6 +138,8 @@ export const claimSession = async (
 
   const created = await deps.db
     .transaction(async (tx) => {
+      await lockListPermission(tx, input.listId, actorId, Permission.Shop);
+
       const active = await findActive(tx, input.listId);
 
       if (active) {
@@ -229,18 +238,23 @@ export const heartbeatSession = async (
   actorId: string,
   input: HeartbeatInput,
 ): Promise<ShoppingSession> => {
-  const [renewed] = await deps.db
-    .update(shoppingSessions)
-    .set({ expiresAt: leaseUntil() })
-    .where(
-      and(
-        eq(shoppingSessions.id, input.sessionId),
-        eq(shoppingSessions.listId, input.listId),
-        eq(shoppingSessions.userId, actorId),
-        isNull(shoppingSessions.endedAt),
-      ),
-    )
-    .returning();
+  const renewed = await deps.db.transaction(async (tx) => {
+    await lockListPermission(tx, input.listId, actorId, Permission.Shop);
+
+    const [row] = await tx
+      .update(shoppingSessions)
+      .set({ expiresAt: leaseUntil() })
+      .where(
+        and(
+          eq(shoppingSessions.id, input.sessionId),
+          eq(shoppingSessions.listId, input.listId),
+          eq(shoppingSessions.userId, actorId),
+          isNull(shoppingSessions.endedAt),
+        ),
+      )
+      .returning();
+    return row;
+  });
 
   if (!renewed) {
     throw await conflict(
@@ -254,6 +268,11 @@ export const heartbeatSession = async (
 
 /**
  * Hands the list back. Idempotent, and never throws.
+ *
+ * No permission check, on purpose: only the holder matches the WHERE, and
+ * giving a lease back is harmless even for somebody who lost Shop — or the
+ * list itself — since they claimed it. Refusing would leave the list blocked
+ * until the lease expired on its own.
  *
  * It runs on `visibilitychange` and on unload, so it will fire twice; an error
  * there would surface as a scary toast at the exact moment the user is done

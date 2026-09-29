@@ -1,7 +1,7 @@
 import {
-  Permission,
   claimSessionInputSchema,
   heartbeatInputSchema,
+  listIdInputSchema,
   releaseSessionInputSchema,
 } from "@pantry/shared";
 
@@ -11,8 +11,7 @@ import {
   heartbeatSession,
   releaseSession,
 } from "../../services/shopping/sessions.service.js";
-import { listProcedure } from "../procedures.js";
-import { router } from "../trpc.js";
+import { authedProcedure, router } from "../trpc.js";
 
 /**
  * Taking a list in charge.
@@ -22,24 +21,28 @@ import { router } from "../trpc.js";
  * queue would fire from the car park an hour later and take the list from
  * whoever holds it by then.
  *
- * Note what is NOT here: nothing in this router gates `items.check`.
- * `Permission.Shop` alone authorizes ticking, so a shopper whose lease expired
- * while they were offline still drains their queue on the way home.
+ * Permissions are checked by the service: Read to see the lease, Shop to take
+ * or renew it, nothing to hand it back. Note also what is NOT here: nothing in
+ * this router gates `items.check`. `Permission.Shop` alone authorizes ticking,
+ * so a shopper whose lease expired while they were offline still drains their
+ * queue on the way home.
  */
 export const shoppingRouter = router({
-  active: listProcedure(Permission.Read).query(({ ctx, input }) =>
-    activeSession(ctx.db, input.listId),
-  ),
+  active: authedProcedure
+    .input(listIdInputSchema)
+    .query(({ ctx, input }) =>
+      activeSession(ctx.db, input.listId, ctx.user.id),
+    ),
 
-  claim: listProcedure(Permission.Shop)
+  claim: authedProcedure
     .input(claimSessionInputSchema)
     .mutation(({ ctx, input }) => claimSession(ctx, ctx.user.id, input)),
 
-  heartbeat: listProcedure(Permission.Shop)
+  heartbeat: authedProcedure
     .input(heartbeatInputSchema)
     .mutation(({ ctx, input }) => heartbeatSession(ctx, ctx.user.id, input)),
 
-  release: listProcedure(Permission.Shop)
+  release: authedProcedure
     .input(releaseSessionInputSchema)
     .mutation(({ ctx, input }) => releaseSession(ctx, ctx.user.id, input)),
 });

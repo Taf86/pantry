@@ -105,7 +105,7 @@ describe("the product catalogue", () => {
       const written = await add();
 
       expect(written.item).not.toHaveProperty("productId");
-      expect(await catalogForList(harness.db, listId)).toEqual([
+      expect(await catalogForList(harness.db, listId, userId)).toEqual([
         expect.not.objectContaining({ id: expect.anything() }),
       ]);
     });
@@ -199,7 +199,7 @@ describe("the product catalogue", () => {
         categoryId: null,
       });
 
-      const names = (await catalogForList(harness.db, listId)).map(
+      const names = (await catalogForList(harness.db, listId, userId)).map(
         (s) => s.name,
       );
       expect(names).toContain("pane");
@@ -212,14 +212,14 @@ describe("the product catalogue", () => {
       await add({ name: "latte" });
       await add({ name: "latte" });
 
-      const suggestions = await catalogForList(harness.db, listId);
+      const suggestions = await catalogForList(harness.db, listId, userId);
       expect(suggestions.map((s) => s.name)).toEqual(["latte", "pane"]);
     });
 
     it("carries the unit the list last used, so a tap can restore it", async () => {
       await add({ name: "latte", quantity: 2, unit: "l" });
 
-      const [suggestion] = await catalogForList(harness.db, listId);
+      const [suggestion] = await catalogForList(harness.db, listId, userId);
       expect(suggestion).toMatchObject({ lastQuantity: 2, lastUnit: "l" });
     });
 
@@ -235,7 +235,7 @@ describe("the product catalogue", () => {
         }),
       );
 
-      const names = (await catalogForList(harness.db, listId)).map(
+      const names = (await catalogForList(harness.db, listId, userId)).map(
         (s) => s.name,
       );
       expect(names).toEqual(["latte"]);

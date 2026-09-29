@@ -206,6 +206,7 @@ export const updateList = async (
       return await requireList(tx, input.listId);
     }
 
+    await lockList(tx, input.listId);
     await requireListPermission(tx, input.listId, userId, Permission.Write);
 
     const [updated] = await tx
@@ -233,6 +234,7 @@ export const deleteList = async (
   const deleted = await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, input.mutationId, userId))) return false;
 
+    await lockList(tx, input.listId);
     await requireListPermission(tx, input.listId, userId, Permission.Manage);
 
     // The foreign keys cascade: members, items, per-list catalogue usage and
@@ -404,7 +406,10 @@ export const findMemberCandidate = async (
   return row ?? null;
 };
 
-/** Serializes concurrent membership changes on the same list. */
+/**
+ * Serializes concurrent membership changes on the same list, and makes every
+ * writer holding `lockListPermission` finish before the change lands.
+ */
 const lockList = async (tx: Executor, listId: string): Promise<void> => {
   const [row] = await tx
     .select({ id: lists.id })
@@ -413,9 +418,9 @@ const lockList = async (tx: Executor, listId: string): Promise<void> => {
     .for("update")
     .limit(1);
 
-  if (!row) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "List not existing." });
-  }
+  // Forbidden, not missing: it runs before the permission check, and a
+  // stranger must not learn from the code which list ids exist.
+  if (!row) throw new TRPCError({ code: "FORBIDDEN" });
 };
 
 const assertHasManager = async (
@@ -425,12 +430,7 @@ const assertHasManager = async (
   const [managers] = await tx
     .select({ total: count() })
     .from(listMembers)
-    .where(
-      and(
-        eq(listMembers.listId, listId),
-        holds(Permission.Manage),
-      ),
-    );
+    .where(and(eq(listMembers.listId, listId), holds(Permission.Manage)));
 
   if ((managers?.total ?? 0) === 0) {
     throw new TRPCError({

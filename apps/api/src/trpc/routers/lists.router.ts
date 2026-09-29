@@ -1,9 +1,9 @@
 import {
-  Permission,
   createListInputSchema,
   deleteListInputSchema,
   findMemberInputSchema,
   leaveListInputSchema,
+  listIdInputSchema,
   removeMemberInputSchema,
   setMemberInputSchema,
   updateListInputSchema,
@@ -20,45 +20,48 @@ import {
   setMember,
   updateList,
 } from "../../services/lists/lists.service.js";
-import { listProcedure } from "../procedures.js";
 import { authedProcedure, rateLimited, router } from "../trpc.js";
 
+/**
+ * Permissions are checked by the services, inside the transaction that acts
+ * on them; a check here, outside it, could pass on a grant revoked a moment
+ * later.
+ */
 export const listsRouter = router({
   list: authedProcedure.query(({ ctx }) => listLists(ctx, ctx.user.id)),
 
-  get: listProcedure(Permission.Read).query(({ ctx, input }) =>
-    getList(ctx, input.listId, ctx.user.id),
-  ),
+  get: authedProcedure
+    .input(listIdInputSchema)
+    .query(({ ctx, input }) => getList(ctx, input.listId, ctx.user.id)),
 
   create: authedProcedure
     .input(createListInputSchema)
     .mutation(({ ctx, input }) => createList(ctx, ctx.user.id, input)),
 
-  update: listProcedure(Permission.Write)
+  update: authedProcedure
     .input(updateListInputSchema)
     .mutation(({ ctx, input }) => updateList(ctx, ctx.user.id, input)),
 
-  delete: listProcedure(Permission.Manage)
+  delete: authedProcedure
     .input(deleteListInputSchema)
     .mutation(({ ctx, input }) => deleteList(ctx, ctx.user.id, input)),
 
   members: router({
     // Rate limited because it answers "does this email have an account?".
-    find: listProcedure(Permission.Manage)
+    find: authedProcedure
       .use(rateLimited((ctx) => ctx.limits.procedure))
       .input(findMemberInputSchema)
       .query(({ ctx, input }) => findMemberCandidate(ctx, ctx.user.id, input)),
 
-    set: listProcedure(Permission.Manage)
+    set: authedProcedure
       .input(setMemberInputSchema)
       .mutation(({ ctx, input }) => setMember(ctx, ctx.user.id, input)),
 
-    remove: listProcedure(Permission.Manage)
+    remove: authedProcedure
       .input(removeMemberInputSchema)
       .mutation(({ ctx, input }) => removeMember(ctx, ctx.user.id, input)),
 
-    // Leaving is not managing: Read is the right bar for showing yourself out.
-    leave: listProcedure(Permission.Read)
+    leave: authedProcedure
       .input(leaveListInputSchema)
       .mutation(({ ctx, input }) => leaveList(ctx, ctx.user.id, input)),
   }),

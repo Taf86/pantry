@@ -1,4 +1,5 @@
 import {
+  Permission,
   WriteOutcome,
   type CheckItemInput,
   type CheckManyInput,
@@ -13,6 +14,7 @@ import { listItems } from "../../db/schema/list-items.js";
 import { shoppingSessions } from "../../db/schema/shopping-sessions.js";
 import { clampToNow } from "./clock.js";
 import { requireItem, toListItem, type ItemDeps } from "./items.service.js";
+import { assertListPermissions, lockListPermission } from "./membership.js";
 import { claimMutation } from "./mutations.js";
 
 /**
@@ -119,6 +121,11 @@ const single = async (
       };
     }
 
+    // Shop, not Write: ticking is what a list shared for shopping is for.
+    // Holding the lease is NOT required, so a shopper whose lease expired
+    // while offline still drains their queue.
+    await lockListPermission(tx, args.listId, actorId, Permission.Shop);
+
     const applied = await applyCheck(
       tx,
       actorId,
@@ -196,6 +203,13 @@ export const checkMany = async (
 
   const applied = await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, input.mutationId, actorId))) return [];
+
+    await assertListPermissions(
+      tx,
+      input.checks.map((check) => check.listId),
+      actorId,
+      Permission.Shop,
+    );
 
     const written: Array<typeof listItems.$inferSelect> = [];
     for (const check of input.checks) {

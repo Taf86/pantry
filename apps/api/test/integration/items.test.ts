@@ -113,7 +113,7 @@ describe("items", () => {
 
       expect(replay.outcome).toBe(WriteOutcome.deduplicated);
       expect(
-        await listItemsOf(deps(), { listId, includeDeleted: false }),
+        await listItemsOf(deps(), userId, { listId, includeDeleted: false }),
       ).toHaveLength(1);
     });
 
@@ -122,7 +122,7 @@ describe("items", () => {
       await add({ name: "latte" });
 
       expect(
-        await listItemsOf(deps(), { listId, includeDeleted: false }),
+        await listItemsOf(deps(), userId, { listId, includeDeleted: false }),
       ).toHaveLength(2);
     });
 
@@ -260,10 +260,10 @@ describe("items", () => {
       });
 
       expect(
-        await listItemsOf(deps(), { listId, includeDeleted: false }),
+        await listItemsOf(deps(), userId, { listId, includeDeleted: false }),
       ).toEqual([]);
       expect(
-        await listItemsOf(deps(), { listId, includeDeleted: true }),
+        await listItemsOf(deps(), userId, { listId, includeDeleted: true }),
       ).toHaveLength(1);
     });
 
@@ -317,7 +317,7 @@ describe("items", () => {
       const dairy = await add({ name: "latte", categoryId: "dairy" });
       const produce = await add({ name: "mele", categoryId: "produce" });
 
-      const ordered = await listItemsOf(deps(), {
+      const ordered = await listItemsOf(deps(), userId, {
         listId,
         includeDeleted: false,
       });
@@ -332,7 +332,7 @@ describe("items", () => {
         categoryId: "household",
       });
 
-      const ordered = await listItemsOf(deps(), {
+      const ordered = await listItemsOf(deps(), userId, {
         listId,
         includeDeleted: false,
       });
@@ -372,6 +372,63 @@ describe("items", () => {
       expect(events.events).toEqual([
         expect.objectContaining({ type: "item.deleted", itemId: item.id }),
       ]);
+    });
+  });
+
+  describe("permissions", () => {
+    const viewer = async () => {
+      const id = await makeUser(harness, { status: "active" });
+      await harness.db
+        .insert(listMembers)
+        .values({ listId, userId: id, permissions: Role.Viewer });
+      return id;
+    };
+
+    it("refuses every write to a member who can only read", async () => {
+      const item = await add();
+      const reader = await viewer();
+
+      await expect(addItem(deps(), reader, addInput())).rejects.toThrow(
+        /forbidden/i,
+      );
+      await expect(
+        updateItem(deps(), reader, {
+          ...mutation(),
+          listId,
+          id: item.id,
+          contentUpdatedAt: iso(),
+          rawText: "pane",
+          name: "pane",
+          quantity: null,
+          unit: null,
+          unitText: null,
+          note: null,
+          categoryId: null,
+        }),
+      ).rejects.toThrow(/forbidden/i);
+      await expect(
+        deleteItem(deps(), reader, {
+          ...mutation(),
+          listId,
+          id: item.id,
+          at: iso(),
+        }),
+      ).rejects.toThrow(/forbidden/i);
+    });
+
+    it("shows the items to a reader and to nobody else", async () => {
+      await add();
+      const stranger = await makeUser(harness, { status: "active" });
+
+      expect(
+        await listItemsOf(deps(), await viewer(), {
+          listId,
+          includeDeleted: false,
+        }),
+      ).toHaveLength(1);
+      await expect(
+        listItemsOf(deps(), stranger, { listId, includeDeleted: false }),
+      ).rejects.toThrow(/forbidden/i);
     });
   });
 });

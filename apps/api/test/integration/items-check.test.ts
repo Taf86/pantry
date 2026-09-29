@@ -378,4 +378,41 @@ describe("checking items off", () => {
       expect(events.events).toEqual([]);
     });
   });
+
+  describe("permissions", () => {
+    it("refuses a tick from a member who can only read", async () => {
+      const item = await add();
+      const reader = await makeUser(harness, { status: "active" });
+      await harness.db
+        .insert(listMembers)
+        .values({ listId, userId: reader, permissions: Role.Viewer });
+
+      await expect(check(item.id, iso(), reader)).rejects.toThrow(/forbidden/i);
+      await expect(uncheck(item.id, iso(), reader)).rejects.toThrow(
+        /forbidden/i,
+      );
+    });
+
+    it("refuses the whole batch when one of its lists cannot be shopped", async () => {
+      const item = await add();
+      const other = crypto.randomUUID();
+      await harness.db
+        .insert(lists)
+        .values({ id: other, name: "Altro", createdBy: marco });
+      await harness.db
+        .insert(listMembers)
+        .values({ listId: other, userId: anna, permissions: Role.Viewer });
+
+      await expect(
+        checkMany(deps(), anna, {
+          ...mutation(),
+          checks: [
+            { listId, id: item.id, checkedAt: iso(), at: iso() },
+            { listId: other, id: item.id, checkedAt: iso(), at: iso() },
+          ],
+        }),
+      ).rejects.toThrow(/1 list/i);
+      expect((await rowOf(item.id)).checkedAt).toBeNull();
+    });
+  });
 });

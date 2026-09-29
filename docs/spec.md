@@ -279,19 +279,23 @@ qualcuno a cui chiedi solo di fare la spesa.
 Non esiste una maschera vuota: non avere alcun permesso su una lista o dispensa equivale
 a non esserne membro, quindi togliere tutto significa cancellare la riga di membership.
 
-**Applicazione**: un middleware tRPC risolve la membership una volta sola e la mette
-nel context. Nessun controllo sparso nelle procedure.
+**Applicazione**: i controlli stanno nei service, una volta sola, non nel router. Un
+controllo in un middleware tRPC girerebbe fuori dalla transazione e potrebbe passare su
+un permesso revocato un attimo dopo; i service hanno anche altri chiamanti (test, job).
 
-```ts
-const listProcedure = (required: number) =>
-  authedProcedure
-    .input(z.object({ listId: z.string() }))
-    .use(async ({ ctx, input, next }) => {
-      const m = await getMembership(ctx.db, input.listId, ctx.user.id)
-      if (!m || !can(m.permissions, required)) throw new TRPCError({ code: 'FORBIDDEN' })
-      return next({ ctx: { ...ctx, permissions: m.permissions } })
-    })
-```
+- **Letture**: `requireListPermission` (una lettura per PK), oppure il filtro direttamente
+  nella query, come `listLists` che mostra solo le liste con `Read`.
+- **Scritture**: `lockListPermission` dentro la transazione. Prende la riga di `lists`
+  `FOR SHARE` e poi rilegge la maschera. Ogni cambio di membership (`setMember`,
+  `dropMember`, `deleteList`) tiene la stessa riga `FOR UPDATE`: una revoca o è già
+  committata quando si legge la maschera, o aspetta che la scrittura finisca.
+- Il lock va sulla lista e non sulla riga di membership: la delete di una lista cascata
+  sulle membership mentre chi scrive tiene key-share sulla lista tramite le FK, e i due
+  lock insieme farebbero un ciclo.
+- Chi modifica la riga di `lists` (`updateList`, `deleteList`) la prende subito
+  `FOR UPDATE`: due transazioni che promuovono uno share lock a esclusivo vanno in deadlock.
+- Una lista inesistente risponde `FORBIDDEN` come una non condivisa, per non rivelare
+  quali id esistono.
 
 ---
 

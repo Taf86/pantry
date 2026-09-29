@@ -1,4 +1,5 @@
 import {
+  Role,
   SHOPPING_LEASE_TTL_MS,
   SessionEndReason,
   sessionConflictSchema,
@@ -257,13 +258,13 @@ describe("the shopping lease", () => {
 
   describe("reading", () => {
     it("reports nobody on a list nobody took", async () => {
-      expect(await activeSession(harness.db, listId)).toBeNull();
+      expect(await activeSession(harness.db, listId, marco)).toBeNull();
     });
 
     it("reports the holder while the lease stands", async () => {
       await claimSession(deps(), marco, { listId });
 
-      expect(await activeSession(harness.db, listId)).toMatchObject({
+      expect(await activeSession(harness.db, listId, marco)).toMatchObject({
         holder: { id: marco },
       });
     });
@@ -274,7 +275,7 @@ describe("the shopping lease", () => {
 
       // Expiry is not an ending. The client derives "expired" from expiresAt
       // and still has a name to put in the takeover dialog.
-      expect(await activeSession(harness.db, listId)).toMatchObject({
+      expect(await activeSession(harness.db, listId, marco)).toMatchObject({
         holder: { id: marco },
         endedAt: null,
       });
@@ -294,7 +295,7 @@ describe("the shopping lease", () => {
       await expireLease(harness, session.id, SHOPPING_LEASE_TTL_MS + MINUTE);
 
       expect(await sweepExpiredShoppingSessions(harness.db)).toBe(1);
-      expect(await activeSession(harness.db, listId)).toBeNull();
+      expect(await activeSession(harness.db, listId, marco)).toBeNull();
     });
 
     it("lets the list be taken again once the sweeper has closed the old one", async () => {
@@ -344,6 +345,51 @@ describe("the shopping lease", () => {
       await releaseSession(deps(), marco, input);
 
       expect(events.events).toEqual([]);
+    });
+  });
+
+  describe("permissions", () => {
+    const demote = (userId: string, permissions: number) =>
+      harness.db
+        .update(listMembers)
+        .set({ permissions })
+        .where(eq(listMembers.userId, userId));
+
+    it("refuses the lease to a member who cannot shop", async () => {
+      await demote(anna, Role.Viewer);
+
+      await expect(claimSession(deps(), anna, { listId })).rejects.toThrow(
+        /forbidden/i,
+      );
+    });
+
+    it("stops renewing a lease once Shop is withdrawn", async () => {
+      const session = await claimSession(deps(), marco, { listId });
+      await demote(marco, Role.Viewer);
+
+      await expect(
+        heartbeatSession(deps(), marco, { listId, sessionId: session.id }),
+      ).rejects.toThrow(/forbidden/i);
+    });
+
+    it("still lets the holder hand the lease back after losing Shop", async () => {
+      const session = await claimSession(deps(), marco, { listId });
+      await demote(marco, Role.Viewer);
+
+      await releaseSession(deps(), marco, {
+        listId,
+        sessionId: session.id,
+        completed: false,
+      });
+      expect(await activeSession(harness.db, listId, anna)).toBeNull();
+    });
+
+    it("tells nobody outside the list who is shopping", async () => {
+      const stranger = await makeUser(harness, { status: "active" });
+
+      await expect(activeSession(harness.db, listId, stranger)).rejects.toThrow(
+        /forbidden/i,
+      );
     });
   });
 });

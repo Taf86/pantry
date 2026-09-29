@@ -9,6 +9,7 @@ import { lists } from "../../src/db/schema/lists.js";
 import {
   assertListPermissions,
   getListMembership,
+  lockListPermission,
   requireListPermission,
 } from "../../src/services/lists/membership.js";
 import {
@@ -95,6 +96,53 @@ describe("list membership", () => {
     await expect(
       requireListPermission(harness.db, shopped, stranger, Permission.Shop),
     ).resolves.toBe(Role.Shopper);
+  });
+
+  describe("lockListPermission", () => {
+    it("answers a missing list like a forbidden one", async () => {
+      await expect(
+        harness.db.transaction((tx) =>
+          lockListPermission(tx, crypto.randomUUID(), member, Permission.Read),
+        ),
+      ).rejects.toThrow(/forbidden/i);
+    });
+
+    it("makes a revocation wait for a writer that already passed the check", async () => {
+      let locked!: () => void;
+      const taken = new Promise<void>((resolve) => (locked = resolve));
+      let finish!: () => void;
+      const done = new Promise<void>((resolve) => (finish = resolve));
+
+      const writer = harness.db.transaction(async (tx) => {
+        await lockListPermission(tx, listId, member, Permission.Write);
+        locked();
+        await done;
+      });
+      await taken;
+
+      // What setMember and dropMember do before touching a mask.
+      let revoked = false;
+      const revoking = harness.db
+        .transaction(async (tx) => {
+          await tx
+            .select({ id: lists.id })
+            .from(lists)
+            .where(eq(lists.id, listId))
+            .for("update");
+          await tx.delete(listMembers).where(eq(listMembers.listId, listId));
+        })
+        .then(() => {
+          revoked = true;
+        });
+
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      expect(revoked).toBe(false);
+
+      finish();
+      await writer;
+      await revoking;
+      expect(revoked).toBe(true);
+    });
   });
 
   describe("assertListPermissions", () => {
