@@ -316,19 +316,26 @@ describe("lists", () => {
       ).rejects.toThrow(/forbidden/i);
     });
 
-    it("hides a list from a member who cannot read it", async () => {
+    it("refuses a grant that does not include Read", async () => {
       const list = await newList();
-      await setMember(deps(), owner, {
-        ...mutation(),
-        listId: list.id,
-        userId: mate,
-        permissions: Permission.Shop,
-      });
+
+      for (const permissions of [
+        Permission.Write,
+        Permission.Shop,
+        Permission.Manage,
+        Permission.Write | Permission.Shop,
+      ]) {
+        await expect(
+          setMember(deps(), owner, {
+            ...mutation(),
+            listId: list.id,
+            userId: mate,
+            permissions,
+          }),
+        ).rejects.toThrow(/include read/i);
+      }
 
       expect(await listLists(deps(), mate)).toEqual([]);
-      await expect(getList(deps(), list.id, mate)).rejects.toThrow(
-        /not existing/i,
-      );
     });
 
     it("refuses to share a list with somebody who does not exist", async () => {

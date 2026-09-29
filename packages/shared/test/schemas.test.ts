@@ -1,13 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_CHECK_BATCH, MAX_CONTACT_LENGTH } from "../src/constants.js";
-import { ALL_PERMISSIONS, ROLE_NAMES, Role } from "../src/permissions.js";
+import {
+  ALL_PERMISSIONS,
+  Permission,
+  ROLE_NAMES,
+  Role,
+} from "../src/permissions.js";
 import {
   MAX_JOINED_ROOMS,
   joinPayloadSchema,
   serverEventSchema,
 } from "../src/events.js";
-import { emailSchema, permissionsSchema } from "../src/schemas/common.js";
+import {
+  emailSchema,
+  grantablePermissionsSchema,
+  permissionsSchema,
+} from "../src/schemas/common.js";
 import {
   addItemInputSchema,
   checkManyInputSchema,
@@ -55,6 +64,27 @@ describe("permissionsSchema", () => {
 
   it("rejects a negative mask", () => {
     expect(permissionsSchema.safeParse(-1).success).toBe(false);
+  });
+});
+
+describe("grantablePermissionsSchema", () => {
+  it("accepts the mask of every named role", () => {
+    for (const name of ROLE_NAMES) {
+      expect(grantablePermissionsSchema.safeParse(Role[name]).success).toBe(
+        true,
+      );
+    }
+  });
+
+  it("rejects any mask that leaves Read out", () => {
+    for (const mask of [
+      Permission.Write,
+      Permission.Shop,
+      Permission.Manage,
+      ALL_PERMISSIONS & ~Permission.Read,
+    ]) {
+      expect(grantablePermissionsSchema.safeParse(mask).success).toBe(false);
+    }
   });
 });
 

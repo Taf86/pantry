@@ -1,4 +1,5 @@
 import {
+  can,
   MAX_LIST_MEMBERS,
   MAX_LISTS_PER_USER,
   Permission,
@@ -33,6 +34,8 @@ export interface ListDeps {
   db: Database;
   events: EventBus;
 }
+
+const NO_MANAGER = "A list must keep at least one member who can manage it.";
 
 const memberCount = sql<number>`(
   SELECT count(*)::int FROM ${listMembers}
@@ -268,31 +271,50 @@ export const setMember = async (
     if (!(await claimMutation(tx, input.mutationId, actorId))) return;
 
     await lockList(tx, input.listId);
-    await requireListPermission(tx, input.listId, actorId, Permission.Manage);
+
+    // One read stands in for the permission check, the size limit and the
+    // manager invariant. It is a statement of its own, after the lock, so it
+    // sees whatever the writers we waited for committed.
+    const members = new Map(
+      (
+        await tx
+          .select({
+            userId: listMembers.userId,
+            permissions: listMembers.permissions,
+          })
+          .from(listMembers)
+          .where(eq(listMembers.listId, input.listId))
+      ).map((row) => [row.userId, row.permissions]),
+    );
+
+    if (!can(members.get(actorId) ?? 0, Permission.Manage)) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+
+    // The router's schema already refuses this; the service is the authority.
+    if (!can(input.permissions, Permission.Read)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Permissions must include Read.",
+      });
+    }
+
     await requireUserExists(tx, input.userId);
 
-    const present = await tx
-      .select({ userId: listMembers.userId })
-      .from(listMembers)
-      .where(
-        and(
-          eq(listMembers.listId, input.listId),
-          eq(listMembers.userId, input.userId),
-        ),
+    if (!members.has(input.userId) && members.size >= MAX_LIST_MEMBERS) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Too many members.",
+      });
+    }
+
+    if (!can(input.permissions, Permission.Manage)) {
+      const keepsManager = [...members].some(
+        ([userId, permissions]) =>
+          userId !== input.userId && can(permissions, Permission.Manage),
       );
-
-    if (present.length === 0) {
-      const [members] = await tx
-        .select({ total: count() })
-        .from(listMembers)
-        .where(eq(listMembers.listId, input.listId));
-
-      if ((members?.total ?? 0) >= MAX_LIST_MEMBERS) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Too many members.",
-        });
-      }
+      if (!keepsManager)
+        throw new TRPCError({ code: "BAD_REQUEST", message: NO_MANAGER });
     }
 
     await tx
@@ -307,8 +329,6 @@ export const setMember = async (
         target: [listMembers.listId, listMembers.userId],
         set: { permissions: input.permissions },
       });
-
-    await assertHasManager(tx, input.listId);
   });
 
   deps.events.publish({
@@ -433,10 +453,7 @@ const assertHasManager = async (
     .where(and(eq(listMembers.listId, listId), holds(Permission.Manage)));
 
   if ((managers?.total ?? 0) === 0) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "A list must keep at least one member who can manage it.",
-    });
+    throw new TRPCError({ code: "BAD_REQUEST", message: NO_MANAGER });
   }
 };
 

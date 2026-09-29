@@ -212,7 +212,18 @@ describe("the phase 2 schema", () => {
         await violatedConstraint(() =>
           harness.db.execute(
             sql`INSERT INTO list_members (list_id, user_id, permissions)
-              VALUES (${listId}, ${userId}, ${1 << 6})`,
+              VALUES (${listId}, ${userId}, ${1 | (1 << 6)})`,
+          ),
+        ),
+      ).toBe("list_members_permissions_check");
+    });
+
+    it("rejects a permission mask without Read", async () => {
+      expect(
+        await violatedConstraint(() =>
+          harness.db.execute(
+            sql`INSERT INTO list_members (list_id, user_id, permissions)
+              VALUES (${listId}, ${userId}, ${2 | 4 | 8})`,
           ),
         ),
       ).toBe("list_members_permissions_check");

@@ -10,7 +10,7 @@ import {
   MAX_UNIT_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from "../constants.js";
-import { ALL_PERMISSIONS } from "../permissions.js";
+import { ALL_PERMISSIONS, can, Permission } from "../permissions.js";
 import { UnitCodes } from "../units.js";
 
 export const nameSchema = z.string().trim().min(1).max(MAX_NAME_LENGTH);
@@ -92,6 +92,18 @@ export const permissionsSchema = z
   .refine((mask) => (mask & ~ALL_PERMISSIONS) === 0, {
     error: "Unknown permission bit",
   });
+
+/**
+ * A mask that can be handed to somebody: it must include `Read`.
+ *
+ * Every other permission acts on a list the member has to see, so a mask
+ * without `Read` is a grant nobody can exercise. Kept apart from
+ * `permissionsSchema`, which also describes what is already stored.
+ */
+export const grantablePermissionsSchema = permissionsSchema.refine(
+  (mask) => can(mask, Permission.Read),
+  { error: "Permissions must include Read" },
+);
 
 export const isoDateTimeSchema = z.iso.datetime({ offset: true });
 

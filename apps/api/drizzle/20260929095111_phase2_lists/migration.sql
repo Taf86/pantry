@@ -46,7 +46,7 @@ CREATE TABLE "list_members" (
 	"invited_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "list_members_pkey" PRIMARY KEY("list_id","user_id"),
-	CONSTRAINT "list_members_permissions_check" CHECK ("permissions" > 0 AND ("permissions" | 15) = 15)
+	CONSTRAINT "list_members_permissions_check" CHECK (("permissions" & 1) = 1 AND ("permissions" | 15) = 15)
 );
 --> statement-breakpoint
 CREATE TABLE "list_products" (

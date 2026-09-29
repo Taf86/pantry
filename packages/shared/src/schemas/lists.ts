@@ -4,6 +4,7 @@ import { Role } from "../permissions.js";
 import {
   emailSchema,
   entityIdSchema,
+  grantablePermissionsSchema,
   isoDateTimeSchema,
   mutationEnvelope,
   nameSchema,
@@ -70,7 +71,7 @@ export type DeleteListInput = z.infer<typeof deleteListInputSchema>;
 export const setMemberInputSchema = mutationEnvelope.extend({
   listId: entityIdSchema,
   userId: userIdSchema,
-  permissions: permissionsSchema.default(Role.Editor),
+  permissions: grantablePermissionsSchema.default(Role.Editor),
 });
 export type SetMemberInput = z.infer<typeof setMemberInputSchema>;
 
