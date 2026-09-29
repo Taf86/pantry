@@ -255,7 +255,6 @@ Modello a bitmask, applicato in modo identico a liste e dispense.
 ```ts
 // packages/shared/src/permissions.ts
 export const Permission = {
-  None:   0,
   Read:   1 << 0,  // vede il contenuto
   Write:  1 << 1,  // aggiunge, modifica, rimuove
   Shop:   1 << 2,  // spunta come comprato / consuma dalla dispensa
@@ -276,6 +275,9 @@ export const can = (granted: number, required: number) =>
 `Shop` separato da `Write` è il punto: una persona può spuntare i prodotti senza poter
 alterare la lista. È la distinzione che rende sensato condividere una lista con
 qualcuno a cui chiedi solo di fare la spesa.
+
+Non esiste una maschera vuota: non avere alcun permesso su una lista o dispensa equivale
+a non esserne membro, quindi togliere tutto significa cancellare la riga di membership.
 
 **Applicazione**: un middleware tRPC risolve la membership una volta sola e la mette
 nel context. Nessun controllo sparso nelle procedure.

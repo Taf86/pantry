@@ -47,7 +47,7 @@ export const listsRouter = router({
     find: listProcedure(Permission.Manage)
       .use(rateLimited((ctx) => ctx.limits.procedure))
       .input(findMemberInputSchema)
-      .query(({ ctx, input }) => findMemberCandidate(ctx, input)),
+      .query(({ ctx, input }) => findMemberCandidate(ctx, ctx.user.id, input)),
 
     set: listProcedure(Permission.Manage)
       .input(setMemberInputSchema)

@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e1703ecf-ae63-4e6d-88fb-471cdeb8a9db",
+  "id": "5e8b1f0b-bc88-4072-abaa-34a22d4b618a",
   "prevIds": [
     "ee796fe7-92be-434f-a9aa-beeed1344c8f"
   ],
@@ -2849,7 +2849,7 @@
       "table": "list_items"
     },
     {
-      "value": "(\"permissions\" | 15) = 15",
+      "value": "\"permissions\" > 0 AND (\"permissions\" | 15) = 15",
       "name": "list_members_permissions_check",
       "entityType": "checks",
       "schema": "public",

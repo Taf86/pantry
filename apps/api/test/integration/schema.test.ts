@@ -217,5 +217,16 @@ describe("the phase 2 schema", () => {
         ),
       ).toBe("list_members_permissions_check");
     });
+
+    it("rejects an empty permission mask", async () => {
+      expect(
+        await violatedConstraint(() =>
+          harness.db.execute(
+            sql`INSERT INTO list_members (list_id, user_id, permissions)
+              VALUES (${listId}, ${userId}, 0)`,
+          ),
+        ),
+      ).toBe("list_members_permissions_check");
+    });
   });
 });

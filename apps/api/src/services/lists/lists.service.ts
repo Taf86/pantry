@@ -26,6 +26,7 @@ import { listMembers } from "../../db/schema/list-members.js";
 import { lists } from "../../db/schema/lists.js";
 import { users } from "../../db/schema/users.js";
 import type { EventBus } from "../../realtime/events.js";
+import { requireListPermission } from "./membership.js";
 import { claimMutation } from "./mutations.js";
 
 export interface ListDeps {
@@ -63,6 +64,10 @@ const listSelection = {
 const asMember = (userId: string) =>
   and(eq(listMembers.listId, lists.id), eq(listMembers.userId, userId));
 
+/** The membership row carries every bit of `required`, as `can` would say. */
+const holds = (required: number) =>
+  sql`(${listMembers.permissions} & ${required}) = ${required}`;
+
 /**
  * Every list the caller belongs to, oldest first.
  *
@@ -78,6 +83,7 @@ export const listLists = async (
     .select(listSelection)
     .from(lists)
     .innerJoin(listMembers, asMember(userId))
+    .where(holds(Permission.Read))
     .orderBy(asc(lists.id));
 
   return rows.map(serializeDates);
@@ -108,7 +114,7 @@ const summaryFor = async (
     .select(listSelection)
     .from(lists)
     .innerJoin(listMembers, asMember(userId))
-    .where(eq(lists.id, listId))
+    .where(and(eq(lists.id, listId), holds(Permission.Read)))
     .limit(1);
 
   if (!row) {
@@ -200,6 +206,8 @@ export const updateList = async (
       return await requireList(tx, input.listId);
     }
 
+    await requireListPermission(tx, input.listId, userId, Permission.Write);
+
     const [updated] = await tx
       .update(lists)
       .set({ name: input.name })
@@ -224,6 +232,8 @@ export const deleteList = async (
 ): Promise<void> => {
   const deleted = await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, input.mutationId, userId))) return false;
+
+    await requireListPermission(tx, input.listId, userId, Permission.Manage);
 
     // The foreign keys cascade: members, items, per-list catalogue usage and
     // any lease still standing go with it, in this one statement.
@@ -256,6 +266,7 @@ export const setMember = async (
     if (!(await claimMutation(tx, input.mutationId, actorId))) return;
 
     await lockList(tx, input.listId);
+    await requireListPermission(tx, input.listId, actorId, Permission.Manage);
     await requireUserExists(tx, input.userId);
 
     const present = await tx
@@ -312,7 +323,7 @@ export const removeMember = async (
   actorId: string,
   input: RemoveMemberInput,
 ): Promise<ListMember[]> => {
-  await dropMember(deps, actorId, input.mutationId, input.listId, input.userId);
+  await dropMember(deps, actorId, input, input.userId, Permission.Manage);
   return listMembersOf(deps.db, input.listId);
 };
 
@@ -321,20 +332,22 @@ export const leaveList = async (
   actorId: string,
   input: LeaveListInput,
 ): Promise<void> => {
-  await dropMember(deps, actorId, input.mutationId, input.listId, actorId);
+  // Leaving is not managing: Read is the right bar for showing yourself out.
+  await dropMember(deps, actorId, input, actorId, Permission.Read);
 };
 
 const dropMember = async (
   deps: ListDeps,
   actorId: string,
-  mutationId: string,
-  listId: string,
+  { mutationId, listId }: { mutationId: string; listId: string },
   userId: string,
+  required: number,
 ): Promise<void> => {
   const removed = await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, mutationId, actorId))) return false;
 
     await lockList(tx, listId);
+    await requireListPermission(tx, listId, actorId, required);
 
     const gone = await tx
       .delete(listMembers)
@@ -368,8 +381,16 @@ const dropMember = async (
  */
 export const findMemberCandidate = async (
   deps: ListDeps,
+  actorId: string,
   input: FindMemberInput,
 ): Promise<UserRef | null> => {
+  await requireListPermission(
+    deps.db,
+    input.listId,
+    actorId,
+    Permission.Manage,
+  );
+
   const [row] = await deps.db
     .select({
       id: users.id,
@@ -407,7 +428,7 @@ const assertHasManager = async (
     .where(
       and(
         eq(listMembers.listId, listId),
-        sql`(${listMembers.permissions} & ${Permission.Manage}) = ${Permission.Manage}`,
+        holds(Permission.Manage),
       ),
     );
 

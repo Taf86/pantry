@@ -4,9 +4,11 @@
  * `Shop` is deliberately separate from `Write`: a person can tick products off
  * while shopping without being able to alter the list. It is the distinction
  * that makes it sensible to share a list with someone you only ask to shop.
+ *
+ * There is no empty mask: holding no permission on a list or pantry means not
+ * being a member of it, so revoking everything is removing the membership row.
  */
 export const Permission = {
-  None: 0,
   /** Sees the contents. */
   Read: 1 << 0,
   /** Adds, edits, removes. */

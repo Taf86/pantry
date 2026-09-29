@@ -33,9 +33,10 @@ export const listMembers = pgTable(
   (table) => [
     primaryKey({ columns: [table.listId, table.userId] }),
     index("idx_list_members_user").on(table.userId),
+    // Non-empty as well as known: no permission at all means no row.
     check(
       "list_members_permissions_check",
-      sql`(${table.permissions} | ${ALL_PERMISSIONS}) = ${ALL_PERMISSIONS}`,
+      sql`${table.permissions} > 0 AND (${table.permissions} | ${ALL_PERMISSIONS}) = ${ALL_PERMISSIONS}`,
     ),
   ],
 );

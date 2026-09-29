@@ -18,11 +18,11 @@ describe("can", () => {
   });
 
   it("is satisfied by any mask when nothing is required", () => {
-    expect(can(Permission.None, Permission.None)).toBe(true);
+    expect(can(Role.Viewer, 0)).toBe(true);
   });
 
   it("grants nothing on an empty mask", () => {
-    expect(can(Permission.None, Permission.Read)).toBe(false);
+    expect(can(0, Permission.Read)).toBe(false);
   });
 });
 

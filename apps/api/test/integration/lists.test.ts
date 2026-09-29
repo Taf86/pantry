@@ -178,7 +178,7 @@ describe("lists", () => {
       const email = "mate@example.com";
       await harness.db.update(users).set({ email }).where(eq(users.id, mate));
 
-      const found = await findMemberCandidate(deps(), {
+      const found = await findMemberCandidate(deps(), owner, {
         listId: list.id,
         email,
       });
@@ -191,7 +191,7 @@ describe("lists", () => {
       await makeUser(harness, { email, status: "suspended" });
 
       expect(
-        await findMemberCandidate(deps(), { listId: list.id, email }),
+        await findMemberCandidate(deps(), owner, { listId: list.id, email }),
       ).toBeNull();
     });
   });
@@ -267,6 +267,67 @@ describe("lists", () => {
       expect(members).toHaveLength(2);
       expect(members.find((m) => m.user.id === mate)?.permissions).toBe(
         Role.Editor,
+      );
+    });
+
+    it("refuses every change to somebody without the permission for it", async () => {
+      const list = await newList();
+      await setMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+        permissions: Role.Shopper,
+      });
+
+      await expect(
+        updateList(deps(), mate, { ...mutation(), listId: list.id, name: "X" }),
+      ).rejects.toThrow(/forbidden/i);
+      await expect(
+        deleteList(deps(), mate, { ...mutation(), listId: list.id }),
+      ).rejects.toThrow(/forbidden/i);
+      await expect(
+        setMember(deps(), mate, {
+          ...mutation(),
+          listId: list.id,
+          userId: mate,
+          permissions: Role.Owner,
+        }),
+      ).rejects.toThrow(/forbidden/i);
+      await expect(
+        removeMember(deps(), mate, {
+          ...mutation(),
+          listId: list.id,
+          userId: owner,
+        }),
+      ).rejects.toThrow(/forbidden/i);
+      await expect(
+        findMemberCandidate(deps(), mate, {
+          listId: list.id,
+          email: "a@example.com",
+        }),
+      ).rejects.toThrow(/forbidden/i);
+    });
+
+    it("refuses to let a stranger leave a list they are not on", async () => {
+      const list = await newList();
+
+      await expect(
+        leaveList(deps(), mate, { ...mutation(), listId: list.id }),
+      ).rejects.toThrow(/forbidden/i);
+    });
+
+    it("hides a list from a member who cannot read it", async () => {
+      const list = await newList();
+      await setMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+        permissions: Permission.Shop,
+      });
+
+      expect(await listLists(deps(), mate)).toEqual([]);
+      await expect(getList(deps(), list.id, mate)).rejects.toThrow(
+        /not existing/i,
       );
     });
 

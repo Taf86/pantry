@@ -83,10 +83,11 @@ export const quantitySchema = z
   .nonnegative()
   .max(MAX_QUANTITY);
 
+/** A non-empty mask: granting nothing is removing the member, not a mask. */
 export const permissionsSchema = z
   .number()
   .int()
-  .min(0)
+  .min(1)
   .max(ALL_PERMISSIONS)
   .refine((mask) => (mask & ~ALL_PERMISSIONS) === 0, {
     error: "Unknown permission bit",
