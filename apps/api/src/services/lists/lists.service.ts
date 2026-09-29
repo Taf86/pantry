@@ -6,6 +6,7 @@ import {
   serializeDates,
   type CreateListInput,
   type DeleteListInput,
+  type FindMemberInput,
   type LeaveListInput,
   type List,
   type ListDetail,
@@ -14,6 +15,7 @@ import {
   type RemoveMemberInput,
   type SetMemberInput,
   type UpdateListInput,
+  type UserRef,
 } from "@pantry/shared";
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, sql } from "drizzle-orm";
@@ -43,10 +45,16 @@ const openItemCount = sql<number>`(
     AND ${listItems.checkedAt} IS NULL
 )`;
 
+const creatorName = sql<string | null>`(
+  SELECT ${users.displayName} FROM ${users}
+  WHERE ${users.id} = ${lists.createdBy}
+)`;
+
 const listSelection = {
   id: lists.id,
   name: lists.name,
   createdBy: lists.createdBy,
+  creatorName,
   permissions: listMembers.permissions,
   memberCount,
   openItemCount,
@@ -350,6 +358,29 @@ const dropMember = async (
   // Publishing alone would not be enough: their socket is still in the room,
   // and would keep receiving items for a list they can no longer read.
   deps.events.revoke(listId, userId);
+};
+
+/**
+ * The active account behind an exact email, so a manager can add it.
+ *
+ * Unactivated and suspended accounts answer like missing ones: adding someone
+ * who cannot sign in grants nothing, and telling them apart would leak state.
+ */
+export const findMemberCandidate = async (
+  deps: ListDeps,
+  input: FindMemberInput,
+): Promise<UserRef | null> => {
+  const [row] = await deps.db
+    .select({
+      id: users.id,
+      email: users.email,
+      displayName: users.displayName,
+    })
+    .from(users)
+    .where(and(eq(users.email, input.email), eq(users.status, "active")))
+    .limit(1);
+
+  return row ?? null;
 };
 
 /** Serializes concurrent membership changes on the same list. */

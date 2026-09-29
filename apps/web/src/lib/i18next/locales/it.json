@@ -8,7 +8,10 @@
     "auth": {
       "invalidCredentials": "Credenziali non valide"
     },
-    "unknown": "Errore sconosciuto"
+    "unknown": "Errore sconosciuto",
+    "forbidden": "Non hai i permessi per questa operazione.",
+    "notAllowed": "Operazione non consentita.",
+    "notFound": "Non esiste più."
   },
   "feature": {
     "sessionLoader": {
@@ -255,6 +258,78 @@
       "error": "Non è stato possibile cambiarle. Riprova."
     },
     "lists": {
+      "index": {
+        "title": "Liste",
+        "emptyTitle": "Nessuna lista",
+        "empty": "Crea la tua prima lista, oppure chiedi a qualcuno di condividerne una con te.",
+        "createdBy": "Creata da {{name}}",
+        "createdByYou": "Creata da te",
+        "createdByUnknown": "Creatore non più presente",
+        "members_one": "{{count}} membro",
+        "members_other": "{{count}} membri",
+        "loadFailedTitle": "Liste non disponibili",
+        "loadFailed": "Non è stato possibile caricare le liste. Riprova più tardi."
+      },
+      "action": {
+        "create": "Nuova lista",
+        "edit": "Modifica",
+        "members": "Membri",
+        "manageMembers": "Gestisci permessi"
+      },
+      "form": {
+        "createTitle": "Nuova lista",
+        "createDescription": "Dai un nome alla lista. Potrai condividerla subito dopo.",
+        "editTitle": "Modifica lista",
+        "editDescription": "Cambia il nome della lista: lo vedranno tutti i membri.",
+        "name": "Nome",
+        "create": "Crea",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "notFoundTitle": "Lista non trovata",
+        "notFound": "La lista non esiste o non ne fai più parte.",
+        "forbiddenTitle": "Accesso negato",
+        "forbidden": "Non hai i permessi per modificare questa lista."
+      },
+      "members": {
+        "title": "Membri di {{name}}",
+        "manageDescription": "Aggiungi persone alla lista e decidi cosa possono fare.",
+        "readDescription": "Le persone con cui è condivisa questa lista.",
+        "offline": "Per cambiare i membri serve la rete.",
+        "addTitle": "Aggiungi un membro",
+        "addDescription": "Inserisci l'email esatta del suo account Pantry.",
+        "full": "La lista ha già il numero massimo di membri ({{max}}).",
+        "email": "Email",
+        "role": "Ruolo",
+        "roleOf": "Ruolo di {{displayName}}",
+        "add": "Aggiungi",
+        "addFailed": "Aggiunta non riuscita",
+        "added": "{{displayName}} è stato aggiunto alla lista.",
+        "userNotFound": "Nessun account attivo con questa email.",
+        "alreadyMember": "Questa persona fa già parte della lista: cambiale il ruolo dall'elenco.",
+        "tooManyLookups": "Troppe ricerche in poco tempo. Riprova tra un minuto.",
+        "you": "Tu",
+        "creator": "Proprietario",
+        "remove": "Rimuovi",
+        "removeTitle": "Rimuovere {{displayName}} da {{name}}?",
+        "removeDescription": "Non vedrà più la lista finché qualcuno non lo aggiunge di nuovo.",
+        "removed": "{{displayName}} è stato rimosso dalla lista.",
+        "leave": "Esci dalla lista",
+        "leaveTitle": "Uscire da {{name}}?",
+        "leaveDescription": "Non vedrai più la lista finché un gestore non ti aggiunge di nuovo.",
+        "left": "Sei uscito da {{name}}.",
+        "creatorCannotLeave": "Hai creato tu questa lista, quindi non puoi uscirne."
+      },
+      "role": {
+        "viewer": "Lettore",
+        "shopper": "Acquirente",
+        "editor": "Editor",
+        "manager": "Gestore",
+        "custom": "Personalizzato",
+        "viewerDescription": "Lettore: vede la lista, senza modificarla.",
+        "shopperDescription": "Acquirente: vede la lista e spunta i prodotti comprati.",
+        "editorDescription": "Editor: aggiunge, modifica e spunta i prodotti.",
+        "managerDescription": "Gestore: come l'editor, e in più gestisce i membri."
+      },
       "item": {
         "overwritten": "Qualcuno ha modificato questo prodotto mentre eri offline: ho tenuto la sua versione.",
         "queued": "In coda"

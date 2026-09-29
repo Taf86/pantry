@@ -8,7 +8,10 @@
     "auth": {
       "invalidCredentials": "Invalid credentials"
     },
-    "unknown": "Unknown error"
+    "unknown": "Unknown error",
+    "forbidden": "You are not allowed to do this.",
+    "notAllowed": "Operation not allowed.",
+    "notFound": "It no longer exists."
   },
   "feature": {
     "dataTable": {
@@ -255,6 +258,78 @@
       "error": "Could not be changed. Try again."
     },
     "lists": {
+      "index": {
+        "title": "Lists",
+        "emptyTitle": "No lists",
+        "empty": "Create your first list, or ask someone to share one with you.",
+        "createdBy": "Created by {{name}}",
+        "createdByYou": "Created by you",
+        "createdByUnknown": "Creator no longer around",
+        "members_one": "{{count}} member",
+        "members_other": "{{count}} members",
+        "loadFailedTitle": "Lists unavailable",
+        "loadFailed": "The lists could not be loaded. Try again later."
+      },
+      "action": {
+        "create": "New list",
+        "edit": "Edit",
+        "members": "Members",
+        "manageMembers": "Manage permissions"
+      },
+      "form": {
+        "createTitle": "New list",
+        "createDescription": "Give the list a name. You can share it right after.",
+        "editTitle": "Edit list",
+        "editDescription": "Change the list's name: every member will see it.",
+        "name": "Name",
+        "create": "Create",
+        "save": "Save",
+        "cancel": "Cancel",
+        "notFoundTitle": "List not found",
+        "notFound": "The list does not exist or you are no longer on it.",
+        "forbiddenTitle": "Access denied",
+        "forbidden": "You are not allowed to edit this list."
+      },
+      "members": {
+        "title": "Members of {{name}}",
+        "manageDescription": "Add people to the list and decide what they can do.",
+        "readDescription": "The people this list is shared with.",
+        "offline": "Changing members needs a network connection.",
+        "addTitle": "Add a member",
+        "addDescription": "Enter the exact email of their Pantry account.",
+        "full": "The list already has the maximum number of members ({{max}}).",
+        "email": "Email",
+        "role": "Role",
+        "roleOf": "Role of {{displayName}}",
+        "add": "Add",
+        "addFailed": "Could not add",
+        "added": "{{displayName}} was added to the list.",
+        "userNotFound": "No active account has this email.",
+        "alreadyMember": "This person is already on the list: change their role from the list below.",
+        "tooManyLookups": "Too many lookups in a short time. Try again in a minute.",
+        "you": "You",
+        "creator": "Owner",
+        "remove": "Remove",
+        "removeTitle": "Remove {{displayName}} from {{name}}?",
+        "removeDescription": "They will no longer see the list until someone adds them again.",
+        "removed": "{{displayName}} was removed from the list.",
+        "leave": "Leave list",
+        "leaveTitle": "Leave {{name}}?",
+        "leaveDescription": "You will no longer see the list until a manager adds you again.",
+        "left": "You left {{name}}.",
+        "creatorCannotLeave": "You created this list, so you cannot leave it."
+      },
+      "role": {
+        "viewer": "Viewer",
+        "shopper": "Shopper",
+        "editor": "Editor",
+        "manager": "Manager",
+        "custom": "Custom",
+        "viewerDescription": "Viewer: sees the list without changing it.",
+        "shopperDescription": "Shopper: sees the list and ticks off what was bought.",
+        "editorDescription": "Editor: adds, edits and ticks off products.",
+        "managerDescription": "Manager: like an editor, and also manages the members."
+      },
       "item": {
         "overwritten": "Someone changed this product while you were offline: their version was kept.",
         "queued": "Queued"

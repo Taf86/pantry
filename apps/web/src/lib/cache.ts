@@ -1,5 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { ListItem, ShoppingSession } from "@pantry/shared";
+import type {
+  ListDetail,
+  ListItem,
+  ListSummary,
+  ShoppingSession,
+} from "@pantry/shared";
 
 import { keys } from "./keys";
 
@@ -72,6 +77,52 @@ export const findListItem = (
   client
     .getQueryData<ListItem[]>(keys.listItems(listId))
     ?.find((item) => item.id === itemId);
+
+/**
+ * Writes a summary into the index.
+ *
+ * Appended when new: the server orders the index by id, and a UUID v7 minted
+ * just now sorts last, so the refetch will not move the row.
+ */
+export const upsertListSummary = (
+  client: QueryClient,
+  summary: ListSummary,
+): void => {
+  client.setQueryData<ListSummary[]>(keys.lists(), (current) =>
+    upsertById(current, summary),
+  );
+};
+
+export const removeListSummary = (
+  client: QueryClient,
+  listId: string,
+): void => {
+  client.setQueryData<ListSummary[]>(keys.lists(), (current) =>
+    removeById(current, listId),
+  );
+};
+
+export const findListSummary = (
+  client: QueryClient,
+  listId: string,
+): ListSummary | undefined =>
+  client
+    .getQueryData<ListSummary[]>(keys.lists())
+    ?.find((list) => list.id === listId);
+
+/** Renames a list everywhere this client shows it: the index and the detail. */
+export const renameList = (
+  client: QueryClient,
+  listId: string,
+  name: string,
+): void => {
+  const previous = findListSummary(client, listId);
+  if (previous) upsertListSummary(client, { ...previous, name });
+  client.setQueryData<ListDetail>(
+    keys.list(listId),
+    (current) => current && { ...current, name },
+  );
+};
 
 /** Who holds the list, as far as this client knows. `null` means nobody. */
 export const setListClaim = (

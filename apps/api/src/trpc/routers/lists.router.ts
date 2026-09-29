@@ -2,6 +2,7 @@ import {
   Permission,
   createListInputSchema,
   deleteListInputSchema,
+  findMemberInputSchema,
   leaveListInputSchema,
   removeMemberInputSchema,
   setMemberInputSchema,
@@ -11,6 +12,7 @@ import {
 import {
   createList,
   deleteList,
+  findMemberCandidate,
   getList,
   leaveList,
   listLists,
@@ -19,7 +21,7 @@ import {
   updateList,
 } from "../../services/lists/lists.service.js";
 import { listProcedure } from "../procedures.js";
-import { authedProcedure, router } from "../trpc.js";
+import { authedProcedure, rateLimited, router } from "../trpc.js";
 
 export const listsRouter = router({
   list: authedProcedure.query(({ ctx }) => listLists(ctx, ctx.user.id)),
@@ -41,6 +43,12 @@ export const listsRouter = router({
     .mutation(({ ctx, input }) => deleteList(ctx, ctx.user.id, input)),
 
   members: router({
+    // Rate limited because it answers "does this email have an account?".
+    find: listProcedure(Permission.Manage)
+      .use(rateLimited((ctx) => ctx.limits.procedure))
+      .input(findMemberInputSchema)
+      .query(({ ctx, input }) => findMemberCandidate(ctx, input)),
+
     set: listProcedure(Permission.Manage)
       .input(setMemberInputSchema)
       .mutation(({ ctx, input }) => setMember(ctx, ctx.user.id, input)),

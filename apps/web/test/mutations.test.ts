@@ -1,5 +1,6 @@
 import { QueryClient, onlineManager } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
+import { Role } from "@pantry/shared";
 import type * as TrpcModule from "@/lib/trpc";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -311,6 +312,83 @@ describe("the offline mutation layer", () => {
       ).rejects.toThrow();
 
       expect(client.getQueryData(keys.listItems(LIST))).toEqual([original]);
+    });
+
+    it("shows a list created offline in the index, owned by whoever made it", async () => {
+      client.setQueryData(keys.me(), {
+        id: "anna",
+        email: "anna@example.com",
+        displayName: "Anna",
+        role: "user",
+        status: "active",
+      });
+      onlineManager.setOnline(false);
+
+      const { mutation } = run(MUTATION.listCreate, {
+        mutationId: crypto.randomUUID(),
+        id: LIST,
+        name: "Spesa",
+      });
+      await vi.waitFor(() => {
+        expect(mutation.state.isPaused).toBe(true);
+      });
+
+      expect(client.getQueryData(keys.lists())).toEqual([
+        expect.objectContaining({
+          id: LIST,
+          name: "Spesa",
+          createdBy: "anna",
+          creatorName: "Anna",
+          permissions: Role.Owner,
+        }),
+      ]);
+    });
+
+    it("takes a refused list back out of the index", async () => {
+      failNext = refusal("BAD_REQUEST");
+
+      await expect(
+        run(MUTATION.listCreate, {
+          mutationId: crypto.randomUUID(),
+          id: LIST,
+          name: "Spesa",
+        }).done,
+      ).rejects.toThrow();
+
+      expect(client.getQueryData(keys.lists())).toEqual([]);
+    });
+
+    it("puts the old name back when a rename is refused", async () => {
+      const summary = {
+        id: LIST,
+        name: "Spesa",
+        createdBy: "anna",
+        creatorName: "Anna",
+        permissions: Role.Owner,
+        memberCount: 1,
+        openItemCount: 0,
+      };
+      client.setQueryData(keys.lists(), [summary]);
+      client.setQueryData(keys.list(LIST), { ...summary, members: [] });
+      failNext = refusal();
+
+      const { done } = run(MUTATION.listUpdate, {
+        mutationId: crypto.randomUUID(),
+        listId: LIST,
+        name: "Casa",
+      });
+      await vi.waitFor(() => {
+        expect(client.getQueryData(keys.lists())).toEqual([
+          { ...summary, name: "Casa" },
+        ]);
+      });
+      await expect(done).rejects.toThrow();
+
+      expect(client.getQueryData(keys.lists())).toEqual([summary]);
+      expect(client.getQueryData(keys.list(LIST))).toEqual({
+        ...summary,
+        members: [],
+      });
     });
   });
 });

@@ -6,6 +6,8 @@ import InvitePage from "./features/auth/invite-page";
 import RequireAuth from "./components/guards/require-auth/require-auth";
 import MainLayout from "./components/layout/main-layout";
 import ListsPage from "./features/lists/lists-page";
+import ListFormPage from "./features/lists/list-form-page";
+import ListMembersPage from "./features/lists/list-members-page";
 import RequireAdmin from "./components/guards/require-admin";
 import UsersPage from "./features/admin/users/users-page";
 import UserPage from "./features/admin/user-page";
@@ -52,6 +54,9 @@ const router = createBrowserRouter([
             children: [
               { index: true, loader: () => replace("/lists") },
               { path: "lists", element: <ListsPage /> },
+              { path: "lists/new", element: <ListFormPage /> },
+              { path: "lists/:listId/edit", element: <ListFormPage /> },
+              { path: "lists/:listId/members", element: <ListMembersPage /> },
               { path: "shopping", element: <ShoppingPage /> },
               { path: "pantries", element: <PantriesPage /> },
               {

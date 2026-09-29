@@ -9,6 +9,7 @@ import { lists } from "../../src/db/schema/lists.js";
 import {
   createList,
   deleteList,
+  findMemberCandidate,
   getList,
   leaveList,
   listLists,
@@ -151,6 +152,47 @@ describe("lists", () => {
       await newList();
 
       expect(await listLists(deps(), mate)).toEqual([]);
+    });
+
+    it("names the creator to every member, not only to the creator", async () => {
+      await harness.db
+        .update(users)
+        .set({ displayName: "Anna" })
+        .where(eq(users.id, owner));
+      const list = await newList();
+      await setMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+        permissions: Role.Viewer,
+      });
+
+      const [seen] = await listLists(deps(), mate);
+      expect(seen?.creatorName).toBe("Anna");
+    });
+  });
+
+  describe("finding a member to add", () => {
+    it("finds an active account by its exact email", async () => {
+      const list = await newList();
+      const email = "mate@example.com";
+      await harness.db.update(users).set({ email }).where(eq(users.id, mate));
+
+      const found = await findMemberCandidate(deps(), {
+        listId: list.id,
+        email,
+      });
+      expect(found?.id).toBe(mate);
+    });
+
+    it("answers a suspended account like a missing one", async () => {
+      const list = await newList();
+      const email = "gone@example.com";
+      await makeUser(harness, { email, status: "suspended" });
+
+      expect(
+        await findMemberCandidate(deps(), { listId: list.id, email }),
+      ).toBeNull();
     });
   });
 

@@ -8,7 +8,9 @@ import type {
   DeleteListInput,
   ItemWriteResult,
   LeaveListInput,
+  ListDetail,
   ListItem,
+  ListMember,
   ListSummary,
   RemoveMemberInput,
   SetMemberInput,
@@ -23,18 +25,23 @@ import type {
   HeartbeatInput,
   ReleaseSessionInput,
 } from "@pantry/shared";
+import { Role } from "@pantry/shared";
 import i18n from "i18next";
 
 import { toast } from "@/components/ui/toast";
 import {
   findListItem,
+  findListSummary,
   removeListItem,
+  removeListSummary,
+  renameList,
   setListClaim,
   upsertListItem,
+  upsertListSummary,
 } from "./cache";
 import { recordServerTime } from "./clock";
 import { keys } from "./keys";
-import { isRetriable, trpc } from "./trpc";
+import { isApiError, isRetriable, trpc } from "./trpc";
 
 /**
  * Mutation keys are a durable contract.
@@ -112,13 +119,22 @@ const requireOnline = (): void => {
   if (!onlineManager.isOnline()) throw new OfflineError();
 };
 
+const describeError = (error: unknown): string => {
+  if (isOfflineError(error)) return i18n.t("feature.sync.needsNetwork");
+  switch (isApiError(error) ? error.data?.code : undefined) {
+    case "FORBIDDEN":
+      return i18n.t("error.forbidden");
+    case "BAD_REQUEST":
+      return i18n.t("error.notAllowed");
+    case "NOT_FOUND":
+      return i18n.t("error.notFound");
+    default:
+      return i18n.t("error.unknown");
+  }
+};
+
 const report = (error: unknown): void => {
-  toast.add({
-    type: "error",
-    description: isOfflineError(error)
-      ? i18n.t("feature.sync.needsNetwork")
-      : i18n.t("error.unknown"),
-  });
+  toast.add({ type: "error", description: describeError(error) });
 };
 
 /** Retrying a FORBIDDEN never changes its mind, and the queue stops draining. */
@@ -159,26 +175,51 @@ export const registerMutationDefaults = (client: QueryClient): void => {
 
   // ------------------------------------------------------------------ lists
 
+  // Creating and renaming are queueable, so they show up at once: a list
+  // created in a dead spot would otherwise exist nowhere on screen until the
+  // queue drained, and the user would create it a second time.
   client.setMutationDefaults([MUTATION.listCreate], {
     mutationFn: (input: CreateListInput) => trpc.lists.create.mutate(input),
-    onSuccess: (created: ListSummary) => {
-      client.setQueryData<ListSummary[]>(keys.lists(), (current) => [
-        created,
-        ...(current ?? []).filter((list) => list.id !== created.id),
-      ]);
+    onMutate: (input: CreateListInput) => {
+      const me = client.getQueryData<User | null>(keys.me()) ?? null;
+      upsertListSummary(client, {
+        id: input.id,
+        name: input.name,
+        createdBy: me?.id ?? null,
+        creatorName: me?.displayName ?? null,
+        permissions: Role.Owner,
+        memberCount: 1,
+        openItemCount: 0,
+      });
     },
-    onError: report,
+    onSuccess: (created: ListSummary) => upsertListSummary(client, created),
+    onError: (error: unknown, input: CreateListInput) => {
+      removeListSummary(client, input.id);
+      report(error);
+    },
     retry,
     retryDelay,
   });
 
   client.setMutationDefaults([MUTATION.listUpdate], {
     mutationFn: (input: UpdateListInput) => trpc.lists.update.mutate(input),
+    onMutate: (input: UpdateListInput) => {
+      const previous = findListSummary(client, input.listId)?.name;
+      renameList(client, input.listId, input.name);
+      return { previous };
+    },
     onSuccess: (_data, input: UpdateListInput) => {
       invalidateIndex();
-      void client.invalidateQueries({ queryKey: keys.list(input.listId) });
+      void client.invalidateQueries({
+        queryKey: keys.list(input.listId),
+        exact: true,
+      });
     },
-    onError: report,
+    onError: (error: unknown, input: UpdateListInput, context: unknown) => {
+      const previous = (context as { previous?: string } | undefined)?.previous;
+      if (previous !== undefined) renameList(client, input.listId, previous);
+      report(error);
+    },
     retry,
     retryDelay,
   });
@@ -200,13 +241,26 @@ export const registerMutationDefaults = (client: QueryClient): void => {
   // online-only: `always` never pauses, it just fails and says so.
   const onlineOnly = { networkMode: "always" as const, retry: false };
 
+  /** The server answers with the whole membership, so there is no refetch. */
+  const adoptMembers = (listId: string, members: ListMember[]): void => {
+    client.setQueryData<ListDetail>(
+      keys.list(listId),
+      (current) =>
+        current && { ...current, members, memberCount: members.length },
+    );
+    const summary = findListSummary(client, listId);
+    if (summary) {
+      upsertListSummary(client, { ...summary, memberCount: members.length });
+    }
+  };
+
   client.setMutationDefaults([MUTATION.listMemberSet], {
     mutationFn: (input: SetMemberInput) => {
       requireOnline();
       return trpc.lists.members.set.mutate(input);
     },
-    onSuccess: (_data, input: SetMemberInput) =>
-      void client.invalidateQueries({ queryKey: keys.list(input.listId) }),
+    onSuccess: (members: ListMember[], input: SetMemberInput) =>
+      adoptMembers(input.listId, members),
     onError: report,
     ...onlineOnly,
   });
@@ -216,8 +270,8 @@ export const registerMutationDefaults = (client: QueryClient): void => {
       requireOnline();
       return trpc.lists.members.remove.mutate(input);
     },
-    onSuccess: (_data, input: RemoveMemberInput) =>
-      void client.invalidateQueries({ queryKey: keys.list(input.listId) }),
+    onSuccess: (members: ListMember[], input: RemoveMemberInput) =>
+      adoptMembers(input.listId, members),
     onError: report,
     ...onlineOnly,
   });
@@ -228,9 +282,7 @@ export const registerMutationDefaults = (client: QueryClient): void => {
       return trpc.lists.members.leave.mutate(input);
     },
     onSuccess: (_data, input: LeaveListInput) => {
-      client.setQueryData<ListSummary[]>(keys.lists(), (current) =>
-        (current ?? []).filter((list) => list.id !== input.listId),
-      );
+      removeListSummary(client, input.listId);
       client.removeQueries({ queryKey: keys.list(input.listId) });
     },
     onError: report,

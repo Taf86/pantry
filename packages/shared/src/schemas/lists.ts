@@ -2,6 +2,7 @@ import * as z from "zod";
 
 import { Role } from "../permissions.js";
 import {
+  emailSchema,
   entityIdSchema,
   isoDateTimeSchema,
   mutationEnvelope,
@@ -26,6 +27,8 @@ export type List = z.infer<typeof listSchema>;
 
 /** A list as it appears in the index, with the caller's own standing. */
 export const listSummarySchema = listSchema.extend({
+  /** Display name of `createdBy`; null once that account is gone. */
+  creatorName: z.string().nullable(),
   permissions: permissionsSchema,
   memberCount: z.number().int().nonnegative(),
   openItemCount: z.number().int().nonnegative(),
@@ -81,3 +84,13 @@ export const leaveListInputSchema = mutationEnvelope.extend({
   listId: entityIdSchema,
 });
 export type LeaveListInput = z.infer<typeof leaveListInputSchema>;
+
+/**
+ * Exact match on the address, never a prefix search: a manager learns who an
+ * email belongs to only if they already know the email.
+ */
+export const findMemberInputSchema = z.object({
+  listId: entityIdSchema,
+  email: emailSchema,
+});
+export type FindMemberInput = z.infer<typeof findMemberInputSchema>;
