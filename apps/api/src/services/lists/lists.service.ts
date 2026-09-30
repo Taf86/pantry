@@ -87,7 +87,7 @@ export const listLists = async (
     .from(lists)
     .innerJoin(listMembers, asMember(userId))
     .where(holds(Permission.Read))
-    .orderBy(asc(lists.id));
+    .orderBy(desc(listMembers.permissions), asc(lists.id));
 
   return rows.map(serializeDates);
 };
