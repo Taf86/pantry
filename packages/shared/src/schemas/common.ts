@@ -1,4 +1,4 @@
-import z from "zod";
+import * as z from "zod";
 import {
   DEFAULT_PAGE_SIZE,
   MAX_CONTACT_LENGTH,
@@ -6,6 +6,7 @@ import {
   MAX_PAGE_SIZE,
   MIN_PASSWORD_LENGTH,
 } from "../constants.js";
+import { ALL_PERMISSIONS, can, Permission } from "../permissions.js";
 
 export const nameSchema = z.string().trim().min(1).max(MAX_NAME_LENGTH);
 
@@ -38,3 +39,21 @@ export type Page<TRow> = {
   rows: TRow[];
   rowCount: number;
 };
+
+export const entityIdSchema = z.uuid();
+export const userIdSchema = z.string().min(1).max(64);
+export const permissionsSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(ALL_PERMISSIONS)
+  .refine((mask) => (mask & ~ALL_PERMISSIONS) === 0, {
+    error: "Unknown permission bit",
+  });
+
+export const grantablePermissionsSchema = permissionsSchema.refine(
+  (mask) => can(mask, Permission.Read),
+  { error: "Permissions must include Read" },
+);
+
+export const mutationSchema = z.object({ mutationId: z.uuid() });

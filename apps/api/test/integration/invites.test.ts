@@ -17,7 +17,7 @@ import {
 import {
   acceptInvite,
   deleteInvite,
-  listInvites,
+  getInvites,
   previewInvite,
   requireInvite,
   sweepStaleInvites,
@@ -221,7 +221,7 @@ describe("onboarding without email", () => {
   it("shows in the backoffice who still has an invite open", async () => {
     const { user, invite } = await admin();
 
-    const open = await listInvites({ db: harness.db }, PAGE);
+    const open = await getInvites({ db: harness.db }, PAGE);
     expect(open.rowCount).toBe(1);
     expect(open.rows[0]?.user.email).toBe("admin@example.com");
     expect(open.rows[0]?.createdBy.id).toBe(user.id);
@@ -232,7 +232,7 @@ describe("onboarding without email", () => {
       { token: invite.token, password: "password-long-1" },
     );
 
-    const after = await listInvites({ db: harness.db }, PAGE);
+    const after = await getInvites({ db: harness.db }, PAGE);
     expect(after.rows[0]?.usedAt).not.toBeNull();
   });
 
@@ -242,7 +242,7 @@ describe("onboarding without email", () => {
 
     await deleteInvite({ db: harness.db }, row?.id ?? "");
 
-    expect((await listInvites({ db: harness.db }, PAGE)).rowCount).toBe(0);
+    expect((await getInvites({ db: harness.db }, PAGE)).rowCount).toBe(0);
     await expect(
       requireInvite({ db: harness.db }, row?.id ?? ""),
     ).rejects.toThrow(TRPCError);
@@ -275,7 +275,7 @@ describe("onboarding without email", () => {
 
     expect(await sweepStaleInvites(harness.db)).toBe(2);
 
-    const left = await listInvites({ db: harness.db }, PAGE);
+    const left = await getInvites({ db: harness.db }, PAGE);
     expect(left.rowCount).toBe(1);
     expect(left.rows[0]?.user.id).toBe(fresh.id);
   });
@@ -305,7 +305,7 @@ describe("onboarding without email", () => {
 
     expect((await statusOf(user.id))?.status).toBe("suspended");
 
-    const left = await listInvites(deps, PAGE);
+    const left = await getInvites(deps, PAGE);
     expect(left.rows[0]?.usedAt).toBeNull();
   });
 

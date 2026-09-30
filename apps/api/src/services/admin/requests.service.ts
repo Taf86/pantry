@@ -95,15 +95,7 @@ export const createRequest = async (
   return { id: existing.id };
 };
 
-const notifyQueued = (deps: RequestDeps): void => {
-  try {
-    deps.notifier?.requestQueued();
-  } catch (error: unknown) {
-    deps.logger?.error({ error }, "Admin notification could not be started.");
-  }
-};
-
-export const listRequests = async (
+export const getRequests = async (
   deps: RequestDeps,
   input: ListRequestsInput,
 ): Promise<ListRequestsResult> => {
@@ -221,6 +213,30 @@ export const sweepStalePendingRequests = async (
   return expired.length;
 };
 
+export const countOpenRequests = async (
+  deps: RequestDeps,
+  requesterHash?: string,
+): Promise<{ total: number; mine: number }> => {
+  const [row] = await deps.db
+    .select({
+      total: count(),
+      mine: sql<number>`count(*) filter (
+        where ${requests.requesterHash} is not distinct from ${requesterHash ?? null}
+      )`.mapWith(Number),
+    })
+    .from(requests)
+    .where(eq(requests.status, RequestStatus.pending));
+
+  return { total: row?.total ?? 0, mine: row?.mine ?? 0 };
+};
+
+const notifyQueued = (deps: RequestDeps): void => {
+  try {
+    deps.notifier?.requestQueued();
+  } catch (error: unknown) {
+    deps.logger?.error({ error }, "Admin notification could not be started.");
+  }
+};
 interface RequestDeps {
   db: Database;
   requesterHash?: string;
@@ -367,23 +383,6 @@ const countRequests = async (deps: RequestDeps, where: SQL | undefined) => {
     .from(requests)
     .where(where);
   return row?.value ?? 0;
-};
-
-export const countOpenRequests = async (
-  deps: RequestDeps,
-  requesterHash?: string,
-): Promise<{ total: number; mine: number }> => {
-  const [row] = await deps.db
-    .select({
-      total: count(),
-      mine: sql<number>`count(*) filter (
-        where ${requests.requesterHash} is not distinct from ${requesterHash ?? null}
-      )`.mapWith(Number),
-    })
-    .from(requests)
-    .where(eq(requests.status, RequestStatus.pending));
-
-  return { total: row?.total ?? 0, mine: row?.mine ?? 0 };
 };
 
 const openIndexPredicate = sql`${requests.status} = ${sql.raw(

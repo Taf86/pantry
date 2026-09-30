@@ -27,7 +27,7 @@ import { previewInvite } from "../../src/services/admin/invites.service.js";
 import {
   approveRequest,
   createRequest,
-  listRequests,
+  getRequests,
   rejectRequest,
   requireRequest,
   sweepDecidedRequests,
@@ -95,7 +95,7 @@ describe("requests", () => {
 
     expect(again.id).toBe(first.id);
     expect(other.id).toBe(first.id);
-    expect((await listRequests(deps(), PAGE)).rowCount).toBe(1);
+    expect((await getRequests(deps(), PAGE)).rowCount).toBe(1);
   });
 
   it("queues again once the previous one has been decided", async () => {
@@ -105,7 +105,7 @@ describe("requests", () => {
     const second = await signup();
 
     expect(second.id).not.toBe(id);
-    expect((await listRequests(deps(), PAGE)).rowCount).toBe(2);
+    expect((await getRequests(deps(), PAGE)).rowCount).toBe(2);
   });
 
   it("stops accepting when the queue is full", async () => {
@@ -247,21 +247,21 @@ describe("requests", () => {
     await reset("forgetful@example.com");
     await rejectRequest(deps(), admin, id);
 
-    const pending = await listRequests(deps(), {
+    const pending = await getRequests(deps(), {
       ...PAGE,
       filters: { status: ["pending"] },
     });
     expect(pending.rowCount).toBe(1);
     expect(pending.rows[0]?.type).toBe("reset_password");
 
-    const signups = await listRequests(deps(), {
+    const signups = await getRequests(deps(), {
       ...PAGE,
       filters: { type: ["signup"] },
     });
     expect(signups.rowCount).toBe(1);
     expect(signups.rows[0]?.status).toBe("rejected");
 
-    const byEmail = await listRequests(deps(), {
+    const byEmail = await getRequests(deps(), {
       ...PAGE,
       filters: { email: "forgetful" },
     });
@@ -286,7 +286,7 @@ describe("requests", () => {
 
     expect(await sweepDecidedRequests(harness.db)).toBe(1);
 
-    const left = await listRequests(deps(), PAGE);
+    const left = await getRequests(deps(), PAGE);
     expect(left.rowCount).toBe(1);
     expect(left.rows[0]?.status).toBe("pending");
   });

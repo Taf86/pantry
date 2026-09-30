@@ -118,6 +118,13 @@ export const MAX_CONTACT_LENGTH = 200;
 /** Minimum length of the password chosen during activation. */
 export const MIN_PASSWORD_LENGTH = 10;
 
-/** Prefix of the Socket.IO rooms. */
+/** The path the realtime transport is served on. */
+export const REALTIME_PATH = "/ws";
 export const listRoom = (listId: string): string => `list:${listId}`;
+export const userRoom = (userId: string): string => `user:${userId}`;
+export const sessionRoom = (sessionId: string): string =>
+  `session:${sessionId}`;
 export const pantryRoom = (pantryId: string): string => `pantry:${pantryId}`;
+
+export const MAX_LISTS_PER_USER = 50;
+export const MAX_LIST_MEMBERS = 20;

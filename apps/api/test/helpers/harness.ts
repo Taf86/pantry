@@ -14,6 +14,10 @@ import { buildDbUrl } from "../../src/config/db.js";
 import { loadConfig, type AppConfig } from "../../src/config/env.js";
 import { createDatabase, type Database } from "../../src/db/client.js";
 import { runMigrations } from "../../src/db/migrate.js";
+import {
+  createRecordingEventBus,
+  type RecordingEventBus,
+} from "../../src/realtime/events.js";
 import * as schema from "../../src/db/schema/index.js";
 
 export interface Harness {
@@ -123,6 +127,7 @@ export const createHarness = async (): Promise<Harness> => {
 export interface ServerHarness extends Harness {
   app: Awaited<AppServer>;
   services: AppServices;
+  events: RecordingEventBus;
 }
 
 export const createServerHarness = async (
@@ -144,12 +149,14 @@ export const createServerHarness = async (
     },
   };
 
+  const events = createRecordingEventBus();
   const services: AppServices = {
     config: harness.config,
     db: harness.db,
     auth: harness.auth,
     logger: silentLogger(),
     limits,
+    events,
     notifier: { requestQueued: () => undefined, stop: () => Promise.resolve() },
   };
 
@@ -160,6 +167,7 @@ export const createServerHarness = async (
     ...harness,
     app,
     services,
+    events,
     close: async () => {
       await app.close();
       limits.stop();
@@ -168,7 +176,7 @@ export const createServerHarness = async (
   };
 };
 
-const silentLogger = () =>
+export const silentLogger = () =>
   ({
     level: "silent",
     fatal: () => undefined,

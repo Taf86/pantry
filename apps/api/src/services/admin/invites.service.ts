@@ -59,7 +59,7 @@ export const issueInviteTx = async (
   return { userId, token, expiresAt: expiresAt.toISOString() };
 };
 
-export const listInvites = async (
+export const getInvites = async (
   deps: InviteListDeps,
   input: ListInvitesInput,
 ): Promise<ListInvitesResult> => {
@@ -150,10 +150,6 @@ export const previewInvite = async (
 
   return serializeDates(row);
 };
-export interface InviteDeps {
-  db: Database;
-  auth: Auth;
-}
 
 export const acceptInvite = async (
   deps: InviteDeps,
@@ -228,12 +224,13 @@ export const acceptInvite = async (
   });
 };
 
+interface InviteDeps {
+  db: Database;
+  auth: Auth;
+}
 interface InviteListDeps {
   db: Database;
 }
-
-// The invite points at two users: the one it was addressed to and the one who
-// issued it, so the users table joins twice and the second join needs an alias.
 const creators = alias(users, "creators");
 
 const inviteSelection = {

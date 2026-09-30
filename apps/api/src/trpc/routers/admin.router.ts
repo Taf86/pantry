@@ -12,11 +12,11 @@ import {
 } from "@pantry/shared";
 import {
   deleteInvite,
-  listInvites,
+  getInvites,
 } from "../../services/admin/invites.service.js";
 import {
   approveRequest,
-  listRequests,
+  getRequests,
   rejectRequest,
   requireRequest,
 } from "../../services/admin/requests.service.js";
@@ -24,7 +24,7 @@ import {
   createUser,
   deleteUser,
   editUser,
-  listUsers,
+  getUsers,
   regenerateInvite,
   requireUser,
   setRole,
@@ -36,7 +36,7 @@ export const adminRouter = router({
   users: router({
     list: adminProcedure
       .input(listUsersInputSchema)
-      .query(({ ctx, input }) => listUsers(ctx, input)),
+      .query(({ ctx, input }) => getUsers(ctx, input)),
     get: adminProcedure
       .input(userIdInputSchema)
       .query(({ ctx, input }) => requireUser(ctx, input.userId)),
@@ -70,7 +70,7 @@ export const adminRouter = router({
   invites: router({
     list: adminProcedure
       .input(listInvitesInputSchema)
-      .query(({ ctx, input }) => listInvites(ctx, input)),
+      .query(({ ctx, input }) => getInvites(ctx, input)),
 
     delete: adminProcedure
       .input(inviteIdInputSchema)
@@ -80,7 +80,7 @@ export const adminRouter = router({
   requests: router({
     list: adminProcedure
       .input(listRequestsInputSchema)
-      .query(({ ctx, input }) => listRequests(ctx, input)),
+      .query(({ ctx, input }) => getRequests(ctx, input)),
 
     get: adminProcedure
       .input(requestIdInputSchema)

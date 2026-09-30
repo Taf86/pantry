@@ -33,8 +33,9 @@ import { issueInviteTx } from "./invites.service.js";
 import { sessions } from "../../db/schema/sessions.js";
 import { accounts } from "../../db/schema/accounts.js";
 import { invites } from "../../db/schema/invites.js";
+import type { EventBus } from "../../realtime/events.js";
 
-export const listUsers = async (
+export const getUsers = async (
   deps: AdminDeps,
   input: ListUsersInput,
 ): Promise<ListUsersResult> => {
@@ -106,8 +107,6 @@ export const editUser = async (
     });
   }
 
-  // Only the last active admin is protected: a user who is not one already
-  // cannot be the reason the system runs out of them.
   const wasActiveAdmin = target.role === "admin" && target.status === "active";
   const staysActiveAdmin = role === "admin" && status === "active";
   if (
@@ -147,6 +146,7 @@ export const editUser = async (
     }
   });
 
+  if (status !== "active") deps.events?.disconnectUser(userId);
   return requireUser(deps, userId);
 };
 
@@ -186,6 +186,7 @@ export const setStatus = async (
     }
   });
 
+  if (status !== "active") deps.events?.disconnectUser(userId);
   return requireUser(deps, userId);
 };
 
@@ -213,11 +214,6 @@ export const deleteUser = async (
       message: "At least one admin must remain active",
     });
   }
-
-  // Foreign keys already cascade, but Better Auth's own deleteUser wipes
-  // sessions and accounts explicitly; mirroring it keeps the behaviour the
-  // same if a table ever loses its cascade. Invites go both ways: the ones
-  // addressed to this user and the ones they issued to others.
   await deps.db.transaction(async (tx) => {
     await tx.delete(sessions).where(eq(sessions.userId, userId));
     await tx.delete(accounts).where(eq(accounts.userId, userId));
@@ -227,6 +223,7 @@ export const deleteUser = async (
     await tx.delete(users).where(eq(users.id, userId));
   });
 
+  deps.events?.disconnectUser(userId);
   return target;
 };
 
@@ -281,6 +278,7 @@ export const createUserTx = async (
 
 interface AdminDeps {
   db: Database;
+  events?: Pick<EventBus, "disconnectUser">;
 }
 
 const userSelection = {

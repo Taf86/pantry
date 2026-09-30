@@ -8,6 +8,8 @@ import { createLogger } from "./logger.js";
 import { createAdminNotifier } from "./services/notifications/admin-notifier.js";
 import { createAppLimits } from "./server/rate-limit.js";
 import { buildServer } from "./server/server.js";
+import { nullEventBus } from "./realtime/events.js";
+import { createRealtime } from "./realtime/io.js";
 
 const SHUTDOWN_TIMEOUT_MS = 8_000;
 
@@ -24,14 +26,18 @@ const main = async (): Promise<void> => {
     logger,
     limits,
     notifier,
-    auth: createAuth(db, config),
-    // events: nullEventBus,
+    auth: createAuth(db, config, {
+      onSessionDeleted: (sessionId) => {
+        services.events.disconnectSession(sessionId);
+      },
+    }),
+    events: nullEventBus,
   };
   const app = await buildServer(services);
   await app.ready();
 
-  // const realtime = createRealtime(app.server, services);
-  // services.events = realtime.bus;
+  const realtime = createRealtime(app.server, services);
+  services.events = realtime.bus;
 
   const stopCleanup = startCleanupJob(db, logger);
   await app.listen({ port: config.PORT, host: config.HOST });
@@ -54,7 +60,7 @@ const main = async (): Promise<void> => {
       await stopCleanup();
       await notifier.stop();
       limits.stop();
-      // await realtime.close();
+      await realtime.close();
       await app.close();
       await closeDb();
     } catch (error) {
