@@ -1,7 +1,11 @@
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { QueryClient } from "@tanstack/react-query";
-import type { PersistQueryClientOptions } from "@tanstack/react-query-persist-client";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
+import type {
+  PersistedClient,
+  PersistQueryClientOptions,
+} from "@tanstack/react-query-persist-client";
 import { del, get, set } from "idb-keyval";
+import { isQueueable, registerMutationDefaults } from "./mutations";
 import { isRetriable } from "./trpc";
 import { PERSIST_KEY } from "./pwa";
 
@@ -24,11 +28,11 @@ export const createAppQueryClient = (): QueryClient => {
     },
   });
 
-  // registerMutationDefaults(client);
+  registerMutationDefaults(client);
   return client;
 };
 
-const idbPersister = createAsyncStoragePersister({
+export const idbPersister = createAsyncStoragePersister({
   storage: {
     getItem: (key) => get<string>(key).then((value) => value ?? null),
     setItem: (key, value) => set(key, value),
@@ -41,9 +45,21 @@ const idbPersister = createAsyncStoragePersister({
 export const persistOptions: Omit<PersistQueryClientOptions, "queryClient"> = {
   persister: idbPersister,
   maxAge: WEEK_IN_MS,
-  buster: "v2",
+  buster: "v3",
   dehydrateOptions: {
-    shouldDehydrateMutation: (mutation) => mutation.state.isPaused,
+    shouldDehydrateMutation: (mutation) =>
+      mutation.state.isPaused && isQueueable(mutation.options.mutationKey),
     shouldDehydrateQuery: (query) => query.state.status === "success",
   },
+};
+
+export const flushPersistedCache = async (
+  queryClient: QueryClient,
+): Promise<void> => {
+  const snapshot: PersistedClient = {
+    buster: persistOptions.buster ?? "",
+    timestamp: Date.now(),
+    clientState: dehydrate(queryClient, persistOptions.dehydrateOptions),
+  };
+  await set(PERSIST_KEY, JSON.stringify(snapshot));
 };

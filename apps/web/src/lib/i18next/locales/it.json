@@ -8,7 +8,10 @@
     "auth": {
       "invalidCredentials": "Credenziali non valide"
     },
-    "unknown": "Errore sconosciuto"
+    "unknown": "Errore sconosciuto",
+    "forbidden": "Non hai i permessi per questa operazione.",
+    "notAllowed": "Operazione non consentita.",
+    "notFound": "Non esiste."
   },
   "feature": {
     "sessionLoader": {
@@ -253,6 +256,70 @@
       "installFirst": "Su iPhone e iPad aggiungi prima Pantry alla schermata Home.",
       "unsupported": "Questo browser non supporta le notifiche push.",
       "error": "Non è stato possibile cambiarle. Riprova."
+    },
+    "lists": {
+      "index": {
+        "title": "Liste",
+        "emptyTitle": "Nessuna lista",
+        "empty": "Crea la tua prima lista, oppure chiedi a qualcuno di condividerne una con te.",
+        "createdBy": "Creata da {{name}}",
+        "createdByYou": "Creata da te",
+        "createdByUnknown": "Creatore non più presente",
+        "members_one": "{{count}} membro",
+        "members_other": "{{count}} membri",
+        "loadFailedTitle": "Liste non disponibili",
+        "loadFailed": "Non è stato possibile caricare le liste. Riprova più tardi.",
+        "deleteTitle": "Eliminare {{name}}?",
+        "deleteDescription": "La lista, i suoi prodotti e i membri verranno eliminati per tutti. L'operazione non si può annullare.",
+        "deleted": "{{name}} è stata eliminata."
+      },
+      "action": {
+        "create": "Nuova lista",
+        "edit": "Modifica",
+        "delete": "Elimina",
+        "members": "Membri",
+        "manageMembers": "Gestisci permessi"
+      },
+      "column": {
+        "name": "Nome",
+        "role": "Ruolo",
+        "createdBy": "Creata da",
+        "members": "Membri",
+        "actions": "Azioni"
+      },
+      "role": {
+        "viewer": "Lettore",
+        "shopper": "Acquirente",
+        "editor": "Editor",
+        "manager": "Gestore",
+        "custom": "Personalizzato",
+        "viewerDescription": "Lettore: vede la lista, senza modificarla.",
+        "shopperDescription": "Acquirente: vede la lista e spunta i prodotti comprati.",
+        "editorDescription": "Editor: aggiunge, modifica e spunta i prodotti.",
+        "managerDescription": "Gestore: come l'editor, e in più gestisce i membri."
+      },
+      "form": {
+        "createTitle": "Nuova lista",
+        "createDescription": "Dai un nome alla lista. Potrai condividerla subito dopo.",
+        "editTitle": "Modifica lista",
+        "editDescription": "Cambia il nome della lista: lo vedranno tutti i membri.",
+        "name": "Nome",
+        "create": "Crea",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "notFoundTitle": "Lista non trovata",
+        "notFound": "La lista non esiste o non ne fai più parte.",
+        "forbiddenTitle": "Accesso negato",
+        "forbidden": "Non hai i permessi per modificare questa lista."
+      }
+    },
+    "sync": {
+      "online": "Online",
+      "syncing": "Sincronizzazione…",
+      "offline": "Offline",
+      "needsNetwork": "Serve la rete per questa operazione.",
+      "pending_one": "Offline · {{count}} modifica in coda",
+      "pending_other": "Offline · {{count}} modifiche in coda"
     }
   },
   "validation": {
