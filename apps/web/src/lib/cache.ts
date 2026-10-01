@@ -79,17 +79,32 @@ export const findListItem = (
     ?.find((item) => item.id === itemId);
 
 /**
+ * The service's order for the index: highest permissions first, then by id
+ * (oldest first, since a UUID v7 leads with its mint time). Ids are compared
+ * as plain strings, which matches Postgres' byte order on lowercase hex.
+ */
+export const compareListSummaries = (
+  a: ListSummary,
+  b: ListSummary,
+): number => {
+  if (a.permissions !== b.permissions) return b.permissions - a.permissions;
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? -1 : 1;
+};
+
+/**
  * Writes a summary into the index.
  *
- * Appended when new: the server orders the index by id, and a UUID v7 minted
- * just now sorts last, so the refetch will not move the row.
+ * Sorted the way the server sorts it, so the refetch does not move the row:
+ * a new list lands where its permissions and id put it, and a changed
+ * permission moves the row to where the server would now return it.
  */
 export const upsertListSummary = (
   client: QueryClient,
   summary: ListSummary,
 ): void => {
   client.setQueryData<ListSummary[]>(keys.lists(), (current) =>
-    upsertById(current, summary),
+    upsertById(current, summary).sort(compareListSummaries),
   );
 };
 

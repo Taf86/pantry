@@ -226,13 +226,23 @@ export const registerMutationDefaults = (client: QueryClient): void => {
 
   client.setMutationDefaults([MUTATION.listDelete], {
     mutationFn: (input: DeleteListInput) => trpc.lists.delete.mutate(input),
+    // Gone from the index at once, even offline; the detail query stays until
+    // the server confirms, so a rollback has nothing to refetch.
+    onMutate: (input: DeleteListInput) => {
+      const previous = findListSummary(client, input.listId);
+      removeListSummary(client, input.listId);
+      return { previous };
+    },
     onSuccess: (_data, input: DeleteListInput) => {
-      client.setQueryData<ListSummary[]>(keys.lists(), (current) =>
-        (current ?? []).filter((list) => list.id !== input.listId),
-      );
+      removeListSummary(client, input.listId);
       client.removeQueries({ queryKey: keys.list(input.listId) });
     },
-    onError: report,
+    onError: (error: unknown, _input: DeleteListInput, context: unknown) => {
+      const previous = (context as { previous?: ListSummary } | undefined)
+        ?.previous;
+      if (previous) upsertListSummary(client, previous);
+      report(error);
+    },
     retry,
     retryDelay,
   });

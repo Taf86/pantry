@@ -260,7 +260,6 @@
     "lists": {
       "index": {
         "title": "Liste",
-        "emptyTitle": "Nessuna lista",
         "empty": "Crea la tua prima lista, oppure chiedi a qualcuno di condividerne una con te.",
         "createdBy": "Creata da {{name}}",
         "createdByYou": "Creata da te",
@@ -268,13 +267,24 @@
         "members_one": "{{count}} membro",
         "members_other": "{{count}} membri",
         "loadFailedTitle": "Liste non disponibili",
-        "loadFailed": "Non è stato possibile caricare le liste. Riprova più tardi."
+        "loadFailed": "Non è stato possibile caricare le liste. Riprova più tardi.",
+        "deleteTitle": "Eliminare {{name}}?",
+        "deleteDescription": "La lista, i suoi prodotti e i membri verranno eliminati per tutti. L'operazione non si può annullare.",
+        "deleted": "{{name}} è stata eliminata."
       },
       "action": {
         "create": "Nuova lista",
         "edit": "Modifica",
+        "delete": "Elimina",
         "members": "Membri",
         "manageMembers": "Gestisci permessi"
+      },
+      "column": {
+        "name": "Nome",
+        "role": "Ruolo",
+        "createdBy": "Creata da",
+        "members": "Membri",
+        "actions": "Azioni"
       },
       "form": {
         "createTitle": "Nuova lista",
