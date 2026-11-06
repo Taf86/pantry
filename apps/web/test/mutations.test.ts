@@ -33,7 +33,6 @@ vi.mock("@/lib/trpc", async () => {
         members: {
           set: { mutate: record("lists.members.set") },
           remove: { mutate: record("lists.members.remove") },
-          leave: { mutate: record("lists.members.leave") },
         },
       },
       items: {
@@ -139,7 +138,6 @@ describe("the offline mutation layer", () => {
       MUTATION.shoppingHeartbeat,
       MUTATION.listMemberSet,
       MUTATION.listMemberRemove,
-      MUTATION.listLeave,
     ];
 
     it("never declares one of them queueable", () => {

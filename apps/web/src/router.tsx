@@ -8,6 +8,7 @@ import MainLayout from "./components/layout/main-layout";
 import ListsPage from "./features/lists/lists-page";
 import ListFormPage from "./features/lists/list-form-page";
 import ListMembersPage from "./features/lists/list-members-page";
+import ListMemberAddPage from "./features/lists/list-member-add-page";
 import RequireAdmin from "./components/guards/require-admin";
 import UsersPage from "./features/admin/users/users-page";
 import UserPage from "./features/admin/user-page";
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
               { path: "lists/new", element: <ListFormPage /> },
               { path: "lists/:listId/edit", element: <ListFormPage /> },
               { path: "lists/:listId/members", element: <ListMembersPage /> },
+              {
+                path: "lists/:listId/members/add",
+                element: <ListMemberAddPage />,
+              },
               { path: "shopping", element: <ShoppingPage /> },
               { path: "pantries", element: <PantriesPage /> },
               {

@@ -7,7 +7,6 @@ import type {
   DeleteItemInput,
   DeleteListInput,
   ItemWriteResult,
-  LeaveListInput,
   ListDetail,
   ListItem,
   ListMember,
@@ -57,7 +56,6 @@ export const MUTATION = {
   listDelete: "lists.delete",
   listMemberSet: "lists.members.set",
   listMemberRemove: "lists.members.remove",
-  listLeave: "lists.members.leave",
 
   itemAdd: "items.add",
   itemUpdate: "items.update",
@@ -280,20 +278,14 @@ export const registerMutationDefaults = (client: QueryClient): void => {
       requireOnline();
       return trpc.lists.members.remove.mutate(input);
     },
-    onSuccess: (members: ListMember[], input: RemoveMemberInput) =>
-      adoptMembers(input.listId, members),
-    onError: report,
-    ...onlineOnly,
-  });
-
-  client.setMutationDefaults([MUTATION.listLeave], {
-    mutationFn: (input: LeaveListInput) => {
-      requireOnline();
-      return trpc.lists.members.leave.mutate(input);
-    },
-    onSuccess: (_data, input: LeaveListInput) => {
-      removeListSummary(client, input.listId);
-      client.removeQueries({ queryKey: keys.list(input.listId) });
+    // Removing yourself is leaving: the list is gone from this device too.
+    onSuccess: (members: ListMember[], input: RemoveMemberInput) => {
+      if (input.userId === meId()) {
+        removeListSummary(client, input.listId);
+        client.removeQueries({ queryKey: keys.list(input.listId) });
+      } else {
+        adoptMembers(input.listId, members);
+      }
     },
     onError: report,
     ...onlineOnly,

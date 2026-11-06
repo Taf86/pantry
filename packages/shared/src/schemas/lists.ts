@@ -81,11 +81,6 @@ export const removeMemberInputSchema = mutationEnvelope.extend({
 });
 export type RemoveMemberInput = z.infer<typeof removeMemberInputSchema>;
 
-export const leaveListInputSchema = mutationEnvelope.extend({
-  listId: entityIdSchema,
-});
-export type LeaveListInput = z.infer<typeof leaveListInputSchema>;
-
 /**
  * Exact match on the address, never a prefix search: a manager learns who an
  * email belongs to only if they already know the email.

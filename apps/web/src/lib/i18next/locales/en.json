@@ -327,7 +327,7 @@
         "leaveTitle": "Leave {{name}}?",
         "leaveDescription": "You will no longer see the list until a manager adds you again.",
         "left": "You left {{name}}.",
-        "creatorCannotLeave": "You created this list, so you cannot leave it."
+        "forbidden": "Only those who manage the list can add members."
       },
       "role": {
         "viewer": "Viewer",

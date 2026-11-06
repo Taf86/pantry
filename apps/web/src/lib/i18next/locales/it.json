@@ -327,7 +327,7 @@
         "leaveTitle": "Uscire da {{name}}?",
         "leaveDescription": "Non vedrai più la lista finché un gestore non ti aggiunge di nuovo.",
         "left": "Sei uscito da {{name}}.",
-        "creatorCannotLeave": "Hai creato tu questa lista, quindi non puoi uscirne."
+        "forbidden": "Solo chi gestisce la lista può aggiungere membri."
       },
       "role": {
         "viewer": "Lettore",

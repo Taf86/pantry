@@ -2,7 +2,6 @@ import {
   createListInputSchema,
   deleteListInputSchema,
   findMemberInputSchema,
-  leaveListInputSchema,
   listIdInputSchema,
   removeMemberInputSchema,
   setMemberInputSchema,
@@ -14,7 +13,6 @@ import {
   deleteList,
   findMemberCandidate,
   getList,
-  leaveList,
   listLists,
   removeMember,
   setMember,
@@ -57,12 +55,9 @@ export const listsRouter = router({
       .input(setMemberInputSchema)
       .mutation(({ ctx, input }) => setMember(ctx, ctx.user.id, input)),
 
+    // Also how a member leaves: removing yourself needs only Read.
     remove: authedProcedure
       .input(removeMemberInputSchema)
       .mutation(({ ctx, input }) => removeMember(ctx, ctx.user.id, input)),
-
-    leave: authedProcedure
-      .input(leaveListInputSchema)
-      .mutation(({ ctx, input }) => leaveList(ctx, ctx.user.id, input)),
   }),
 });

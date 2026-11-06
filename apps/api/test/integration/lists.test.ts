@@ -11,7 +11,6 @@ import {
   deleteList,
   findMemberCandidate,
   getList,
-  leaveList,
   listLists,
   removeMember,
   setMember,
@@ -246,9 +245,50 @@ describe("lists", () => {
       });
 
       await expect(
-        leaveList(deps(), owner, { ...mutation(), listId: list.id }),
-      ).resolves.toBeUndefined();
+        removeMember(deps(), owner, {
+          ...mutation(),
+          listId: list.id,
+          userId: owner,
+        }),
+      ).resolves.toEqual([]);
       expect(await listLists(deps(), owner)).toEqual([]);
+    });
+
+    it("lets a member without Manage remove themselves", async () => {
+      const list = await newList();
+      await setMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+        permissions: Role.Viewer,
+      });
+
+      await removeMember(deps(), mate, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+      });
+
+      expect(await listLists(deps(), mate)).toEqual([]);
+      expect(await listLists(deps(), owner)).toHaveLength(1);
+    });
+
+    it("lets a manager remove the creator of the list", async () => {
+      const list = await newList();
+      await setMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+        permissions: Role.Owner,
+      });
+
+      const members = await removeMember(deps(), mate, {
+        ...mutation(),
+        listId: list.id,
+        userId: owner,
+      });
+
+      expect(members.map((m) => m.user.id)).toEqual([mate]);
     });
 
     it("updates an existing member instead of adding a second row", async () => {
@@ -312,7 +352,11 @@ describe("lists", () => {
       const list = await newList();
 
       await expect(
-        leaveList(deps(), mate, { ...mutation(), listId: list.id }),
+        removeMember(deps(), mate, {
+          ...mutation(),
+          listId: list.id,
+          userId: mate,
+        }),
       ).rejects.toThrow(/forbidden/i);
     });
 

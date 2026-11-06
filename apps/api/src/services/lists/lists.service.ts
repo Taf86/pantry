@@ -8,7 +8,6 @@ import {
   type CreateListInput,
   type DeleteListInput,
   type FindMemberInput,
-  type LeaveListInput,
   type List,
   type ListDetail,
   type ListMember,
@@ -340,31 +339,19 @@ export const setMember = async (
   return listMembersOf(deps.db, input.listId);
 };
 
+/**
+ * Takes a member off the list: a manager removing anyone, or a member removing
+ * themselves. Leaving is not managing, so Read is the bar for showing yourself
+ * out. Either way the list must keep at least one manager.
+ */
 export const removeMember = async (
   deps: ListDeps,
   actorId: string,
-  input: RemoveMemberInput,
+  { mutationId, listId, userId }: RemoveMemberInput,
 ): Promise<ListMember[]> => {
-  await dropMember(deps, actorId, input, input.userId, Permission.Manage);
-  return listMembersOf(deps.db, input.listId);
-};
+  const self = userId === actorId;
+  const required = self ? Permission.Read : Permission.Manage;
 
-export const leaveList = async (
-  deps: ListDeps,
-  actorId: string,
-  input: LeaveListInput,
-): Promise<void> => {
-  // Leaving is not managing: Read is the right bar for showing yourself out.
-  await dropMember(deps, actorId, input, actorId, Permission.Read);
-};
-
-const dropMember = async (
-  deps: ListDeps,
-  actorId: string,
-  { mutationId, listId }: { mutationId: string; listId: string },
-  userId: string,
-  required: number,
-): Promise<void> => {
   const removed = await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, mutationId, actorId))) return false;
 
@@ -382,17 +369,20 @@ const dropMember = async (
     return gone.length > 0;
   });
 
-  if (!removed) return;
+  if (removed) {
+    deps.events.publish({
+      type: "list.member.changed",
+      listId,
+      userId,
+      permissions: null,
+    });
+    // Publishing alone would not be enough: their socket is still in the room,
+    // and would keep receiving items for a list they can no longer read.
+    deps.events.revoke(listId, userId);
+  }
 
-  deps.events.publish({
-    type: "list.member.changed",
-    listId,
-    userId,
-    permissions: null,
-  });
-  // Publishing alone would not be enough: their socket is still in the room,
-  // and would keep receiving items for a list they can no longer read.
-  deps.events.revoke(listId, userId);
+  // Whoever just left can no longer read the list, its members included.
+  return self ? [] : listMembersOf(deps.db, listId);
 };
 
 /**
