@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { useLists } from "../use-lists";
+import { useLists } from "../common/use-lists";
 import useListsTable from "./use-lists-table";
 
 export default function ListsPage() {

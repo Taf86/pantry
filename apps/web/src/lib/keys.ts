@@ -7,6 +7,7 @@ import type {
 export const keys = {
   me: () => ["me"] as const,
   lists: () => ["lists"] as const,
+  listMembers: (listId: string) => ["list", "members", listId] as const,
   adminUsers: () => ["admin", "users"] as const,
   adminUsersList: (input: ListUsersInput) =>
     ["admin", "users", "list", input] as const,

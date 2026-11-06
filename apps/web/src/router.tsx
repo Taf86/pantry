@@ -18,7 +18,9 @@ import ShoppingPage from "./features/shopping/shopping-page";
 import PantriesPage from "./features/pantries/pantries-page";
 import UnknownErrorPage from "./components/errors/unknown-error-page";
 import RootLayout from "./components/layout/root-layout";
-import ListFormPage from "./features/lists/list-form-page";
+import ListPage from "./features/lists/list-page";
+import ListMembersPage from "./features/lists/list-members-page/list-members-page";
+import AddListMemberPage from "./features/lists/add-list-member-page";
 
 const router = createBrowserRouter([
   {
@@ -53,8 +55,13 @@ const router = createBrowserRouter([
             children: [
               { index: true, loader: () => replace("/lists") },
               { path: "lists", element: <ListsPage /> },
-              { path: "lists/new", element: <ListFormPage /> },
-              { path: "lists/:listId/edit", element: <ListFormPage /> },
+              { path: "lists/new", element: <ListPage /> },
+              { path: "lists/:listId/edit", element: <ListPage /> },
+              { path: "lists/:listId/members", element: <ListMembersPage /> },
+              {
+                path: "lists/:listId/members/add",
+                element: <AddListMemberPage />,
+              },
               { path: "shopping", element: <ShoppingPage /> },
               { path: "pantries", element: <PantriesPage /> },
               {

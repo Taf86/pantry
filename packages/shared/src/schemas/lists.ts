@@ -40,11 +40,18 @@ export type DeleteListInput = z.infer<typeof deleteListInputSchema>;
 
 export type ListMember = {
   listId: string;
-  listName: string;
   userId: string;
   userEmail: string;
   userDisplayName: string;
   permissions: number;
+};
+
+export type ListMembers = {
+  listId: string;
+  listName: string;
+  createdBy: string;
+  createdByDisplayName: string;
+  members: ListMember[];
 };
 
 export const listIdInputSchema = z.object({ listId: entityIdSchema });

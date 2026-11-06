@@ -26,10 +26,10 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import * as z from "zod";
-import { useLists } from "./use-lists";
+import { useLists } from "./common/use-lists";
 
 const listsPath = "/lists";
-export default function ListFormPage() {
+export default function ListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 

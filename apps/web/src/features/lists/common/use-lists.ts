@@ -8,3 +8,9 @@ export const useLists = () =>
     queryKey: keys.lists(),
     queryFn: () => trpc.lists.list.query(),
   });
+
+export const useListMembers = (listId: string) =>
+  useQuery({
+    queryKey: keys.listMembers(listId),
+    queryFn: () => trpc.lists.members.get.query({ listId }),
+  });

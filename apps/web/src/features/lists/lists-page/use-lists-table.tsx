@@ -13,7 +13,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import DeleteListAction from "./delete-list-action";
-import { roleLabelKeys } from "./role-labels";
+import { roleLabelKeys } from "../common/role-labels";
 
 const columnHelper = createDataTableColumnHelper<ListSummary>();
 

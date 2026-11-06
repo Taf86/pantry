@@ -9,7 +9,7 @@ import {
   type DeleteListInput,
   type FindMemberInput,
   type List,
-  type ListMember,
+  type ListMembers,
   type ListSummary,
   type RemoveMemberInput,
   type SetMemberInput,
@@ -148,27 +148,41 @@ export const getListMembers = async (
   deps: ListDeps,
   listId: string,
   userId: string,
-): Promise<ListMember[]> => {
-  const rows = await deps.db
+): Promise<ListMembers> => {
+  const [list] = await deps.db
     .select({
       listId: lists.id,
       listName: lists.name,
+      createdBy: lists.createdBy,
+      createdByDisplayName: users.displayName,
+    })
+    .from(lists)
+    .innerJoin(users, eq(users.id, lists.createdBy))
+    .where(eq(lists.id, listId))
+    .limit(1);
+
+  if (!list) {
+    throw new TRPCError({ code: "NOT_FOUND" });
+  }
+
+  const members = await deps.db
+    .select({
+      listId: listMembers.listId,
       userId: listMembers.userId,
       permissions: listMembers.permissions,
       userEmail: users.email,
       userDisplayName: users.displayName,
     })
-    .from(lists)
-    .innerJoin(listMembers, eq(listMembers.listId, lists.id))
+    .from(listMembers)
     .innerJoin(users, eq(users.id, listMembers.userId))
-    .where(eq(lists.id, listId))
+    .where(eq(listMembers.listId, listId))
     .orderBy(desc(listMembers.permissions), users.displayName);
 
-  const userMembership = rows.find((r) => r.userId === userId);
+  const userMembership = members.find((m) => m.userId === userId);
   if (!userMembership || !can(userMembership.permissions, Permission.Read)) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
-  return rows;
+  return { ...list, members };
 };
 
 export const findMemberCandidate = async (
@@ -200,7 +214,7 @@ export const setMember = async (
   deps: ListDeps,
   actorId: string,
   input: SetMemberInput,
-): Promise<ListMember[]> => {
+): Promise<ListMembers> => {
   await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, input.mutationId, actorId))) return;
 

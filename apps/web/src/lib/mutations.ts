@@ -1,8 +1,11 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { onlineManager, type QueryClient } from "@tanstack/react-query";
 import type {
   CreateListInput,
   DeleteListInput,
+  ListMembers,
   ListSummary,
+  RemoveMemberInput,
+  SetMemberInput,
   UpdateListInput,
   User,
 } from "@pantry/shared";
@@ -22,6 +25,8 @@ export const MUTATION = {
   listCreate: "lists.create",
   listUpdate: "lists.update",
   listDelete: "lists.delete",
+  listMemberSet: "lists.members.set",
+  listMemberRemove: "lists.members.remove",
 } as const;
 
 export type MutationName = (typeof MUTATION)[keyof typeof MUTATION];
@@ -39,14 +44,14 @@ export const isQueueable = (mutationKey: unknown): boolean =>
 
 export const listScope = (listId: string): string => `list:${listId}`;
 
-class OfflineError extends Error {
+export class OfflineError extends Error {
   constructor() {
     super("offline");
     this.name = "OfflineError";
   }
 }
 
-const isOfflineError = (error: unknown): error is OfflineError =>
+export const isOfflineError = (error: unknown): error is OfflineError =>
   error instanceof OfflineError;
 
 const describeError = (error: unknown): string => {
@@ -141,5 +146,36 @@ export const registerMutationDefaults = (client: QueryClient): void => {
     },
     retry,
     retryDelay,
+  });
+
+  const onlineOnly = { networkMode: "always" as const, retry: false };
+  const requireOnline = (): void => {
+    if (!onlineManager.isOnline()) throw new OfflineError();
+  };
+
+  const adoptMembers = (listId: string, members: ListMembers): void => {
+    client.setQueryData<ListMembers>(keys.listMembers(listId), () => members);
+  };
+
+  client.setMutationDefaults([MUTATION.listMemberSet], {
+    mutationFn: (input: SetMemberInput) => {
+      requireOnline();
+      return trpc.lists.members.set.mutate(input);
+    },
+    onSuccess: (members: ListMembers, input: SetMemberInput) =>
+      adoptMembers(input.listId, members),
+    onError: report,
+    ...onlineOnly,
+  });
+
+  client.setMutationDefaults([MUTATION.listMemberRemove], {
+    mutationFn: (input: RemoveMemberInput) => {
+      requireOnline();
+      return trpc.lists.members.remove.mutate(input);
+    },
+    onSuccess: (members: ListMembers, input: RemoveMemberInput) =>
+      adoptMembers(input.listId, members),
+    onError: report,
+    ...onlineOnly,
   });
 };
