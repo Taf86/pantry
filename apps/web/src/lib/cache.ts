@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { ListSummary } from "@pantry/shared";
+import type { ListMembers, ListSummary } from "@pantry/shared";
 
 import { keys } from "./keys";
 
@@ -60,8 +60,23 @@ export const renameList = (
 ): void => {
   const previous = findListSummary(client, listId);
   if (previous) upsertListSummary(client, { ...previous, name });
-  // client.setQueryData<ListDetail>(
-  //   keys.list(listId),
-  //   (current) => current && { ...current, name },
-  // );
+  client.setQueryData<ListMembers>(
+    keys.listMembers(listId),
+    (current) => current && { ...current, listName: name },
+  );
+};
+
+export const removeListMember = (
+  client: QueryClient,
+  listId: string,
+  userId: string,
+): void => {
+  client.setQueryData<ListMembers>(
+    keys.listMembers(listId),
+    (current) =>
+      current && {
+        ...current,
+        members: current.members.filter((m) => m.userId !== userId),
+      },
+  );
 };

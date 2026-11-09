@@ -271,7 +271,9 @@
         "loadFailed": "Non è stato possibile caricare le liste. Riprova più tardi.",
         "deleteTitle": "Eliminare {{name}}?",
         "deleteDescription": "La lista, i suoi prodotti e i membri verranno eliminati per tutti. L'operazione non si può annullare.",
-        "deleted": "{{name}} è stata eliminata."
+        "deleted": "{{name}} è stata eliminata.",
+        "deletedRemotely": "{{name}} è stata eliminata da un altro membro.",
+        "accessRevoked": "Non fai più parte di {{name}}."
       },
       "action": {
         "create": "Nuova lista",

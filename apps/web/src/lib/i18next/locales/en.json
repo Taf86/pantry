@@ -271,7 +271,9 @@
         "loadFailed": "The lists could not be loaded. Try again later.",
         "deleteTitle": "Delete {{name}}?",
         "deleteDescription": "The list, its items and its members will be deleted for everyone. This cannot be undone.",
-        "deleted": "{{name}} was deleted."
+        "deleted": "{{name}} was deleted.",
+        "deletedRemotely": "{{name}} was deleted by another member.",
+        "accessRevoked": "You are no longer on {{name}}."
       },
       "action": {
         "create": "New list",

@@ -14,6 +14,7 @@ import i18n from "i18next";
 import { toast } from "@/components/ui/toast";
 import {
   findListSummary,
+  removeListMember,
   removeListSummary,
   renameList,
   upsertListSummary,
@@ -173,8 +174,18 @@ export const registerMutationDefaults = (client: QueryClient): void => {
       requireOnline();
       return trpc.lists.members.remove.mutate(input);
     },
-    onSuccess: (members: ListMembers, input: RemoveMemberInput) =>
-      adoptMembers(input.listId, members),
+    onSuccess: (_data: void, input: RemoveMemberInput) => {
+      const me = client.getQueryData<User | null>(keys.me())?.id;
+      if (input.userId === me) {
+        removeListSummary(client, input.listId);
+        client.removeQueries({ queryKey: keys.list(input.listId) });
+        return;
+      }
+      removeListMember(client, input.listId, input.userId);
+      void client.invalidateQueries({
+        queryKey: keys.listMembers(input.listId),
+      });
+    },
     onError: report,
     ...onlineOnly,
   });

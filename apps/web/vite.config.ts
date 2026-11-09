@@ -83,7 +83,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": { target: API_TARGET, changeOrigin: false },
-      "/socket.io": { target: API_TARGET, ws: true, changeOrigin: false },
+      "/ws": { target: API_TARGET, ws: true, changeOrigin: false },
     },
   },
   build: {

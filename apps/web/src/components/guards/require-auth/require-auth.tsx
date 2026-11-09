@@ -3,6 +3,7 @@ import { useSession } from "@/hooks/use-session";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { RequireAuthContext } from "./require-auth-context";
 import ServiceUnavailablePage from "@/components/errors/service-unavailable-page";
+import { SocketProvider } from "@/providers/socket-provider";
 
 export default function RequireAuth() {
   const session = useSession();
@@ -15,7 +16,9 @@ export default function RequireAuth() {
 
   return (
     <RequireAuthContext value={session.data}>
-      <Outlet />
+      <SocketProvider key={session.data.id}>
+        <Outlet />
+      </SocketProvider>
     </RequireAuthContext>
   );
 }

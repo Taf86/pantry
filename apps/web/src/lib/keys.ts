@@ -7,11 +7,14 @@ import type {
 export const keys = {
   me: () => ["me"] as const,
   lists: () => ["lists"] as const,
-  listMembers: (listId: string) => ["list", "members", listId] as const,
+  list: (listId: string) => ["list", listId] as const,
+  listMembers: (listId: string) => ["list", listId, "members"] as const,
+
   adminUsers: () => ["admin", "users"] as const,
   adminUsersList: (input: ListUsersInput) =>
     ["admin", "users", "list", input] as const,
   adminUser: (userId: string) => ["admin", "users", userId] as const,
+
   adminInvites: () => ["admin", "invites"] as const,
   adminInvitesList: (input: ListInvitesInput) =>
     ["admin", "invites", "list", input] as const,

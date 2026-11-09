@@ -10,6 +10,7 @@ import {
   deleteList,
   findMemberCandidate,
   getList,
+  getListMembers,
   getLists,
   removeMember,
   setMember,
@@ -100,6 +101,55 @@ describe("lists", () => {
 
       expect(replayed.id).toBe(input.id);
       expect(await getLists(deps(), owner)).toHaveLength(1);
+    });
+
+    it("refuses an id that already belongs to somebody else's list", async () => {
+      const list = await newList();
+
+      await expect(
+        createList(deps(), mate, { ...mutation(), id: list.id, name: "Mia" }),
+      ).rejects.toThrow(/taken/i);
+
+      expect(await getLists(deps(), mate)).toEqual([]);
+      expect(
+        (await getListMembers(deps(), list.id, owner)).members,
+      ).toHaveLength(1);
+      expect(events.events).toEqual([]);
+    });
+
+    it("does not let a removed member take the list back by its id", async () => {
+      const list = await newList();
+      await setMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+        permissions: Role.Editor,
+      });
+      await removeMember(deps(), owner, {
+        ...mutation(),
+        listId: list.id,
+        userId: mate,
+      });
+
+      await expect(
+        createList(deps(), mate, { ...mutation(), id: list.id, name: "Spesa" }),
+      ).rejects.toThrow(/taken/i);
+      expect(await getLists(deps(), mate)).toEqual([]);
+    });
+
+    it("treats a second create of its own list as a no-op", async () => {
+      const id = crypto.randomUUID();
+      await createList(deps(), owner, { ...mutation(), id, name: "Spesa" });
+      events.reset();
+
+      const again = await createList(deps(), owner, {
+        ...mutation(),
+        id,
+        name: "Spesa",
+      });
+
+      expect(again.permissions).toBe(Role.Owner);
+      expect(events.events).toEqual([]);
     });
 
     it("refuses to create more lists than the cap allows", async () => {
@@ -253,7 +303,7 @@ describe("lists", () => {
         });
 
       await share(Role.Viewer);
-      const members = await share(Role.Editor);
+      const members = (await share(Role.Editor)).members;
 
       expect(members).toHaveLength(2);
       expect(members.find((m) => m.userId === mate)?.permissions).toBe(
@@ -348,6 +398,22 @@ describe("lists", () => {
   });
 
   describe("notifications", () => {
+    it("tells the creator's other devices about a new list, once", async () => {
+      const input = { ...mutation(), id: crypto.randomUUID(), name: "Spesa" };
+
+      await createList(deps(), owner, input);
+      await createList(deps(), owner, input);
+
+      expect(events.events).toEqual([
+        {
+          type: "list.member.changed",
+          listId: input.id,
+          userId: owner,
+          permissions: Role.Owner,
+        },
+      ]);
+    });
+
     it("announces a rename to the room of its list", async () => {
       const list = await newList();
       await updateList(deps(), owner, {

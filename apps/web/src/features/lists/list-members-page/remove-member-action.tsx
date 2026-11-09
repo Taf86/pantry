@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { useAppMutation } from "@/hooks/use-app-mutation";
+import useRequireAuth from "@/hooks/use-require-auth";
 import { MUTATION } from "@/lib/mutations";
 import {
   uuidv7,
@@ -20,9 +21,10 @@ import {
   type ListMember,
   type RemoveMemberInput,
 } from "@pantry/shared";
-import { TriangleAlertIcon, UserMinusIcon } from "lucide-react";
+import { LogOutIcon, TriangleAlertIcon, UserMinusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 export default function RemoveMemberAction({
   list,
@@ -34,9 +36,12 @@ export default function RemoveMemberAction({
   disabled: boolean;
 }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const me = useRequireAuth();
   const [open, setOpen] = useState(false);
+  const self = member.userId === me.id;
 
-  const remove = useAppMutation<RemoveMemberInput, ListMember[]>(
+  const remove = useAppMutation<RemoveMemberInput, void>(
     MUTATION.listMemberRemove,
   );
 
@@ -44,15 +49,29 @@ export default function RemoveMemberAction({
     remove.mutate(
       { mutationId: uuidv7(), listId: list.listId, userId: member.userId },
       {
-        onSuccess: () =>
+        onSuccess: () => {
+          if (self) {
+            void navigate("/lists", { replace: true });
+            toast.add({
+              description: t("feature.lists.members.left", {
+                name: list.listName,
+              }),
+            });
+            return;
+          }
           toast.add({
             description: t("feature.lists.members.removed", {
               displayName: member.userDisplayName,
             }),
-          }),
+          });
+        },
         onSettled: () => setOpen(false),
       },
     );
+
+  const label = t(
+    self ? "feature.lists.members.leave" : "feature.lists.members.remove",
+  );
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -62,10 +81,10 @@ export default function RemoveMemberAction({
             variant="ghost"
             size="icon-sm"
             disabled={disabled}
-            aria-label={t("feature.lists.members.remove")}
-            title={t("feature.lists.members.remove")}
+            aria-label={label}
+            title={label}
           >
-            <UserMinusIcon />
+            {self ? <LogOutIcon /> : <UserMinusIcon />}
           </Button>
         }
       />
@@ -75,13 +94,19 @@ export default function RemoveMemberAction({
             <TriangleAlertIcon className="text-destructive" />
           </AlertDialogMedia>
           <AlertDialogTitle>
-            {t("feature.lists.members.removeTitle", {
-              displayName: member.userDisplayName,
-              name: list.listName,
-            })}
+            {self
+              ? t("feature.lists.members.leaveTitle", { name: list.listName })
+              : t("feature.lists.members.removeTitle", {
+                  displayName: member.userDisplayName,
+                  name: list.listName,
+                })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("feature.lists.members.removeDescription")}
+            {t(
+              self
+                ? "feature.lists.members.leaveDescription"
+                : "feature.lists.members.removeDescription",
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -93,7 +118,7 @@ export default function RemoveMemberAction({
             disabled={remove.isPending}
             onClick={confirm}
           >
-            {t("feature.lists.members.remove")}
+            {label}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

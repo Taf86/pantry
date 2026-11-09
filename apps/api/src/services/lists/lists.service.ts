@@ -46,8 +46,8 @@ export const createList = async (
   userId: string,
   input: CreateListInput,
 ): Promise<ListSummary> => {
-  await deps.db.transaction(async (tx) => {
-    if (!(await claimMutation(tx, input.mutationId, userId))) return;
+  const created = await deps.db.transaction(async (tx) => {
+    if (!(await claimMutation(tx, input.mutationId, userId))) return false;
 
     const [owned] = await tx
       .select({ total: count() })
@@ -59,16 +59,37 @@ export const createList = async (
       throw new TRPCError({ code: "BAD_REQUEST", message: "Too many lists." });
     }
 
-    await tx
+    const inserted = await tx
       .insert(lists)
       .values({ id: input.id, name: input.name, createdBy: userId })
-      .onConflictDoNothing();
+      .onConflictDoNothing()
+      .returning({ id: lists.id });
+
+    if (inserted.length === 0) {
+      const [member] = await tx
+        .select({ userId: listMembers.userId })
+        .from(listMembers)
+        .where(
+          and(eq(listMembers.listId, input.id), eq(listMembers.userId, userId)),
+        );
+      if (member) return false;
+      throw new TRPCError({ code: "CONFLICT", message: "List id taken." });
+    }
 
     await tx
       .insert(listMembers)
-      .values({ listId: input.id, userId, permissions: Role.Owner })
-      .onConflictDoNothing();
+      .values({ listId: input.id, userId, permissions: Role.Owner });
+    return true;
   });
+
+  if (created) {
+    deps.events.publish({
+      type: "list.member.changed",
+      listId: input.id,
+      userId,
+      permissions: Role.Owner,
+    });
+  }
 
   return requireListSummary(deps.db, userId, input.id);
 };

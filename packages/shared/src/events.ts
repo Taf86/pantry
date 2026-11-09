@@ -11,7 +11,6 @@ export const serverEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("item.upserted"),
     listId: entityIdSchema,
-    // item: listItemSchema,
   }),
   z.object({
     type: z.literal("item.deleted"),

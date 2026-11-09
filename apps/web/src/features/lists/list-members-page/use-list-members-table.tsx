@@ -96,9 +96,7 @@ export default function useListMembersTable(
         ) : null,
     });
 
-    const columns = canManage
-      ? [displayName, email, permissions, actions]
-      : [displayName, email, permissions];
+    const columns = [displayName, email, permissions, actions];
 
     return {
       desktopColumns: columnHelper.columns(columns),
