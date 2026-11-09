@@ -111,13 +111,12 @@ export const registerMutationDefaults = (client: QueryClient): void => {
       renameList(client, input.listId, input.name);
       return { previous };
     },
-    // onSuccess: (_data, input: UpdateListInput) => {
-    onSuccess: () => {
+    onSuccess: (_data, input: UpdateListInput) => {
       invalidateIndex();
-      // void client.invalidateQueries({
-      //   queryKey: keys.list(input.listId),
-      //   exact: true,
-      // });
+      void client.invalidateQueries({
+        queryKey: keys.list(input.listId),
+        exact: true,
+      });
     },
     onError: (error: unknown, input: UpdateListInput, context: unknown) => {
       const previous = (context as { previous?: string } | undefined)?.previous;
@@ -137,7 +136,7 @@ export const registerMutationDefaults = (client: QueryClient): void => {
     },
     onSuccess: (_data, input: DeleteListInput) => {
       removeListSummary(client, input.listId);
-      // client.removeQueries({ queryKey: keys.list(input.listId) });
+      client.removeQueries({ queryKey: keys.list(input.listId) });
     },
     onError: (error: unknown, _input: DeleteListInput, context: unknown) => {
       const previous = (context as { previous?: ListSummary } | undefined)

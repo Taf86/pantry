@@ -136,8 +136,6 @@ export function DesktopDataTable<TData extends RowData>({
         <TableBody
           aria-busy={isPending || isFetching}
           className={cn(
-            // TableBody drops the divider on the last row; keep it, so the table
-            // closes at the bottom the way the header's border opens it at the top.
             "transition-opacity [&_tr:last-child]:border-b",
             isFetching && !isPending && "opacity-50",
           )}

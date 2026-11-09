@@ -140,8 +140,6 @@ describe("mutation deduplication", () => {
       }),
     ).rejects.toThrow(/blew up/);
 
-    // Either both the claim and the operation hold, or neither does. A claim
-    // that survived a rolled-back operation would silently swallow the retry.
     expect(await claimMutation(harness.db, mutationId, userId)).toBe(true);
   });
 

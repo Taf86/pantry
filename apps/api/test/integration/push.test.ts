@@ -248,9 +248,6 @@ describe("push", () => {
     });
 
     it("keeps a subscription through backpressure and config errors", async () => {
-      // 429 and 5xx are the service asking for patience; 401 means our own
-      // VAPID config is wrong. Deleting rows for either destroys recoverable
-      // state.
       await registerSubscription(deps(), admin, subscription("a"));
       await registerSubscription(deps(), admin, subscription("b"));
       await registerSubscription(deps(), admin, subscription("c"));

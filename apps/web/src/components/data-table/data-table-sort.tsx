@@ -79,8 +79,6 @@ export function DataTableSort<TData>({
                 </span>
                 <ToggleGroup
                   value={direction === null ? [] : [direction]}
-                  // Re-pressing the active direction clears the group value:
-                  // ignore it, the column stays sorted the way it is.
                   onValueChange={(next: unknown[]) => {
                     const [value] = next;
                     if (value === "asc" || value === "desc") {

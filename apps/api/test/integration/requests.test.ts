@@ -370,8 +370,6 @@ describe("requests", () => {
 
       const expired = await requireRequest(deps(), id);
       expect(expired.status).toBe("rejected");
-      // A null decider is what tells an expiry apart from a real refusal,
-      // which is why no new status was needed.
       expect(expired.decidedBy).toBeNull();
       expect(expired.decidedAt).not.toBeNull();
     });
