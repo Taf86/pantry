@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -7,7 +8,14 @@ import { API_CACHE_NAME } from "./src/lib/pwa.js";
 
 const API_TARGET = process.env["VITE_API_TARGET"] ?? "http://localhost:3000";
 
+const { version: APP_VERSION } = JSON.parse(
+  readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf-8"),
+) as { version: string };
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   plugins: [
     react(),
     tailwindcss(),

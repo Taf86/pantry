@@ -52,6 +52,11 @@
     "navBar": {
       "menu": "Menu",
       "logout": "Esci",
+      "version": "Versione {{version}}",
+      "group": {
+        "home": "Home",
+        "admin": "Admin"
+      },
       "link": {
         "lists": "Liste",
         "shopping": "Spesa",

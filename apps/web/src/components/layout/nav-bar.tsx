@@ -20,7 +20,7 @@ import {
   ShoppingCartIcon,
   type LucideProps,
 } from "lucide-react";
-import { Link, useMatch, useNavigate } from "react-router-dom";
+import { Link, NavLink, useMatch, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import useRequireAuth from "@/hooks/use-require-auth";
 import type { User } from "@pantry/shared";
@@ -28,6 +28,7 @@ import { signOut } from "@/lib/auth-client";
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -41,23 +42,46 @@ import { getSubscription } from "@/lib/push";
 import { trpc } from "@/lib/trpc";
 import { forgetLastUser } from "@/lib/user/last-user";
 import type { ParseKeys } from "i18next";
+import { APP_NAME, APP_VERSION } from "@/lib/app-info";
 
-const adminPageNavItems = [
+type NavItem = { to: string; key: ParseKeys };
+
+const adminNavItems = [
   { to: "/admin/users", key: "feature.navBar.link.users" },
   { to: "/admin/invites", key: "feature.navBar.link.invites" },
   { to: "/admin/requests", key: "feature.navBar.link.requests" },
+] as const satisfies NavItem[];
+
+const adminPageNavItems = [
+  ...adminNavItems,
   { to: "/", key: "feature.navBar.link.home" },
-] as const satisfies { to: string; key: ParseKeys }[];
+] as const satisfies NavItem[];
 
 const homeNavItems = [
   { to: "/lists", key: "feature.navBar.link.lists" },
   { to: "/shopping", key: "feature.navBar.link.shopping" },
   { to: "/pantries", key: "feature.navBar.link.pantries" },
-] as const satisfies { to: string; key: ParseKeys }[];
+] as const satisfies NavItem[];
 
 const toAdminNavItems = [
   { to: "/admin", key: "feature.navBar.link.admin" },
-] as const satisfies { to: string; key: ParseKeys }[];
+] as const satisfies NavItem[];
+
+type NavGroup = NavItem & { id: string; items: readonly NavItem[] };
+
+const homeNavGroup = {
+  id: "home",
+  to: "/",
+  key: "feature.navBar.group.home",
+  items: homeNavItems,
+} as const satisfies NavGroup;
+
+const adminNavGroup = {
+  id: "admin",
+  to: "/admin",
+  key: "feature.navBar.group.admin",
+  items: adminNavItems,
+} as const satisfies NavGroup;
 
 const quickActions = [
   { id: "add", icon: PlusIcon, key: "feature.navBar.quickAction.add" },
@@ -106,6 +130,10 @@ export default function NavBar() {
       ? [...homeNavItems, ...toAdminNavItems]
       : homeNavItems;
 
+  const mobileNavGroups: NavGroup[] = isAdminUser
+    ? [homeNavGroup, adminNavGroup]
+    : [homeNavGroup];
+
   const logout = async () => {
     await releasePushSubscription();
     await signOut();
@@ -146,25 +174,64 @@ export default function NavBar() {
               {t("feature.navBar.menu")}
             </span>
           </SheetTrigger>
-          <SheetContent side="left" className="w-3/4 overflow-y-auto">
+          {/* Drawer opens below the sticky header (h-14) so the top bar
+              stays visible; the hamburger above doubles as the close button. */}
+          <SheetContent
+            side="left"
+            showCloseButton={false}
+            className="top-14! z-40! h-auto! overflow-y-auto"
+            overlayClassName="top-14! z-40!"
+          >
             <SheetHeader className="sr-only">
               <SheetTitle>{t("feature.navBar.menu")}</SheetTitle>
             </SheetHeader>
             <nav
               aria-label="Navigazione principale"
-              className="flex flex-col gap-6 px-6 py-8"
+              className="flex flex-col gap-8 px-6 py-6"
             >
-              {navItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setNavOpen(false)}
-                  className="text-2xl font-medium underline-offset-8 data-[status=active]:underline"
-                >
-                  {t(item.key)}
-                </Link>
+              {mobileNavGroups.map((group) => (
+                <section key={group.id} className="flex flex-col gap-3">
+                  <NavLink
+                    to={group.to}
+                    end
+                    onClick={() => setNavOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "text-muted-foreground text-xs font-semibold tracking-wider uppercase",
+                        isActive && "text-foreground",
+                      )
+                    }
+                  >
+                    {t(group.key)}
+                  </NavLink>
+                  <ul className="flex flex-col gap-1 border-l pl-4">
+                    {group.items.map((item) => (
+                      <li key={item.to}>
+                        <NavLink
+                          to={item.to}
+                          onClick={() => setNavOpen(false)}
+                          className={({ isActive }) =>
+                            cn(
+                              "text-foreground/70 hover:text-foreground block py-1.5 text-lg font-medium transition-colors",
+                              isActive &&
+                                "text-foreground underline underline-offset-8",
+                            )
+                          }
+                        >
+                          {t(item.key)}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
             </nav>
+            <SheetFooter className="text-muted-foreground border-t px-6 text-xs">
+              <span className="text-foreground font-medium">{APP_NAME}</span>
+              <span>
+                {t("feature.navBar.version", { version: APP_VERSION })}
+              </span>
+            </SheetFooter>
           </SheetContent>
         </Sheet>
 
