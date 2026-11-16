@@ -3,13 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { canShare, copyToClipboard, mailtoUrl, shareLink } from "@/lib/share";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { canShare, mailtoUrl, shareLink } from "@/lib/share";
 import type { UserRef } from "@pantry/shared";
 import {
+  CheckIcon,
   CopyIcon,
   MailIcon,
   Share2Icon,
   TriangleAlertIcon,
+  XIcon,
 } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
@@ -36,12 +39,13 @@ export default function InviteLinkShare({
   const displayName = recipient?.displayName ?? "";
   const email = recipient?.email ?? "";
 
-  const copy = async () =>
-    toast.add(
-      (await copyToClipboard(url))
-        ? { description: t("feature.inviteLink.copied") }
-        : { type: "error", description: t("feature.inviteLink.copyFailed") },
-    );
+  const clipboard = useCopyToClipboard();
+
+  const copyFeedback = {
+    copied: t("feature.inviteLink.copied"),
+    failed: t("feature.inviteLink.copyFailed"),
+    idle: "",
+  }[clipboard.status];
 
   const share = async () => {
     const outcome = await shareLink({
@@ -95,10 +99,31 @@ export default function InviteLinkShare({
           type="button"
           variant="outline"
           disabled={url === ""}
-          onClick={() => void copy()}
+          onClick={() => void clipboard.copy(url)}
         >
-          <CopyIcon data-icon="inline-start" />
+          {clipboard.status === "copied" ? (
+            <CheckIcon
+              key="copied"
+              data-icon="inline-start"
+              className="animate-in duration-200 fade-in-0 zoom-in-50"
+            />
+          ) : clipboard.status === "failed" ? (
+            <XIcon
+              key="failed"
+              data-icon="inline-start"
+              className="text-destructive animate-in duration-200 fade-in-0 zoom-in-50"
+            />
+          ) : (
+            <CopyIcon
+              key="copy"
+              data-icon="inline-start"
+              className="animate-in duration-200 fade-in-0 zoom-in-75"
+            />
+          )}
           {t("feature.inviteLink.copy")}
+          <span className="sr-only" aria-live="polite">
+            {copyFeedback}
+          </span>
         </Button>
 
         {canShare() ? (
