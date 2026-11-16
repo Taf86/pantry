@@ -30,7 +30,8 @@ import type { PgColumn } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 import { issueInviteTx } from "./invites.service.js";
-import { requireMainTenantId } from "../tenants/tenants.service.js";
+import { requireTenant } from "../tenants/tenants.service.js";
+import { tenants } from "../../db/schema/tenants.js";
 import { sessions } from "../../db/schema/sessions.js";
 import { accounts } from "../../db/schema/accounts.js";
 import { invites } from "../../db/schema/invites.js";
@@ -47,6 +48,7 @@ export const getUsers = async (
     deps.db
       .select(userSelection)
       .from(users)
+      .innerJoin(tenants, eq(tenants.id, users.tenantId))
       .where(where)
       .orderBy(...buildUserOrder(input.sorting))
       .limit(pageSize)
@@ -61,6 +63,7 @@ export const requireUser = async (deps: AdminDeps, userId: string) => {
   const [row] = await deps.db
     .select(userSelection)
     .from(users)
+    .innerJoin(tenants, eq(tenants.id, users.tenantId))
     .where(eq(users.id, userId))
     .limit(1);
 
@@ -76,11 +79,7 @@ export const createUser = async (
   input: CreateUserInput,
 ): Promise<{ user: UserExtended; invite: InviteLink }> => {
   const invite = await deps.db.transaction(async (tx) => {
-    const { userId } = await createUserTx(
-      tx,
-      input,
-      await requireMainTenantId(tx),
-    );
+    const { userId } = await createUserTx(tx, input);
     return await issueInviteTx(tx, userId, actorId ?? userId);
   });
 
@@ -255,8 +254,9 @@ export const setRole = async (
 export const createUserTx = async (
   tx: Executor,
   input: CreateUserInput,
-  tenantId: string,
 ): Promise<{ userId: string }> => {
+  await requireTenant(tx, input.tenantId);
+
   const [existing] = await tx
     .select({ id: users.id })
     .from(users)
@@ -273,7 +273,7 @@ export const createUserTx = async (
   const userId = randomUUID();
   await tx.insert(users).values({
     id: userId,
-    tenantId,
+    tenantId: input.tenantId,
     email: input.email,
     displayName: input.displayName,
     role: input.role,
@@ -294,6 +294,7 @@ const userSelection = {
   displayName: users.displayName,
   role: users.role,
   status: users.status,
+  tenant: { id: tenants.id, name: tenants.name },
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
   lastSeenAt: users.lastSeenAt,

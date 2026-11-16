@@ -111,9 +111,9 @@
       },
       "form": {
         "createTitle": "New user",
-        "createDescription": "Fill in name, email and role. The invite link is generated on submit.",
+        "createDescription": "Fill in name, email, tenant and role. The invite link is generated on submit.",
         "editTitle": "Edit user",
-        "editDescription": "Update name, email, role and status. The invite link is generated separately.",
+        "editDescription": "Update name, email, role and status. The tenant cannot be changed; the invite link is generated separately.",
         "name": "Name",
         "email": "Email",
         "role": "Role",
@@ -133,7 +133,8 @@
         "create": "Create",
         "save": "Save",
         "cancel": "Cancel",
-        "close": "Close"
+        "close": "Close",
+        "tenant": "Tenant"
       }
     },
     "inviteLink": {
@@ -215,6 +216,13 @@
         "warningTitle": "Link generated",
         "close": "Close"
       },
+      "approve": {
+        "title": "Accept the request from {{email}}?",
+        "description": "Choose the tenant to create the account in. An invite link will be generated.",
+        "tenant": "Tenant",
+        "confirm": "Accept",
+        "cancel": "Cancel"
+      },
       "reject": {
         "title": "Reject the request from {{email}}?",
         "description": "No account is created and no link is issued. The same address can ask again later.",
@@ -225,7 +233,8 @@
       "error": {
         "decided": "The request has already been decided, or an account with this email already exists.",
         "noAccount": "No account matches this address, or the request no longer exists.",
-        "suspended": "That account is suspended: reactivate it before issuing a new link."
+        "suspended": "That account is suspended: reactivate it before issuing a new link.",
+        "tenant": "The chosen tenant no longer exists."
       }
     },
     "request": {
@@ -351,6 +360,10 @@
       "needsNetwork": "This needs a network connection.",
       "pending_one": "Offline · {{count}} change queued",
       "pending_other": "Offline · {{count}} changes queued"
+    },
+    "tenants": {
+      "placeholder": "Choose a tenant",
+      "required": "Choose a tenant."
     }
   },
   "validation": {

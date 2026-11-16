@@ -111,9 +111,9 @@
       },
       "form": {
         "createTitle": "Crea utente",
-        "createDescription": "Inserisci nome, email e ruolo. Il link d'invito viene generato alla creazione.",
+        "createDescription": "Inserisci nome, email, tenant e ruolo. Il link d'invito viene generato alla creazione.",
         "editTitle": "Modifica utente",
-        "editDescription": "Aggiorna nome, email, ruolo e stato. Il link d'invito si genera a parte.",
+        "editDescription": "Aggiorna nome, email, ruolo e stato. Il tenant non si può cambiare; il link d'invito si genera a parte.",
         "name": "Nome",
         "email": "Email",
         "role": "Ruolo",
@@ -133,7 +133,8 @@
         "create": "Crea",
         "save": "Salva",
         "cancel": "Annulla",
-        "close": "Chiudi"
+        "close": "Chiudi",
+        "tenant": "Tenant"
       }
     },
     "inviteLink": {
@@ -215,6 +216,13 @@
         "warningTitle": "Link generato",
         "close": "Chiudi"
       },
+      "approve": {
+        "title": "Accettare la richiesta di {{email}}?",
+        "description": "Scegli il tenant in cui creare l'account. Verrà generato il link d'invito.",
+        "tenant": "Tenant",
+        "confirm": "Accetta",
+        "cancel": "Annulla"
+      },
       "reject": {
         "title": "Rifiutare la richiesta di {{email}}?",
         "description": "Non viene creato nessun account e non viene generato nessun link. Lo stesso indirizzo potrà richiederlo di nuovo più avanti.",
@@ -225,7 +233,8 @@
       "error": {
         "decided": "La richiesta è già stata decisa, oppure esiste già un utente con questa email.",
         "noAccount": "Nessun account corrisponde a questo indirizzo, oppure la richiesta non esiste più.",
-        "suspended": "L'account è sospeso: riattivalo prima di generare un nuovo link."
+        "suspended": "L'account è sospeso: riattivalo prima di generare un nuovo link.",
+        "tenant": "Il tenant scelto non esiste più."
       }
     },
     "request": {
@@ -351,6 +360,10 @@
       "needsNetwork": "Serve la rete per questa operazione.",
       "pending_one": "Offline · {{count}} modifica in coda",
       "pending_other": "Offline · {{count}} modifiche in coda"
+    },
+    "tenants": {
+      "placeholder": "Scegli un tenant",
+      "required": "Scegli un tenant."
     }
   },
   "validation": {

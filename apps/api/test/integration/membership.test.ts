@@ -31,14 +31,12 @@ describe("list membership", () => {
 
   const makeList = async (): Promise<string> => {
     const id = crypto.randomUUID();
-    await harness.db
-      .insert(lists)
-      .values({
-        id,
-        tenantId: MAIN_TENANT_ID,
-        name: "Spesa",
-        createdBy: member,
-      });
+    await harness.db.insert(lists).values({
+      id,
+      tenantId: MAIN_TENANT_ID,
+      name: "Spesa",
+      createdBy: member,
+    });
     return id;
   };
 

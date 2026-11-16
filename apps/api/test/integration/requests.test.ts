@@ -18,7 +18,9 @@ import {
 } from "vitest";
 
 import { requests } from "../../src/db/schema/requests.js";
+import { tenants } from "../../src/db/schema/tenants.js";
 import { users } from "../../src/db/schema/users.js";
+import { getTenants } from "../../src/services/tenants/tenants.service.js";
 import {
   createUser,
   setStatus,
@@ -37,6 +39,7 @@ import {
   createHarness,
   MAIN_TENANT_ID,
   makeUser,
+  OTHER_TENANT_ID,
   type Harness,
 } from "../helpers/harness.js";
 
@@ -79,6 +82,83 @@ describe("requests", () => {
 
   const reset = (email: string) =>
     createRequest(deps(), { type: "reset_password", email });
+
+  const asSignup = (requestId: string, tenantId: string) =>
+    ({ type: "signup", requestId, tenantId }) as const;
+
+  const asReset = (requestId: string) =>
+    ({ type: "reset_password", requestId }) as const;
+
+  const addOtherTenant = () =>
+    harness.db
+      .insert(tenants)
+      .values({ id: OTHER_TENANT_ID, name: "Other", main: false });
+
+  describe("tenants", () => {
+    it("creates the signup account in the tenant the admin chose", async () => {
+      await addOtherTenant();
+      const { id } = await signup();
+
+      const { user } = await approveRequest(
+        deps(),
+        admin,
+        asSignup(id, OTHER_TENANT_ID),
+      );
+
+      expect(user.tenant).toEqual({ id: OTHER_TENANT_ID, name: "Other" });
+    });
+
+    it("refuses a tenant that does not exist, and leaves the request open", async () => {
+      const { id } = await signup();
+
+      await expect(
+        approveRequest(deps(), admin, asSignup(id, OTHER_TENANT_ID)),
+      ).rejects.toThrow(/tenant not existing/i);
+      expect((await requireRequest(deps(), id)).status).toBe("pending");
+    });
+
+    it("refuses an approval whose type does not match the request", async () => {
+      const { id } = await signup();
+
+      await expect(approveRequest(deps(), admin, asReset(id))).rejects.toThrow(
+        /type does not match/i,
+      );
+      expect((await requireRequest(deps(), id)).status).toBe("pending");
+    });
+
+    it("creates an admin-made user in the chosen tenant", async () => {
+      await addOtherTenant();
+
+      const { user } = await createUser(deps(), admin, {
+        email: "elsewhere@example.com",
+        displayName: "Elsewhere",
+        role: "user",
+        tenantId: OTHER_TENANT_ID,
+      });
+
+      expect(user.tenant).toEqual({ id: OTHER_TENANT_ID, name: "Other" });
+    });
+
+    it("refuses to create a user in a tenant that does not exist", async () => {
+      await expect(
+        createUser(deps(), admin, {
+          email: "nowhere@example.com",
+          displayName: "Nowhere",
+          role: "user",
+          tenantId: OTHER_TENANT_ID,
+        }),
+      ).rejects.toThrow(/tenant not existing/i);
+    });
+
+    it("lists the main tenant first", async () => {
+      await addOtherTenant();
+
+      expect(await getTenants(deps())).toEqual([
+        { id: MAIN_TENANT_ID, name: "Main", main: true },
+        { id: OTHER_TENANT_ID, name: "Other", main: false },
+      ]);
+    });
+  });
 
   it("queues a signup with what the account will need", async () => {
     const { id } = await signup();
@@ -129,7 +209,11 @@ describe("requests", () => {
   it("creates the account and hands out a link when a signup is approved", async () => {
     const { id } = await signup();
 
-    const { request, user, invite } = await approveRequest(deps(), admin, id);
+    const { request, user, invite } = await approveRequest(
+      deps(),
+      admin,
+      asSignup(id, MAIN_TENANT_ID),
+    );
 
     expect(user.email).toBe("newcomer@example.com");
     expect(user.displayName).toBe("Newcomer");
@@ -155,11 +239,11 @@ describe("requests", () => {
 
   it("does not approve the same request twice", async () => {
     const { id } = await signup();
-    await approveRequest(deps(), admin, id);
+    await approveRequest(deps(), admin, asSignup(id, MAIN_TENANT_ID));
 
-    await expect(approveRequest(deps(), admin, id)).rejects.toThrow(
-      /already decided/i,
-    );
+    await expect(
+      approveRequest(deps(), admin, asSignup(id, MAIN_TENANT_ID)),
+    ).rejects.toThrow(/already decided/i);
     await expect(rejectRequest(deps(), admin, id)).rejects.toThrow(
       /already decided/i,
     );
@@ -173,7 +257,9 @@ describe("requests", () => {
       displayName: "Impostor",
     });
 
-    await expect(approveRequest(deps(), admin, id)).rejects.toThrow(TRPCError);
+    await expect(
+      approveRequest(deps(), admin, asSignup(id, MAIN_TENANT_ID)),
+    ).rejects.toThrow(TRPCError);
 
     expect((await requireRequest(deps(), id)).status).toBe("pending");
   });
@@ -183,10 +269,11 @@ describe("requests", () => {
       email: "forgetful@example.com",
       displayName: "Forgetful",
       role: "user",
+      tenantId: MAIN_TENANT_ID,
     });
     const { id } = await reset("forgetful@example.com");
 
-    const approved = await approveRequest(deps(), admin, id);
+    const approved = await approveRequest(deps(), admin, asReset(id));
 
     expect(approved.user.id).toBe(user.id);
     expect(approved.invite.token).not.toBe(first.token);
@@ -203,7 +290,7 @@ describe("requests", () => {
   it("leaves the request open when a reset points nowhere", async () => {
     const { id } = await reset("ghost@example.com");
 
-    await expect(approveRequest(deps(), admin, id)).rejects.toThrow(
+    await expect(approveRequest(deps(), admin, asReset(id))).rejects.toThrow(
       /no account/i,
     );
 
@@ -222,7 +309,7 @@ describe("requests", () => {
     });
     const { id } = await reset("suspended@example.com");
 
-    await expect(approveRequest(deps(), admin, id)).rejects.toThrow(
+    await expect(approveRequest(deps(), admin, asReset(id))).rejects.toThrow(
       /suspended/i,
     );
     expect((await requireRequest(deps(), id)).status).toBe("pending");
@@ -249,7 +336,11 @@ describe("requests", () => {
       TRPCError,
     );
     await expect(
-      approveRequest(deps(), admin, crypto.randomUUID()),
+      approveRequest(
+        deps(),
+        admin,
+        asSignup(crypto.randomUUID(), MAIN_TENANT_ID),
+      ),
     ).rejects.toThrow(TRPCError);
   });
 

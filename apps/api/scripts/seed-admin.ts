@@ -9,6 +9,7 @@ import {
   regenerateInvite,
   setRole,
 } from "../src/services/admin/admin.service.js";
+import { requireMainTenantId } from "../src/services/tenants/tenants.service.js";
 
 const main = async (): Promise<void> => {
   const { values } = parseArgs({
@@ -18,26 +19,27 @@ const main = async (): Promise<void> => {
     },
   });
 
-  const parsed = createUserInputSchema.safeParse({
-    email: values.email,
-    displayName: values.name,
-    role: "admin",
-  });
-
-  if (!parsed.success) {
-    process.stderr.write(
-      "Usage: seed:admin --email <email> --name <name>\n" +
-        parsed.error.issues.map((issue) => `  ${issue.message}`).join("\n") +
-        "\n",
-    );
-    process.exitCode = 1;
-    return;
-  }
-
   const config = loadConfig();
   const handle = createDatabase(config);
 
   try {
+    const parsed = createUserInputSchema.safeParse({
+      email: values.email,
+      displayName: values.name,
+      role: "admin",
+      tenantId: await requireMainTenantId(handle.db),
+    });
+
+    if (!parsed.success) {
+      process.stderr.write(
+        "Usage: seed:admin --email <email> --name <name>\n" +
+          parsed.error.issues.map((issue) => `  ${issue.message}`).join("\n") +
+          "\n",
+      );
+      process.exitCode = 1;
+      return;
+    }
+
     const deps = { db: handle.db };
 
     const [existing] = await handle.db

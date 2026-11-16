@@ -43,6 +43,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import z from "zod";
 import { roleLabelKeys, statusLabelKeys } from "../../lib/user/user-labels";
 import InviteLinkShare from "./invite-link-share";
+import TenantSelect from "./tenants/tenant-select";
 
 const usersPath = "/admin/users";
 
@@ -81,6 +82,7 @@ export default function UserPage() {
     email: z.email(),
     role: userRoleSchema,
     status: userStatusSchema,
+    tenantId: z.string().min(1, t("feature.tenants.required")),
   });
   type Values = z.infer<typeof formSchema>;
 
@@ -91,6 +93,7 @@ export default function UserPage() {
         email: user.data.email,
         role: user.data.role,
         status: user.data.status,
+        tenantId: user.data.tenant.id,
       },
     [user.data],
   );
@@ -102,6 +105,7 @@ export default function UserPage() {
       email: "",
       role: UserRole.user,
       status: UserStatus.unactivated,
+      tenantId: "",
     },
     ...(loaded && { values: loaded }),
   });
@@ -116,6 +120,7 @@ export default function UserPage() {
         displayName: input.displayName,
         email: input.email,
         role: input.role,
+        tenantId: input.tenantId,
       }),
     networkMode: "online",
     onSuccess: refreshUsers,
@@ -124,7 +129,13 @@ export default function UserPage() {
 
   const edit = useMutation({
     mutationFn: (input: Values) =>
-      trpc.admin.users.edit.mutate({ userId: userId ?? "", ...input }),
+      trpc.admin.users.edit.mutate({
+        userId: userId ?? "",
+        displayName: input.displayName,
+        email: input.email,
+        role: input.role,
+        status: input.status,
+      }),
     networkMode: "online",
     onSuccess: async () => {
       await refreshUsers();
@@ -239,6 +250,29 @@ export default function UserPage() {
                     autoCapitalize="none"
                     spellCheck={false}
                     disabled={locked}
+                  />
+                )}
+              </FormField>
+
+              <FormField
+                name="tenantId"
+                control={form.control}
+                label={t("feature.users.form.tenant")}
+              >
+                {({ field, invalid }) => (
+                  <TenantSelect
+                    id={field.name}
+                    ref={field.ref}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    invalid={invalid}
+                    disabled={editing || locked}
+                    fallbackItems={
+                      user.data && {
+                        [user.data.tenant.id]: user.data.tenant.name,
+                      }
+                    }
                   />
                 )}
               </FormField>

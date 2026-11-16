@@ -35,14 +35,12 @@ describe("the realtime bus", () => {
 
   const makeList = async (members: Array<[string, number]>) => {
     const id = crypto.randomUUID();
-    await harness.db
-      .insert(lists)
-      .values({
-        id,
-        tenantId: MAIN_TENANT_ID,
-        name: "Spesa",
-        createdBy: marco,
-      });
+    await harness.db.insert(lists).values({
+      id,
+      tenantId: MAIN_TENANT_ID,
+      name: "Spesa",
+      createdBy: marco,
+    });
     for (const [userId, permissions] of members) {
       await harness.db
         .insert(listMembers)

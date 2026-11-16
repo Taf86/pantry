@@ -10,6 +10,8 @@ export const keys = {
   list: (listId: string) => ["list", listId] as const,
   listMembers: (listId: string) => ["list", listId, "members"] as const,
 
+  adminTenants: () => ["admin", "tenants"] as const,
+
   adminUsers: () => ["admin", "users"] as const,
   adminUsersList: (input: ListUsersInput) =>
     ["admin", "users", "list", input] as const,

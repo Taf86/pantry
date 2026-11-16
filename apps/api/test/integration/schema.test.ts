@@ -8,6 +8,7 @@ import { violatedConstraint } from "../helpers/constraints.js";
 import {
   createHarness,
   MAIN_TENANT_ID,
+  OTHER_TENANT_ID,
   makeUser,
   type Harness,
 } from "../helpers/harness.js";
@@ -19,14 +20,12 @@ describe("the phase 2 schema", () => {
 
   const makeList = async (): Promise<string> => {
     const id = crypto.randomUUID();
-    await harness.db
-      .insert(lists)
-      .values({
-        id,
-        tenantId: MAIN_TENANT_ID,
-        name: "Spesa",
-        createdBy: userId,
-      });
+    await harness.db.insert(lists).values({
+      id,
+      tenantId: MAIN_TENANT_ID,
+      name: "Spesa",
+      createdBy: userId,
+    });
     return id;
   };
 
@@ -80,8 +79,6 @@ describe("the phase 2 schema", () => {
   });
 
   describe("tenants", () => {
-    const OTHER_TENANT_ID = "00000000-0000-0000-0000-000000000002";
-
     it("allows only one main tenant", async () => {
       expect(
         await violatedConstraint(() =>

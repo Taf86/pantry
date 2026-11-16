@@ -98,6 +98,19 @@ export const requestIdInputSchema = z.object({
 });
 export type RequestIdInput = z.infer<typeof requestIdInputSchema>;
 
+export const approveRequestInputSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal(RequestType.signup),
+    requestId: z.uuid(),
+    tenantId: z.uuid(),
+  }),
+  z.object({
+    type: z.literal(RequestType.reset_password),
+    requestId: z.uuid(),
+  }),
+]);
+export type ApproveRequestInput = z.infer<typeof approveRequestInputSchema>;
+
 export type ApproveRequestResult = {
   request: RequestExtended;
   user: UserExtended;

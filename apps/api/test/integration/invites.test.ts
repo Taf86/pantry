@@ -22,7 +22,11 @@ import {
   requireInvite,
   sweepStaleInvites,
 } from "../../src/services/admin/invites.service.js";
-import { createHarness, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  type Harness,
+} from "../helpers/harness.js";
 
 const MS_PER_DAY = 86_400_000;
 const PAGE: ListInvitesInput = {
@@ -53,6 +57,7 @@ describe("onboarding without email", () => {
       email: "admin@example.com",
       displayName: "Administrator",
       role: "admin",
+      tenantId: MAIN_TENANT_ID,
     });
 
   const inviteRow = (userId: string) =>
@@ -254,11 +259,13 @@ describe("onboarding without email", () => {
       email: "used@example.com",
       displayName: "Used",
       role: "user",
+      tenantId: MAIN_TENANT_ID,
     });
     const { user: expired } = await createUser({ db: harness.db }, fresh.id, {
       email: "expired@example.com",
       displayName: "Expired",
       role: "user",
+      tenantId: MAIN_TENANT_ID,
     });
 
     const longAgo = new Date(
@@ -286,6 +293,7 @@ describe("onboarding without email", () => {
       email: "suspended@example.com",
       displayName: "Suspended",
       role: "user",
+      tenantId: MAIN_TENANT_ID,
     });
 
     await setStatus(deps, "another-admin", {

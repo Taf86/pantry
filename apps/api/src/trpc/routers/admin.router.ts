@@ -1,4 +1,5 @@
 import {
+  approveRequestInputSchema,
   createUserInputSchema,
   editUserInputSchema,
   inviteIdInputSchema,
@@ -30,9 +31,14 @@ import {
   setRole,
   setStatus,
 } from "../../services/admin/admin.service.js";
+import { getTenants } from "../../services/tenants/tenants.service.js";
 import { adminProcedure, router } from "../trpc.js";
 
 export const adminRouter = router({
+  tenants: router({
+    list: adminProcedure.query(({ ctx }) => getTenants(ctx)),
+  }),
+
   users: router({
     list: adminProcedure
       .input(listUsersInputSchema)
@@ -87,10 +93,8 @@ export const adminRouter = router({
       .query(({ ctx, input }) => requireRequest(ctx, input.requestId)),
 
     approve: adminProcedure
-      .input(requestIdInputSchema)
-      .mutation(({ ctx, input }) =>
-        approveRequest(ctx, ctx.user.id, input.requestId),
-      ),
+      .input(approveRequestInputSchema)
+      .mutation(({ ctx, input }) => approveRequest(ctx, ctx.user.id, input)),
 
     reject: adminProcedure
       .input(requestIdInputSchema)

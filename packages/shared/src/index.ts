@@ -4,6 +4,7 @@ export * from "./schemas/invites.js";
 export * from "./schemas/lists.js";
 export * from "./schemas/push.js";
 export * from "./schemas/requests.js";
+export * from "./schemas/tenants.js";
 export * from "./constants.js";
 export * from "./date.js";
 export * from "./events.js";

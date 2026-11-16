@@ -40,6 +40,7 @@ describe("closing the sockets of a session that ends", () => {
       email: "target@example.com",
       displayName: "Target",
       role: "user",
+      tenantId: MAIN_TENANT_ID,
     });
 
   describe("the admin service, which deletes sessions behind Better Auth's back", () => {

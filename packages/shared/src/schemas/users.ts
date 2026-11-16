@@ -7,6 +7,7 @@ import {
   type Page,
 } from "./common.js";
 import { MAX_CONTACT_LENGTH, MAX_NAME_LENGTH } from "../constants.js";
+import type { TenantRef } from "./tenants.js";
 
 export const UserRole = {
   user: "user",
@@ -39,6 +40,7 @@ export type User = UserRef & {
   status: UserStatus;
 };
 export type UserExtended = User & {
+  tenant: TenantRef;
   createdAt: string;
   updatedAt: string;
   lastSeenAt: string | null;
@@ -79,6 +81,7 @@ export const createUserInputSchema = z.object({
   email: emailSchema,
   displayName: nameSchema,
   role: userRoleSchema.default("user"),
+  tenantId: z.uuid(),
 });
 export type CreateUserInput = z.infer<typeof createUserInputSchema>;
 

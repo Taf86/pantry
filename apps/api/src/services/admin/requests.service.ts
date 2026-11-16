@@ -7,6 +7,7 @@ import {
   RequestStatus,
   RequestType,
   serializeDates,
+  type ApproveRequestInput,
   type ApproveRequestResult,
   type CreateRequestInput,
   type ListRequestsFilters,
@@ -38,7 +39,6 @@ import { requests } from "../../db/schema/requests.js";
 import { users } from "../../db/schema/users.js";
 import type { AdminNotifier } from "../notifications/admin-notifier.js";
 import { createUserTx, requireUser } from "./admin.service.js";
-import { requireMainTenantId } from "../tenants/tenants.service.js";
 import { issueInviteTx } from "./invites.service.js";
 
 export const createRequest = async (
@@ -143,8 +143,9 @@ export const requireRequest = async (
 export const approveRequest = async (
   deps: RequestDeps,
   actorId: string,
-  requestId: string,
+  input: ApproveRequestInput,
 ): Promise<ApproveRequestResult> => {
+  const { requestId } = input;
   const { userId, invite } = await deps.db.transaction(async (tx) => {
     const decided = await decideTx(
       tx,
@@ -153,9 +154,21 @@ export const approveRequest = async (
       actorId,
     );
 
+    if (decided.type !== input.type) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Request type does not match.",
+      });
+    }
+
     const userId =
-      decided.type === RequestType.signup
-        ? await createSignupUser(tx, decided.email, decided.displayName)
+      input.type === RequestType.signup
+        ? await createSignupUser(
+            tx,
+            decided.email,
+            decided.displayName,
+            input.tenantId,
+          )
         : await resolveResetTarget(tx, decided.email);
 
     await tx.update(requests).set({ userId }).where(eq(requests.id, requestId));
@@ -284,6 +297,7 @@ const createSignupUser = async (
   tx: Executor,
   email: string,
   displayName: string | null,
+  tenantId: string,
 ): Promise<string> => {
   if (!displayName) {
     throw new TRPCError({
@@ -292,11 +306,12 @@ const createSignupUser = async (
     });
   }
 
-  const { userId } = await createUserTx(
-    tx,
-    { email, displayName, role: "user" },
-    await requireMainTenantId(tx),
-  );
+  const { userId } = await createUserTx(tx, {
+    email,
+    displayName,
+    role: "user",
+    tenantId,
+  });
   return userId;
 };
 

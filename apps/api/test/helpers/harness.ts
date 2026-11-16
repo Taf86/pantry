@@ -96,7 +96,8 @@ const ensureDatabase = async (config: AppConfig): Promise<void> => {
   }
 };
 
-export const MAIN_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+export const MAIN_TENANT_ID = "00000000-0000-4000-8000-000000000001";
+export const OTHER_TENANT_ID = "00000000-0000-4000-8000-000000000002";
 
 const tableNames = (Object.values(schema) as unknown[])
   .filter((value) => is(value, PgTable))
