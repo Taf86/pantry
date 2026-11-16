@@ -96,6 +96,8 @@ const ensureDatabase = async (config: AppConfig): Promise<void> => {
   }
 };
 
+export const MAIN_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+
 const tableNames = (Object.values(schema) as unknown[])
   .filter((value) => is(value, PgTable))
   .map((table) => `"${getTableName(table)}"`);
@@ -111,6 +113,9 @@ export const createHarness = async (): Promise<Harness> => {
     await handle.db.execute(
       sql.raw(`TRUNCATE ${tableNames.join(", ")} RESTART IDENTITY CASCADE`),
     );
+    await handle.db
+      .insert(schema.tenants)
+      .values({ id: MAIN_TENANT_ID, name: "Main", main: true });
   };
 
   await reset();
@@ -191,6 +196,7 @@ export const silentLogger = () =>
 
 export const makeUser = async (
   harness: Harness,
+  tenantId: string,
   overrides: {
     email?: string;
     displayName?: string;
@@ -201,6 +207,7 @@ export const makeUser = async (
   const id = randomUUID();
   await harness.db.insert(schema.users).values({
     id,
+    tenantId,
     email: overrides.email ?? `${id}@example.com`,
     displayName: overrides.displayName ?? `User ${id.slice(0, 4)}`,
     role: overrides.role ?? "user",

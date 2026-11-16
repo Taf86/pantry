@@ -11,7 +11,12 @@ import {
   createRecordingEventBus,
   type RecordingEventBus,
 } from "../../src/realtime/events.js";
-import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  makeUser,
+  type Harness,
+} from "../helpers/harness.js";
 
 describe("closing the sockets of a session that ends", () => {
   let harness: Harness;
@@ -94,7 +99,7 @@ describe("closing the sockets of a session that ends", () => {
 
     it("reports one session deleted, as a sign-out does", async () => {
       const { auth, deleted } = withHook();
-      const userId = await makeUser(harness);
+      const userId = await makeUser(harness, MAIN_TENANT_ID);
       const { internalAdapter } = await auth.$context;
       const session = await internalAdapter.createSession(userId);
 
@@ -105,7 +110,7 @@ describe("closing the sockets of a session that ends", () => {
 
     it("reports every session of a user revoked at once", async () => {
       const { auth, deleted } = withHook();
-      const userId = await makeUser(harness);
+      const userId = await makeUser(harness, MAIN_TENANT_ID);
       const { internalAdapter } = await auth.$context;
       const first = await internalAdapter.createSession(userId);
       const second = await internalAdapter.createSession(userId);

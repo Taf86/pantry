@@ -14,7 +14,12 @@ import {
   claimMutation,
   sweepAppliedMutations,
 } from "../../src/services/lists/mutations.js";
-import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  makeUser,
+  type Harness,
+} from "../helpers/harness.js";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -28,12 +33,19 @@ describe("list membership", () => {
     const id = crypto.randomUUID();
     await harness.db
       .insert(lists)
-      .values({ id, name: "Spesa", createdBy: member });
+      .values({
+        id,
+        tenantId: MAIN_TENANT_ID,
+        name: "Spesa",
+        createdBy: member,
+      });
     return id;
   };
 
   const share = (id: string, userId: string, permissions: number) =>
-    harness.db.insert(listMembers).values({ listId: id, userId, permissions });
+    harness.db
+      .insert(listMembers)
+      .values({ listId: id, userId, tenantId: MAIN_TENANT_ID, permissions });
 
   beforeAll(async () => {
     harness = await createHarness();
@@ -45,8 +57,8 @@ describe("list membership", () => {
 
   beforeEach(async () => {
     await harness.reset();
-    member = await makeUser(harness, { status: "active" });
-    stranger = await makeUser(harness, { status: "active" });
+    member = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
+    stranger = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
     listId = await makeList();
     await share(listId, member, Role.Owner);
   });
@@ -111,7 +123,7 @@ describe("mutation deduplication", () => {
 
   beforeEach(async () => {
     await harness.reset();
-    userId = await makeUser(harness, { status: "active" });
+    userId = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
   });
 
   it("claims a mutation the first time and refuses the replay", async () => {

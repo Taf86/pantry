@@ -23,7 +23,12 @@ import type {
   PushResult,
   PushSender,
 } from "../../src/services/push/webpush.js";
-import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  makeUser,
+  type Harness,
+} from "../helpers/harness.js";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -75,7 +80,7 @@ describe("push", () => {
   beforeEach(async () => {
     await harness.reset();
     vi.clearAllMocks();
-    admin = await makeUser(harness, {
+    admin = await makeUser(harness, MAIN_TENANT_ID, {
       email: "admin@example.com",
       role: "admin",
     });
@@ -129,7 +134,9 @@ describe("push", () => {
     });
 
     it("re-points a device where someone else signs in", async () => {
-      const other = await makeUser(harness, { email: "other@example.com" });
+      const other = await makeUser(harness, MAIN_TENANT_ID, {
+        email: "other@example.com",
+      });
 
       await registerSubscription(deps(), admin, subscription("a"));
       await registerSubscription(deps(), other, subscription("a"));
@@ -163,7 +170,9 @@ describe("push", () => {
 
   describe("removeSubscription", () => {
     it("removes only the caller's own device", async () => {
-      const other = await makeUser(harness, { email: "other@example.com" });
+      const other = await makeUser(harness, MAIN_TENANT_ID, {
+        email: "other@example.com",
+      });
       await registerSubscription(deps(), admin, subscription("a"));
       await registerSubscription(deps(), other, subscription("b"));
 
@@ -200,7 +209,7 @@ describe("push", () => {
     const notification = requestQueuedNotification(3);
 
     it("reaches every device of every active admin", async () => {
-      const secondAdmin = await makeUser(harness, {
+      const secondAdmin = await makeUser(harness, MAIN_TENANT_ID, {
         email: "admin2@example.com",
         role: "admin",
       });
@@ -218,8 +227,10 @@ describe("push", () => {
     });
 
     it("skips plain users and admins who are not active", async () => {
-      const plain = await makeUser(harness, { email: "user@example.com" });
-      const suspended = await makeUser(harness, {
+      const plain = await makeUser(harness, MAIN_TENANT_ID, {
+        email: "user@example.com",
+      });
+      const suspended = await makeUser(harness, MAIN_TENANT_ID, {
         email: "susp@example.com",
         role: "admin",
         status: "suspended",

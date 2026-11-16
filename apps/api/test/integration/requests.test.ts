@@ -33,7 +33,12 @@ import {
   sweepDecidedRequests,
   sweepStalePendingRequests,
 } from "../../src/services/admin/requests.service.js";
-import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  makeUser,
+  type Harness,
+} from "../helpers/harness.js";
 
 const MS_PER_DAY = 86_400_000;
 const PAGE: ListRequestsInput = {
@@ -56,7 +61,7 @@ describe("requests", () => {
 
   beforeEach(async () => {
     await harness.reset();
-    admin = await makeUser(harness, {
+    admin = await makeUser(harness, MAIN_TENANT_ID, {
       email: "admin@example.com",
       displayName: "Administrator",
       role: "admin",
@@ -131,6 +136,12 @@ describe("requests", () => {
     expect(user.status).toBe("unactivated");
     expect(user.role).toBe("user");
 
+    const [stored] = await harness.db
+      .select({ tenantId: users.tenantId })
+      .from(users)
+      .where(eq(users.id, user.id));
+    expect(stored?.tenantId).toBe(MAIN_TENANT_ID);
+
     expect(invite.userId).toBe(user.id);
     await expect(
       previewInvite(deps(), { token: invite.token }),
@@ -155,7 +166,7 @@ describe("requests", () => {
   });
 
   it("refuses a signup for an address that already has an account", async () => {
-    await makeUser(harness, { email: "taken@example.com" });
+    await makeUser(harness, MAIN_TENANT_ID, { email: "taken@example.com" });
     const { id } = await createRequest(deps(), {
       type: "signup",
       email: "taken@example.com",
@@ -202,7 +213,7 @@ describe("requests", () => {
   });
 
   it("does not reset the password of a suspended account", async () => {
-    const suspended = await makeUser(harness, {
+    const suspended = await makeUser(harness, MAIN_TENANT_ID, {
       email: "suspended@example.com",
     });
     await setStatus(deps(), admin, {

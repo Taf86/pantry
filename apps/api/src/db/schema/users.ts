@@ -1,11 +1,23 @@
-import { boolean, check, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { UserRole, UserRoles, UserStatus, UserStatuses } from "@pantry/shared";
+import { tenants } from "./tenants.js";
 
 export const users = pgTable(
   "users",
   {
     id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "restrict" }),
     email: text("email").notNull().unique(),
     displayName: text("display_name").notNull(),
     emailVerified: boolean("email_verified").notNull().default(false),
@@ -23,6 +35,8 @@ export const users = pgTable(
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   },
   (table) => [
+    unique("users_id_tenant_unique").on(table.id, table.tenantId),
+    index("idx_users_tenant").on(table.tenantId),
     check(
       "users_role_check",
       sql`${table.role} IN (${sql.join(

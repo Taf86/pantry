@@ -20,7 +20,12 @@ import {
   createRecordingEventBus,
   type RecordingEventBus,
 } from "../../src/realtime/events.js";
-import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  makeUser,
+  type Harness,
+} from "../helpers/harness.js";
 
 describe("lists", () => {
   let harness: Harness;
@@ -52,8 +57,8 @@ describe("lists", () => {
   beforeEach(async () => {
     await harness.reset();
     events = createRecordingEventBus();
-    owner = await makeUser(harness, { status: "active" });
-    mate = await makeUser(harness, { status: "active" });
+    owner = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
+    mate = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
   });
 
   describe("creating", () => {
@@ -225,7 +230,7 @@ describe("lists", () => {
     it("answers a suspended account like a missing one", async () => {
       const list = await newList();
       const email = "gone@example.com";
-      await makeUser(harness, { email, status: "suspended" });
+      await makeUser(harness, MAIN_TENANT_ID, { email, status: "suspended" });
 
       expect(
         await findMemberCandidate(deps(), owner, { listId: list.id, email }),
@@ -486,8 +491,10 @@ describe("a list and the account that made it", () => {
   });
 
   it("goes when the creator's account goes, even for the others on it", async () => {
-    const creator = await makeUser(harness, { status: "active" });
-    const guest = await makeUser(harness, { status: "active" });
+    const creator = await makeUser(harness, MAIN_TENANT_ID, {
+      status: "active",
+    });
+    const guest = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
     const list = await createList(deps(), creator, {
       ...mutation(),
       id: crypto.randomUUID(),
@@ -507,8 +514,10 @@ describe("a list and the account that made it", () => {
   });
 
   it("survives losing a member who merely belonged to it", async () => {
-    const creator = await makeUser(harness, { status: "active" });
-    const guest = await makeUser(harness, { status: "active" });
+    const creator = await makeUser(harness, MAIN_TENANT_ID, {
+      status: "active",
+    });
+    const guest = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
     const list = await createList(deps(), creator, {
       ...mutation(),
       id: crypto.randomUUID(),
@@ -527,7 +536,9 @@ describe("a list and the account that made it", () => {
   });
 
   it("cannot be left with members but nobody able to manage it", async () => {
-    const creator = await makeUser(harness, { status: "active" });
+    const creator = await makeUser(harness, MAIN_TENANT_ID, {
+      status: "active",
+    });
     const list = await createList(deps(), creator, {
       ...mutation(),
       id: crypto.randomUUID(),

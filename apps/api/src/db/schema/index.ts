@@ -6,5 +6,6 @@ export * from "./lists.js";
 export * from "./push-subscriptions.js";
 export * from "./requests.js";
 export * from "./sessions.js";
+export * from "./tenants.js";
 export * from "./users.js";
 export * from "./verifications.js";

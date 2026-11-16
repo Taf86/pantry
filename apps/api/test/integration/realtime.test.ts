@@ -12,7 +12,12 @@ import type { Socket } from "socket.io-client";
 
 import { listMembers } from "../../src/db/schema/list-members.js";
 import { lists } from "../../src/db/schema/lists.js";
-import { createHarness, makeUser, type Harness } from "../helpers/harness.js";
+import {
+  createHarness,
+  MAIN_TENANT_ID,
+  makeUser,
+  type Harness,
+} from "../helpers/harness.js";
 import {
   collect,
   createRealtimeHarness,
@@ -32,11 +37,16 @@ describe("the realtime bus", () => {
     const id = crypto.randomUUID();
     await harness.db
       .insert(lists)
-      .values({ id, name: "Spesa", createdBy: marco });
+      .values({
+        id,
+        tenantId: MAIN_TENANT_ID,
+        name: "Spesa",
+        createdBy: marco,
+      });
     for (const [userId, permissions] of members) {
       await harness.db
         .insert(listMembers)
-        .values({ listId: id, userId, permissions });
+        .values({ listId: id, userId, tenantId: MAIN_TENANT_ID, permissions });
     }
     return id;
   };
@@ -54,8 +64,8 @@ describe("the realtime bus", () => {
 
   beforeEach(async () => {
     await harness.reset();
-    marco = await makeUser(harness, { status: "active" });
-    anna = await makeUser(harness, { status: "active" });
+    marco = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
+    anna = await makeUser(harness, MAIN_TENANT_ID, { status: "active" });
     listId = await makeList([
       [marco, Role.Owner],
       [anna, Role.Shopper],
@@ -111,7 +121,9 @@ describe("the realtime bus", () => {
     });
 
     it("refuses a socket that joins a list it cannot read", async () => {
-      const stranger = await makeUser(harness, { status: "active" });
+      const stranger = await makeUser(harness, MAIN_TENANT_ID, {
+        status: "active",
+      });
       const socket = await rt.open(stranger);
       const received = collect(socket);
 
@@ -220,7 +232,9 @@ describe("the realtime bus", () => {
       ({ type: "list.member.changed", listId, userId, permissions }) as const;
 
     it("tells a member they were added to a list whose room they never joined", async () => {
-      const newcomer = await makeUser(harness, { status: "active" });
+      const newcomer = await makeUser(harness, MAIN_TENANT_ID, {
+        status: "active",
+      });
       const socket = await rt.open(newcomer);
       const received = collect(socket);
       await settle();
@@ -260,7 +274,9 @@ describe("the realtime bus", () => {
     });
 
     it("keeps a change about someone else away from a user outside the list", async () => {
-      const stranger = await makeUser(harness, { status: "active" });
+      const stranger = await makeUser(harness, MAIN_TENANT_ID, {
+        status: "active",
+      });
       const socket = await rt.open(stranger);
       const received = collect(socket);
       await settle();

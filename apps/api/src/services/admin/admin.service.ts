@@ -30,6 +30,7 @@ import type { PgColumn } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 import { issueInviteTx } from "./invites.service.js";
+import { requireMainTenantId } from "../tenants/tenants.service.js";
 import { sessions } from "../../db/schema/sessions.js";
 import { accounts } from "../../db/schema/accounts.js";
 import { invites } from "../../db/schema/invites.js";
@@ -75,7 +76,11 @@ export const createUser = async (
   input: CreateUserInput,
 ): Promise<{ user: UserExtended; invite: InviteLink }> => {
   const invite = await deps.db.transaction(async (tx) => {
-    const { userId } = await createUserTx(tx, input);
+    const { userId } = await createUserTx(
+      tx,
+      input,
+      await requireMainTenantId(tx),
+    );
     return await issueInviteTx(tx, userId, actorId ?? userId);
   });
 
@@ -250,6 +255,7 @@ export const setRole = async (
 export const createUserTx = async (
   tx: Executor,
   input: CreateUserInput,
+  tenantId: string,
 ): Promise<{ userId: string }> => {
   const [existing] = await tx
     .select({ id: users.id })
@@ -267,6 +273,7 @@ export const createUserTx = async (
   const userId = randomUUID();
   await tx.insert(users).values({
     id: userId,
+    tenantId,
     email: input.email,
     displayName: input.displayName,
     role: input.role,

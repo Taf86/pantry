@@ -38,6 +38,7 @@ import { requests } from "../../db/schema/requests.js";
 import { users } from "../../db/schema/users.js";
 import type { AdminNotifier } from "../notifications/admin-notifier.js";
 import { createUserTx, requireUser } from "./admin.service.js";
+import { requireMainTenantId } from "../tenants/tenants.service.js";
 import { issueInviteTx } from "./invites.service.js";
 
 export const createRequest = async (
@@ -291,11 +292,11 @@ const createSignupUser = async (
     });
   }
 
-  const { userId } = await createUserTx(tx, {
-    email,
-    displayName,
-    role: "user",
-  });
+  const { userId } = await createUserTx(
+    tx,
+    { email, displayName, role: "user" },
+    await requireMainTenantId(tx),
+  );
   return userId;
 };
 

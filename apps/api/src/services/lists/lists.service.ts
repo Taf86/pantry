@@ -59,9 +59,24 @@ export const createList = async (
       throw new TRPCError({ code: "BAD_REQUEST", message: "Too many lists." });
     }
 
+    const [creator] = await tx
+      .select({ tenantId: users.tenantId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!creator) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "User not existing." });
+    }
+
     const inserted = await tx
       .insert(lists)
-      .values({ id: input.id, name: input.name, createdBy: userId })
+      .values({
+        id: input.id,
+        tenantId: creator.tenantId,
+        name: input.name,
+        createdBy: userId,
+      })
       .onConflictDoNothing()
       .returning({ id: lists.id });
 
@@ -76,9 +91,12 @@ export const createList = async (
       throw new TRPCError({ code: "CONFLICT", message: "List id taken." });
     }
 
-    await tx
-      .insert(listMembers)
-      .values({ listId: input.id, userId, permissions: Role.Owner });
+    await tx.insert(listMembers).values({
+      listId: input.id,
+      userId,
+      tenantId: creator.tenantId,
+      permissions: Role.Owner,
+    });
     return true;
   });
 
@@ -239,7 +257,7 @@ export const setMember = async (
   await deps.db.transaction(async (tx) => {
     if (!(await claimMutation(tx, input.mutationId, actorId))) return;
 
-    await updateLockList(tx, input.listId);
+    const list = await updateLockList(tx, input.listId);
 
     const members = await tx
       .select({
@@ -283,7 +301,7 @@ export const setMember = async (
     const [user] = await tx
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.id, input.userId))
+      .where(and(eq(users.id, input.userId), eq(users.tenantId, list.tenantId)))
       .limit(1);
 
     if (!user) {
@@ -295,6 +313,7 @@ export const setMember = async (
       .values({
         listId: input.listId,
         userId: input.userId,
+        tenantId: list.tenantId,
         permissions: input.permissions,
         invitedBy: actorId,
       })
@@ -410,14 +429,18 @@ const asMember = (userId: string) =>
 const memberCan = (required: number) =>
   sql`(${listMembers.permissions} & ${required}) = ${required}`;
 
-const updateLockList = async (tx: Executor, listId: string): Promise<void> => {
+const updateLockList = async (
+  tx: Executor,
+  listId: string,
+): Promise<{ tenantId: string }> => {
   const [row] = await tx
-    .select({ id: lists.id })
+    .select({ tenantId: lists.tenantId })
     .from(lists)
     .where(eq(lists.id, listId))
     .for("update")
     .limit(1);
   if (!row) throw new TRPCError({ code: "FORBIDDEN" });
+  return row;
 };
 
 const assertHasManager = async (
