@@ -16,7 +16,6 @@ import {
   RequestStatus,
   RequestStatuses,
   RequestTypes,
-  type ApproveRequestResult,
   type ListRequestsFilters,
   type ListRequestsInput,
   type RequestExtended,
@@ -30,11 +29,7 @@ import RequestActions from "./request-actions";
 
 const columnHelper = createDataTableColumnHelper<RequestExtended>();
 
-export default function useRequestsTable({
-  onApproved,
-}: {
-  onApproved: (approved: ApproveRequestResult) => void;
-}) {
+export default function useRequestsTable() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const table = useDataTableState<RequestExtended>({
@@ -80,7 +75,7 @@ export default function useRequestsTable({
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
           {row.original.status === RequestStatus.pending && (
-            <RequestActions request={row.original} onApproved={onApproved} />
+            <RequestActions request={row.original} />
           )}
         </div>
       ),
@@ -104,7 +99,7 @@ export default function useRequestsTable({
         actions,
       ]),
     };
-  }, [t, locale, onApproved]);
+  }, [t, locale]);
 
   const sortFields = useMemo<DataTableSortField<RequestExtended>[]>(
     () => [

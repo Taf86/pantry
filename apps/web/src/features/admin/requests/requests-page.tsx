@@ -3,21 +3,12 @@ import { DataTableFilters } from "@/components/data-table/data-table-filters";
 import { DataTableSort } from "@/components/data-table/data-table-sort";
 import { keys } from "@/lib/keys";
 import { trpc } from "@/lib/trpc";
-import type { ApproveRequestResult } from "@pantry/shared";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import AcceptedRequestDialog from "./accepted-request-dialog";
 import useRequestsTable from "./use-requests-table";
 
 export default function RequestsPage() {
   const { t } = useTranslation();
-
-  const [approved, setApproved] = useState<ApproveRequestResult | null>(null);
-  const onApproved = useCallback(
-    (result: ApproveRequestResult) => setApproved(result),
-    [],
-  );
 
   const {
     table,
@@ -26,7 +17,7 @@ export default function RequestsPage() {
     mobileColumns,
     sortFields,
     filterFields,
-  } = useRequestsTable({ onApproved });
+  } = useRequestsTable();
 
   const requests = useQuery({
     queryKey: keys.adminRequestsList(input),
@@ -57,11 +48,6 @@ export default function RequestsPage() {
         isPending={requests.isPending}
         isFetching={requests.isFetching}
         emptyMessage={t("feature.requests.empty")}
-      />
-
-      <AcceptedRequestDialog
-        approved={approved}
-        onClose={() => setApproved(null)}
       />
     </div>
   );

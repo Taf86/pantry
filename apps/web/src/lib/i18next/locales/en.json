@@ -213,18 +213,23 @@
         "accept": "Accept",
         "reject": "Reject"
       },
-      "accepted": {
-        "title": "Request accepted",
-        "description": "Hand this link to {{displayName}} ({{email}}): they choose the password themselves.",
-        "warningTitle": "Link generated",
-        "close": "Close"
-      },
-      "approve": {
-        "title": "Accept the request from {{email}}?",
-        "description": "Choose the tenant to create the account in. An invite link will be generated.",
+      "accept": {
+        "title": "Accept request",
+        "descriptionSignup": "Choose the tenant to create the account in and confirm: an invite link will be generated for you to hand to the user, who chooses the password themselves.",
+        "descriptionReset": "Confirm to generate a new link for you to hand to the user, who chooses the new password themselves.",
+        "type": "Type",
+        "email": "Email",
+        "name": "Name",
         "tenant": "Tenant",
-        "confirm": "Accept",
-        "cancel": "Cancel"
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "close": "Close",
+        "linkPending": "The link will appear after confirming",
+        "warningTitle": "Link generated",
+        "failed": "Could not accept the request",
+        "alreadyDecided": "This request has already been decided.",
+        "notFoundTitle": "Request not found",
+        "notFound": "The request does not exist or has been removed."
       },
       "reject": {
         "title": "Reject the request from {{email}}?",

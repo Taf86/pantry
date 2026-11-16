@@ -213,18 +213,23 @@
         "accept": "Accetta",
         "reject": "Rifiuta"
       },
-      "accepted": {
-        "title": "Richiesta accettata",
-        "description": "Consegna questo link a {{displayName}} ({{email}}): la password la sceglie da sé.",
-        "warningTitle": "Link generato",
-        "close": "Chiudi"
-      },
-      "approve": {
-        "title": "Accettare la richiesta di {{email}}?",
-        "description": "Scegli il tenant in cui creare l'account. Verrà generato il link d'invito.",
+      "accept": {
+        "title": "Accetta richiesta",
+        "descriptionSignup": "Scegli il tenant in cui creare l'account e conferma: verrà generato il link d'invito da consegnare all'utente, che sceglierà da sé la password.",
+        "descriptionReset": "Conferma per generare un nuovo link da consegnare all'utente, che sceglierà da sé la nuova password.",
+        "type": "Tipo",
+        "email": "Email",
+        "name": "Nome",
         "tenant": "Tenant",
-        "confirm": "Accetta",
-        "cancel": "Annulla"
+        "confirm": "Conferma",
+        "cancel": "Annulla",
+        "close": "Chiudi",
+        "linkPending": "Il link apparirà dopo la conferma",
+        "warningTitle": "Link generato",
+        "failed": "Impossibile accettare la richiesta",
+        "alreadyDecided": "Questa richiesta è già stata decisa.",
+        "notFoundTitle": "Richiesta non trovata",
+        "notFound": "La richiesta non esiste o è stata rimossa."
       },
       "reject": {
         "title": "Rifiutare la richiesta di {{email}}?",

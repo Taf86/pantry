@@ -23,6 +23,8 @@ export const keys = {
   adminRequests: () => ["admin", "requests"] as const,
   adminRequestsList: (input: ListRequestsInput) =>
     ["admin", "requests", "list", input] as const,
+  adminRequest: (requestId: string) =>
+    ["admin", "requests", requestId] as const,
   invitePreview: (token: string) => ["invite", token] as const,
   pushConfig: () => ["push", "config"] as const,
 } as const;

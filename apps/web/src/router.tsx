@@ -13,6 +13,7 @@ import NotFoundPage from "./components/errors/not-found-page";
 import RequireGuest from "./components/guards/require-guest";
 import InvitesPage from "./features/admin/invites/invites-page";
 import RequestsPage from "./features/admin/requests/requests-page";
+import AcceptRequestPage from "./features/admin/requests/accept-request-page";
 import RequestPage from "./features/auth/request-page";
 import ShoppingPage from "./features/shopping/shopping-page";
 import PantriesPage from "./features/pantries/pantries-page";
@@ -74,6 +75,10 @@ const router = createBrowserRouter([
                   { path: "users/:userId", element: <UserPage /> },
                   { path: "invites", element: <InvitesPage /> },
                   { path: "requests", element: <RequestsPage /> },
+                  {
+                    path: "requests/:requestId",
+                    element: <AcceptRequestPage />,
+                  },
                 ],
               },
             ],
