@@ -116,6 +116,16 @@ const pressAndRead = async (): Promise<string> => {
   return toast.textContent ?? "";
 };
 
+// Success is shown by the toggle itself, so no toast should appear.
+const pressAndExpectPressed = async (pressed: boolean) => {
+  const button = await settledBell();
+  await userEvent.click(button);
+  await waitFor(() => {
+    expect(button).toHaveAttribute("aria-pressed", String(pressed));
+  });
+  expect(screen.queryByRole("dialog")).toBeNull();
+};
+
 beforeEach(async () => {
   await import("@/lib/i18next");
   vi.clearAllMocks();
@@ -153,11 +163,7 @@ describe("PushToggle", () => {
     const button = await settledBell();
     expect(button).toHaveAttribute("aria-pressed", "false");
 
-    await pressAndRead();
-
-    await waitFor(() => {
-      expect(button).toHaveAttribute("aria-pressed", "true");
-    });
+    await pressAndExpectPressed(true);
   });
 
   it("claims nothing until it knows, and cannot be pressed meanwhile", async () => {
@@ -183,11 +189,11 @@ describe("PushToggle", () => {
     expect(button).toBeEnabled();
   });
 
-  it("asks, subscribes, registers and says so", async () => {
+  it("asks, subscribes and registers without a toast", async () => {
     givenBrowser();
     renderToggle(<PushToggle />);
 
-    expect(await pressAndRead()).toMatch(/attive|on for this device/i);
+    await pressAndExpectPressed(true);
 
     expect(requestPermission).toHaveBeenCalledTimes(1);
     expect(pushSubscribe).toHaveBeenCalledWith(
@@ -198,7 +204,7 @@ describe("PushToggle", () => {
     );
   });
 
-  it("releases the device on both sides and says so", async () => {
+  it("releases the device on both sides without a toast", async () => {
     givenBrowser({ permission: "granted", existing: fakeSubscription });
     renderToggle(<PushToggle />);
 
@@ -206,7 +212,7 @@ describe("PushToggle", () => {
       expect(subscribe).toHaveBeenCalled();
     });
 
-    expect(await pressAndRead()).toMatch(/disattivate|off for this device/i);
+    await pressAndExpectPressed(false);
 
     expect(unsubscribe).toHaveBeenCalledWith({ endpoint: ENDPOINT });
     expect(subscriptionUnsubscribe).toHaveBeenCalled();
