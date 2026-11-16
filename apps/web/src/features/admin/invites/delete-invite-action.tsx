@@ -34,14 +34,9 @@ export default function DeleteInviteAction({
   const remove = useMutation({
     mutationFn: () => trpc.admin.invites.delete.mutate({ inviteId: invite.id }),
     networkMode: "online",
-    onSuccess: async (deleted) => {
+    onSuccess: async () => {
       setOpen(false);
       await queryClient.invalidateQueries({ queryKey: keys.adminInvites() });
-      toast.add({
-        description: t("feature.invites.delete.done", {
-          displayName: deleted.user.displayName,
-        }),
-      });
     },
     onError: (cause: unknown) => {
       setOpen(false);

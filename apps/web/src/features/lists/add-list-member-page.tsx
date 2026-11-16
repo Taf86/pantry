@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/toast";
 import { useAppMutation } from "@/hooks/use-app-mutation";
 import useErrorMessage from "@/hooks/use-error-message";
 import { useIsOnline } from "@/hooks/use-is-online";
@@ -154,14 +153,7 @@ function AddMember({ list }: { list: ListMembers }) {
         permissions: Role[data.role],
       },
       {
-        onSuccess: () => {
-          toast.add({
-            description: t("feature.lists.members.added", {
-              displayName: found.displayName,
-            }),
-          });
-          void navigate(membersPath);
-        },
+        onSuccess: () => void navigate(membersPath),
       },
     );
   };

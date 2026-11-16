@@ -11,7 +11,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
 import { useAppMutation } from "@/hooks/use-app-mutation";
 import { MUTATION } from "@/lib/mutations";
 import { uuidv7, type DeleteListInput, type ListSummary } from "@pantry/shared";
@@ -26,15 +25,7 @@ export default function DeleteListAction({ list }: { list: ListSummary }) {
   const remove = useAppMutation<DeleteListInput>(MUTATION.listDelete);
 
   const confirm = () => {
-    remove.mutate(
-      { mutationId: uuidv7(), listId: list.id },
-      {
-        onSuccess: () =>
-          toast.add({
-            description: t("feature.lists.index.deleted", { name: list.name }),
-          }),
-      },
-    );
+    remove.mutate({ mutationId: uuidv7(), listId: list.id });
     setOpen(false);
   };
 

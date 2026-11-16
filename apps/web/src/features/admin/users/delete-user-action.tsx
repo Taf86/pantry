@@ -35,14 +35,9 @@ export default function DeleteUserAction({ user }: { user: UserExtended }) {
   const remove = useMutation({
     mutationFn: () => trpc.admin.users.delete.mutate({ userId: user.id }),
     networkMode: "online",
-    onSuccess: async (deleted) => {
+    onSuccess: async () => {
       setOpen(false);
       await queryClient.invalidateQueries({ queryKey: keys.adminUsers() });
-      toast.add({
-        description: t("feature.users.delete.done", {
-          displayName: deleted.displayName,
-        }),
-      });
     },
     onError: (cause: unknown) => {
       setOpen(false);

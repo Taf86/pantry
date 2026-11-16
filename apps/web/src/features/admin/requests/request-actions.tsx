@@ -94,11 +94,6 @@ export default function RequestActions({
     onSuccess: async () => {
       setConfirming(false);
       await refresh();
-      toast.add({
-        description: t("feature.requests.reject.done", {
-          email: request.email,
-        }),
-      });
     },
     onError: (cause: unknown) => {
       setConfirming(false);

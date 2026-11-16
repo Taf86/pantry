@@ -7,12 +7,11 @@ import { BellIcon, BellRingIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ParseKeys } from "i18next";
 
-const OUTCOMES: Record<
-  PushOutcome,
-  { key: ParseKeys; type: "success" | "info" | "warning" | "error" }
+// enabled/disabled are visible from the toggle itself: only explain failures.
+const FAILURES: Record<
+  Exclude<PushOutcome, "enabled" | "disabled">,
+  { key: ParseKeys; type: "info" | "warning" | "error" }
 > = {
-  enabled: { key: "feature.push.enabled", type: "success" },
-  disabled: { key: "feature.push.disabled", type: "info" },
   unavailable: { key: "feature.push.unavailable", type: "warning" },
   denied: { key: "feature.push.denied", type: "warning" },
   "install-first": { key: "feature.push.installFirst", type: "info" },
@@ -27,7 +26,9 @@ export default function PushToggle() {
   if (support === "unsupported") return null;
 
   const press = async () => {
-    const { key, type } = OUTCOMES[await toggle()];
+    const outcome = await toggle();
+    if (outcome === "enabled" || outcome === "disabled") return;
+    const { key, type } = FAILURES[outcome];
     toast.add({ title: t("feature.push.label"), description: t(key), type });
   };
 

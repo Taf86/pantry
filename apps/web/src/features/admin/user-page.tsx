@@ -18,8 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FeedbackIcon } from "@/components/feedback-icon";
 import { toast } from "@/components/ui/toast";
 import useErrorMessage from "@/hooks/use-error-message";
+import { useFeedback } from "@/hooks/use-feedback";
 import { inviteUrl } from "@/lib/invites";
 import { keys } from "@/lib/keys";
 import { trpc, type ApiError } from "@/lib/trpc";
@@ -68,6 +70,7 @@ export default function UserPage() {
   const errorMessage = useErrorMessage(apiErrorMessage);
 
   const [error, setError] = useState<string | null>(null);
+  const saveFeedback = useFeedback();
 
   const user = useQuery({
     queryKey: keys.adminUser(userId ?? ""),
@@ -139,7 +142,7 @@ export default function UserPage() {
     networkMode: "online",
     onSuccess: async () => {
       await refreshUsers();
-      toast.add({ description: t("feature.users.form.saved") });
+      saveFeedback.show("success");
     },
     onError: (cause: unknown) => setError(errorMessage(cause)),
   });
@@ -359,6 +362,11 @@ export default function UserPage() {
 
             <Field orientation="horizontal">
               <Button type="submit" disabled={pending || locked}>
+                <FeedbackIcon
+                  status={saveFeedback.status}
+                  successLabel={t("feature.users.form.saved")}
+                  failureLabel=""
+                />
                 {t(
                   editing
                     ? "feature.users.form.save"

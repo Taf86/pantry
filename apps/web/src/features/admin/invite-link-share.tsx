@@ -2,17 +2,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/toast";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { canShare, mailtoUrl, shareLink } from "@/lib/share";
+import { FeedbackIcon } from "@/components/feedback-icon";
+import { useFeedback } from "@/hooks/use-feedback";
+import { canShare, copyToClipboard, mailtoUrl, shareLink } from "@/lib/share";
 import type { UserRef } from "@pantry/shared";
 import {
-  CheckIcon,
   CopyIcon,
   MailIcon,
   Share2Icon,
   TriangleAlertIcon,
-  XIcon,
 } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,13 +37,11 @@ export default function InviteLinkShare({
   const displayName = recipient?.displayName ?? "";
   const email = recipient?.email ?? "";
 
-  const clipboard = useCopyToClipboard();
+  const copyFeedback = useFeedback();
+  const shareFeedback = useFeedback();
 
-  const copyFeedback = {
-    copied: t("feature.inviteLink.copied"),
-    failed: t("feature.inviteLink.copyFailed"),
-    idle: "",
-  }[clipboard.status];
+  const copy = async () =>
+    copyFeedback.show((await copyToClipboard(url)) ? "success" : "failure");
 
   const share = async () => {
     const outcome = await shareLink({
@@ -53,12 +49,7 @@ export default function InviteLinkShare({
       text: t("feature.inviteLink.shareText", { displayName, email }),
       url,
     });
-    if (outcome === "failed") {
-      toast.add({
-        type: "error",
-        description: t("feature.inviteLink.shareFailed"),
-      });
-    }
+    if (outcome === "failed") shareFeedback.show("failure");
   };
 
   const mailHref = recipient
@@ -99,31 +90,15 @@ export default function InviteLinkShare({
           type="button"
           variant="outline"
           disabled={url === ""}
-          onClick={() => void clipboard.copy(url)}
+          onClick={() => void copy()}
         >
-          {clipboard.status === "copied" ? (
-            <CheckIcon
-              key="copied"
-              data-icon="inline-start"
-              className="animate-in duration-200 fade-in-0 zoom-in-50"
-            />
-          ) : clipboard.status === "failed" ? (
-            <XIcon
-              key="failed"
-              data-icon="inline-start"
-              className="text-destructive animate-in duration-200 fade-in-0 zoom-in-50"
-            />
-          ) : (
-            <CopyIcon
-              key="copy"
-              data-icon="inline-start"
-              className="animate-in duration-200 fade-in-0 zoom-in-75"
-            />
-          )}
+          <FeedbackIcon
+            status={copyFeedback.status}
+            icon={CopyIcon}
+            successLabel={t("feature.inviteLink.copied")}
+            failureLabel={t("feature.inviteLink.copyFailed")}
+          />
           {t("feature.inviteLink.copy")}
-          <span className="sr-only" aria-live="polite">
-            {copyFeedback}
-          </span>
         </Button>
 
         {canShare() ? (
@@ -133,7 +108,12 @@ export default function InviteLinkShare({
             disabled={url === ""}
             onClick={() => void share()}
           >
-            <Share2Icon data-icon="inline-start" />
+            <FeedbackIcon
+              status={shareFeedback.status}
+              icon={Share2Icon}
+              successLabel=""
+              failureLabel={t("feature.inviteLink.shareFailed")}
+            />
             {t("feature.inviteLink.share")}
           </Button>
         ) : url === "" || mailHref === "" ? (

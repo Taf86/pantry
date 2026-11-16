@@ -111,7 +111,6 @@
         "description": "The account, its sessions and every invite linked to it are removed for good. Invites this user issued to others are removed too. This cannot be undone.",
         "confirm": "Delete",
         "cancel": "Cancel",
-        "done": "{{displayName}} has been deleted.",
         "notAllowed": "Not allowed: at least one active administrator must remain and you cannot delete your own account."
       },
       "form": {
@@ -172,8 +171,7 @@
         "title": "Delete the invite for {{displayName}}?",
         "description": "The link stops working right away. If the user hasn't activated the account yet, you will have to issue a new invite. This cannot be undone.",
         "confirm": "Delete",
-        "cancel": "Cancel",
-        "done": "The invite for {{displayName}} has been deleted."
+        "cancel": "Cancel"
       }
     },
     "invite": {
@@ -232,8 +230,7 @@
         "title": "Reject the request from {{email}}?",
         "description": "No account is created and no link is issued. The same address can ask again later.",
         "confirm": "Reject",
-        "cancel": "Cancel",
-        "done": "The request from {{email}} has been rejected."
+        "cancel": "Cancel"
       },
       "error": {
         "decided": "The request has already been decided, or an account with this email already exists.",
@@ -263,8 +260,6 @@
     },
     "push": {
       "label": "Notifications",
-      "enabled": "On for this device. You will hear about new requests.",
-      "disabled": "Off for this device. This browser will stay quiet.",
       "unavailable": "Not configured on the server: no VAPID keys.",
       "denied": "Blocked for this site. Unblock them in your browser settings first.",
       "installFirst": "On iPhone and iPad, add Pantry to the Home Screen first.",
@@ -285,7 +280,6 @@
         "loadFailed": "The lists could not be loaded. Try again later.",
         "deleteTitle": "Delete {{name}}?",
         "deleteDescription": "The list, its items and its members will be deleted for everyone. This cannot be undone.",
-        "deleted": "{{name}} was deleted.",
         "deletedRemotely": "{{name}} was deleted by another member.",
         "accessRevoked": "You are no longer on {{name}}."
       },
@@ -341,7 +335,6 @@
         "roleOf": "Role of {{displayName}}",
         "add": "Add",
         "addFailed": "Could not add",
-        "added": "{{displayName}} was added to the list.",
         "userNotFound": "No active account has this email.",
         "alreadyMember": "This person is already on the list: change their role from the list below.",
         "tooManyLookups": "Too many lookups in a short time. Try again in a minute.",
@@ -350,11 +343,9 @@
         "remove": "Remove",
         "removeTitle": "Remove {{displayName}} from {{name}}?",
         "removeDescription": "They will no longer see the list until someone adds them again.",
-        "removed": "{{displayName}} was removed from the list.",
         "leave": "Leave list",
         "leaveTitle": "Leave {{name}}?",
         "leaveDescription": "You will no longer see the list until a manager adds you again.",
-        "left": "You left {{name}}.",
         "forbidden": "Only those who manage the list can add members."
       }
     },

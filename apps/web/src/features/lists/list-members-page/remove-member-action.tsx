@@ -11,7 +11,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
 import { useAppMutation } from "@/hooks/use-app-mutation";
 import useRequireAuth from "@/hooks/use-require-auth";
 import { MUTATION } from "@/lib/mutations";
@@ -50,20 +49,7 @@ export default function RemoveMemberAction({
       { mutationId: uuidv7(), listId: list.listId, userId: member.userId },
       {
         onSuccess: () => {
-          if (self) {
-            void navigate("/lists", { replace: true });
-            toast.add({
-              description: t("feature.lists.members.left", {
-                name: list.listName,
-              }),
-            });
-            return;
-          }
-          toast.add({
-            description: t("feature.lists.members.removed", {
-              displayName: member.userDisplayName,
-            }),
-          });
+          if (self) void navigate("/lists", { replace: true });
         },
         onSettled: () => setOpen(false),
       },

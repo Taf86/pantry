@@ -111,7 +111,6 @@
         "description": "L'account, le sue sessioni e tutti gli inviti collegati vengono rimossi definitivamente, compresi gli inviti che questo utente ha emesso per altri. L'operazione non è reversibile.",
         "confirm": "Elimina",
         "cancel": "Annulla",
-        "done": "{{displayName}} è stato eliminato.",
         "notAllowed": "Operazione non consentita: deve restare almeno un amministratore attivo e non puoi eliminare il tuo account."
       },
       "form": {
@@ -172,8 +171,7 @@
         "title": "Eliminare l'invito per {{displayName}}?",
         "description": "Il link smette di funzionare subito. Se l'utente non ha ancora attivato l'account, dovrai generargli un nuovo invito. L'operazione non è reversibile.",
         "confirm": "Elimina",
-        "cancel": "Annulla",
-        "done": "L'invito per {{displayName}} è stato eliminato."
+        "cancel": "Annulla"
       }
     },
     "invite": {
@@ -232,8 +230,7 @@
         "title": "Rifiutare la richiesta di {{email}}?",
         "description": "Non viene creato nessun account e non viene generato nessun link. Lo stesso indirizzo potrà richiederlo di nuovo più avanti.",
         "confirm": "Rifiuta",
-        "cancel": "Annulla",
-        "done": "La richiesta di {{email}} è stata rifiutata."
+        "cancel": "Annulla"
       },
       "error": {
         "decided": "La richiesta è già stata decisa, oppure esiste già un utente con questa email.",
@@ -263,8 +260,6 @@
     },
     "push": {
       "label": "Notifiche",
-      "enabled": "Attive su questo dispositivo. Ti avvisiamo delle nuove richieste.",
-      "disabled": "Disattivate su questo dispositivo. Questo browser resterà in silenzio.",
       "unavailable": "Non sono configurate sul server: mancano le chiavi VAPID.",
       "denied": "Bloccate per questo sito. Sbloccale prima dalle impostazioni del browser.",
       "installFirst": "Su iPhone e iPad aggiungi prima Pantry alla schermata Home.",
@@ -285,7 +280,6 @@
         "loadFailed": "Non è stato possibile caricare le liste. Riprova più tardi.",
         "deleteTitle": "Eliminare {{name}}?",
         "deleteDescription": "La lista, i suoi prodotti e i membri verranno eliminati per tutti. L'operazione non si può annullare.",
-        "deleted": "{{name}} è stata eliminata.",
         "deletedRemotely": "{{name}} è stata eliminata da un altro membro.",
         "accessRevoked": "Non fai più parte di {{name}}."
       },
@@ -341,7 +335,6 @@
         "roleOf": "Ruolo di {{displayName}}",
         "add": "Aggiungi",
         "addFailed": "Aggiunta non riuscita",
-        "added": "{{displayName}} è stato aggiunto alla lista.",
         "userNotFound": "Nessun account attivo con questa email.",
         "alreadyMember": "Questa persona fa già parte della lista: cambiale il ruolo dall'elenco.",
         "tooManyLookups": "Troppe ricerche in poco tempo. Riprova tra un minuto.",
@@ -350,11 +343,9 @@
         "remove": "Rimuovi",
         "removeTitle": "Rimuovere {{displayName}} da {{name}}?",
         "removeDescription": "Non vedrà più la lista finché qualcuno non lo aggiunge di nuovo.",
-        "removed": "{{displayName}} è stato rimosso dalla lista.",
         "leave": "Esci dalla lista",
         "leaveTitle": "Uscire da {{name}}?",
         "leaveDescription": "Non vedrai più la lista finché un gestore non ti aggiunge di nuovo.",
-        "left": "Sei uscito da {{name}}.",
         "forbidden": "Solo chi gestisce la lista può aggiungere membri."
       }
     },
