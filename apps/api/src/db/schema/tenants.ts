@@ -12,5 +12,6 @@ export const tenants = pgTable(
     uniqueIndex("idx_tenants_main")
       .on(table.main)
       .where(sql`${table.main}`),
+    uniqueIndex("idx_tenants_name").on(sql`lower(${table.name})`),
   ],
 );

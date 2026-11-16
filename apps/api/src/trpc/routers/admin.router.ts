@@ -1,6 +1,9 @@
 import {
   approveRequestInputSchema,
+  createTenantInputSchema,
   createUserInputSchema,
+  tenantIdInputSchema,
+  updateTenantInputSchema,
   editUserInputSchema,
   inviteIdInputSchema,
   listInvitesInputSchema,
@@ -31,12 +34,31 @@ import {
   setRole,
   setStatus,
 } from "../../services/admin/admin.service.js";
-import { getTenants } from "../../services/tenants/tenants.service.js";
+import {
+  createTenant,
+  deleteTenant,
+  getTenants,
+  updateTenant,
+} from "../../services/tenants/tenants.service.js";
 import { adminProcedure, router } from "../trpc.js";
 
 export const adminRouter = router({
   tenants: router({
     list: adminProcedure.query(({ ctx }) => getTenants(ctx)),
+
+    create: adminProcedure
+      .input(createTenantInputSchema)
+      .mutation(({ ctx, input }) => createTenant(ctx, input)),
+
+    update: adminProcedure
+      .input(updateTenantInputSchema)
+      .mutation(({ ctx, input }) => updateTenant(ctx, input)),
+
+    delete: adminProcedure
+      .input(tenantIdInputSchema)
+      .mutation(({ ctx, input }) =>
+        deleteTenant(ctx, ctx.user.id, input.tenantId),
+      ),
   }),
 
   users: router({

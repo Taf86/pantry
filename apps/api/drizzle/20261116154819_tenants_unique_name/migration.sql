@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "idx_tenants_name" ON "tenants" (lower("name"));
