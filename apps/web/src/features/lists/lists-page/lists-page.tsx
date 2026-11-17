@@ -1,3 +1,4 @@
+import { formReturnState } from "@/hooks/use-leave-form";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableSort } from "@/components/data-table/data-table-sort";
 import ErrorPage from "@/components/errors/error-page";
@@ -32,7 +33,7 @@ export default function ListsPage() {
           <Button
             size="sm"
             nativeButton={false}
-            render={<Link to="/lists/new" />}
+            render={<Link to="/lists/new" state={formReturnState} />}
           >
             <PlusIcon data-icon="inline-start" />
             {t("feature.lists.action.create")}

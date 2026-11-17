@@ -1,3 +1,4 @@
+import { formReturnState } from "@/hooks/use-leave-form";
 import {
   createDataTableColumnHelper,
   useDataTableState,
@@ -51,7 +52,12 @@ export default function useTenantsTable() {
             nativeButton={false}
             aria-label={t("feature.tenants.action.edit")}
             title={t("feature.tenants.action.edit")}
-            render={<Link to={`/admin/tenants/${row.original.id}`} />}
+            render={
+              <Link
+                to={`/admin/tenants/${row.original.id}`}
+                state={formReturnState}
+              />
+            }
           >
             <PencilIcon />
           </Button>

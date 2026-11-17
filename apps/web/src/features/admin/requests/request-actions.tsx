@@ -1,3 +1,4 @@
+import { formReturnState } from "@/hooks/use-leave-form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,7 +72,9 @@ export default function RequestActions({
         disabled={reject.isPending}
         aria-label={t("feature.requests.action.accept")}
         nativeButton={false}
-        render={<Link to={`/admin/requests/${request.id}`} />}
+        render={
+          <Link to={`/admin/requests/${request.id}`} state={formReturnState} />
+        }
       >
         <CheckIcon />
       </Button>

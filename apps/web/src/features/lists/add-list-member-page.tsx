@@ -39,7 +39,8 @@ import { AlertCircleIcon, UserPlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import useLeaveForm from "@/hooks/use-leave-form";
 import * as z from "zod";
 import { roleDescriptionKeys, roleLabelKeys } from "./common/role-labels";
 import { useListMembers } from "./common/use-lists";
@@ -78,12 +79,12 @@ export default function AddListMemberPage() {
 
 function AddMember({ list }: { list: ListMembers }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const online = useIsOnline();
   const roleItems = useRoleItems();
   const [error, setError] = useState<string | null>(null);
 
   const membersPath = `/lists/${list.listId}/members`;
+  const leave = useLeaveForm(membersPath);
 
   const apiErrorMessage = (apiError: ApiError) =>
     apiError.data?.code === "TOO_MANY_REQUESTS"
@@ -153,7 +154,7 @@ function AddMember({ list }: { list: ListMembers }) {
         permissions: Role[data.role],
       },
       {
-        onSuccess: () => void navigate(membersPath),
+        onSuccess: () => void leave(),
       },
     );
   };
@@ -252,11 +253,7 @@ function AddMember({ list }: { list: ListMembers }) {
               <UserPlusIcon data-icon="inline-start" />
               {t("feature.lists.members.add")}
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => void navigate(membersPath)}
-            >
+            <Button type="button" variant="ghost" onClick={() => void leave()}>
               {t("feature.lists.form.cancel")}
             </Button>
           </Field>

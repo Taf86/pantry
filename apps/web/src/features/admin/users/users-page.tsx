@@ -1,3 +1,4 @@
+import { formReturnState } from "@/hooks/use-leave-form";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableFilters } from "@/components/data-table/data-table-filters";
 import { DataTableSort } from "@/components/data-table/data-table-sort";
@@ -37,7 +38,7 @@ export default function UsersPage() {
           <Button
             size="sm"
             nativeButton={false}
-            render={<Link to="/admin/users/create" />}
+            render={<Link to="/admin/users/create" state={formReturnState} />}
           >
             <PlusIcon data-icon="inline-start" />
             {t("feature.users.action.create")}

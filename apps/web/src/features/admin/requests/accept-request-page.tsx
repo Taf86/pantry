@@ -24,7 +24,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, InfoIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import useLeaveForm from "@/hooks/use-leave-form";
 import InviteLinkShare from "../invite-link-share";
 import TenantSelect from "../tenants/tenant-select";
 import { RequestTypeBadge } from "./request-badges";
@@ -33,7 +34,7 @@ const requestsPath = "/admin/requests";
 
 export default function AcceptRequestPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const leave = useLeaveForm(requestsPath);
   const queryClient = useQueryClient();
 
   const { requestId = "" } = useParams<{ requestId: string }>();
@@ -192,7 +193,7 @@ export default function AcceptRequestPage() {
                 type="button"
                 variant="outline"
                 disabled={approve.isPending}
-                onClick={() => void navigate(requestsPath)}
+                onClick={() => void leave()}
               >
                 {t("feature.requests.accept.cancel")}
               </Button>
@@ -212,11 +213,7 @@ export default function AcceptRequestPage() {
 
         {locked && (
           <Field orientation="horizontal">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => void navigate(requestsPath)}
-            >
+            <Button type="button" variant="ghost" onClick={() => void leave()}>
               {t("feature.requests.accept.close")}
             </Button>
           </Field>

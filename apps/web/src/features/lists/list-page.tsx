@@ -24,14 +24,15 @@ import {
 import { useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import useLeaveForm from "@/hooks/use-leave-form";
 import * as z from "zod";
 import { useLists } from "./common/use-lists";
 
 const listsPath = "/lists";
 export default function ListPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const leave = useLeaveForm(listsPath);
 
   const { listId } = useParams<{ listId: string }>();
   const editing = listId !== undefined;
@@ -73,7 +74,7 @@ export default function ListPage() {
     } else {
       create.mutate({ mutationId, id, name: data.name });
     }
-    void navigate(listsPath);
+    void leave();
   };
 
   if (editing && lists.isPending) return <Loader />;
@@ -143,7 +144,7 @@ export default function ListPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => void navigate(listsPath)}
+                onClick={() => void leave()}
               >
                 {t("feature.lists.form.cancel")}
               </Button>

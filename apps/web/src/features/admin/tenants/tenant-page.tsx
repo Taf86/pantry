@@ -21,7 +21,8 @@ import { AlertCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import useLeaveForm from "@/hooks/use-leave-form";
 import z from "zod";
 import useTenants from "./use-tenants";
 
@@ -29,7 +30,7 @@ const tenantsPath = "/admin/tenants";
 
 export default function TenantPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const leave = useLeaveForm(tenantsPath);
   const queryClient = useQueryClient();
 
   const { tenantId } = useParams<{ tenantId: string }>();
@@ -81,7 +82,7 @@ export default function TenantPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: keys.adminTenants() });
       await queryClient.invalidateQueries({ queryKey: keys.adminUsers() });
-      await navigate(tenantsPath);
+      await leave();
     },
     onError: (cause: unknown) => setError(errorMessage(cause)),
   });
@@ -164,7 +165,7 @@ export default function TenantPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => void navigate(tenantsPath)}
+                onClick={() => void leave()}
               >
                 {t("feature.tenants.form.cancel")}
               </Button>

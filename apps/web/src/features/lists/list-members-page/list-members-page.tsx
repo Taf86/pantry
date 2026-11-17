@@ -1,3 +1,4 @@
+import { formReturnState } from "@/hooks/use-leave-form";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableSort } from "@/components/data-table/data-table-sort";
 import ErrorPage from "@/components/errors/error-page";
@@ -64,7 +65,12 @@ function Members({ listMembers }: { listMembers: ListMembers }) {
             <Button
               size="sm"
               nativeButton={false}
-              render={<Link to={`/lists/${listMembers.listId}/members/add`} />}
+              render={
+                <Link
+                  to={`/lists/${listMembers.listId}/members/add`}
+                  state={formReturnState}
+                />
+              }
             >
               <UserPlusIcon data-icon="inline-start" />
               {t("feature.lists.members.add")}

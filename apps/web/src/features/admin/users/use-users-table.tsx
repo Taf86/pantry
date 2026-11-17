@@ -1,3 +1,4 @@
+import { formReturnState } from "@/hooks/use-leave-form";
 import {
   createDataTableColumnHelper,
   optionsFilterValue,
@@ -82,7 +83,12 @@ export default function useUsersTable() {
             size="icon-xs"
             nativeButton={false}
             aria-label={t("feature.users.action.edit")}
-            render={<Link to={`/admin/users/${row.original.id}`} />}
+            render={
+              <Link
+                to={`/admin/users/${row.original.id}`}
+                state={formReturnState}
+              />
+            }
           >
             <PencilIcon />
           </Button>

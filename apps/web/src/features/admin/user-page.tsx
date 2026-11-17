@@ -41,7 +41,8 @@ import { AlertCircleIcon, LinkIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import useLeaveForm from "@/hooks/use-leave-form";
 import z from "zod";
 import { roleLabelKeys, statusLabelKeys } from "../../lib/user/user-labels";
 import InviteLinkShare from "./invite-link-share";
@@ -51,7 +52,7 @@ const usersPath = "/admin/users";
 
 export default function UserPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const leave = useLeaveForm(usersPath);
   const queryClient = useQueryClient();
 
   const { userId } = useParams<{ userId: string }>();
@@ -407,11 +408,7 @@ export default function UserPage() {
           </InviteLinkShare>
 
           <Field orientation="horizontal">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => void navigate(usersPath)}
-            >
+            <Button type="button" variant="ghost" onClick={() => void leave()}>
               {t(
                 editing || locked
                   ? "feature.users.form.close"
