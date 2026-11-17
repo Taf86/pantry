@@ -114,6 +114,8 @@ export const MAX_UNIT_LENGTH = 20;
 export const MAX_NOTE_LENGTH = 500;
 export const MAX_QUANTITY = 1_000_000;
 export const MAX_CONTACT_LENGTH = 200;
+/** Most tenants a users list can be filtered by at once. */
+export const MAX_TENANT_FILTER = 100;
 
 /** Minimum length of the password chosen during activation. */
 export const MIN_PASSWORD_LENGTH = 10;

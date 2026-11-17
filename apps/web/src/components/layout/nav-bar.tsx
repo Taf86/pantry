@@ -47,6 +47,7 @@ import { APP_NAME, APP_VERSION } from "@/lib/app-info";
 type NavItem = { to: string; key: ParseKeys };
 
 const adminNavItems = [
+  { to: "/admin/tenants", key: "feature.navBar.link.tenants" },
   { to: "/admin/users", key: "feature.navBar.link.users" },
   { to: "/admin/invites", key: "feature.navBar.link.invites" },
   { to: "/admin/requests", key: "feature.navBar.link.requests" },

@@ -303,6 +303,7 @@ const userSelection = {
 const sortableColumns = {
   displayName: users.displayName,
   email: users.email,
+  tenant: tenants.name,
   role: users.role,
   status: users.status,
 } satisfies Record<UserSortField, PgColumn>;
@@ -325,6 +326,9 @@ const buildUserFilters = (filters: ListUsersFilters): SQL | undefined => {
   }
   if (filters.email) {
     conditions.push(ilike(users.email, contains(filters.email)));
+  }
+  if (filters.tenant && filters.tenant.length > 0) {
+    conditions.push(inArray(users.tenantId, filters.tenant));
   }
   if (filters.role && filters.role.length > 0) {
     conditions.push(inArray(users.role, filters.role));

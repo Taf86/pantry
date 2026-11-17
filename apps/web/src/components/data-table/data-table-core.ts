@@ -112,6 +112,15 @@ export const textFilterValue = <TData>(
   return text === "" ? undefined : text;
 };
 
+/** Options filter whose allowed values are only known at runtime (ids). */
+export const stringsFilterValue = <TData>(
+  columnFilters: DataTableFiltersState<TData>,
+  columnId: DataTableColumnId<TData>,
+): string[] => {
+  const value = columnFilterValue(columnFilters, columnId);
+  return Array.isArray(value) ? value : [];
+};
+
 export const optionsFilterValue = <TData, TValue extends string>(
   columnFilters: DataTableFiltersState<TData>,
   columnId: DataTableColumnId<TData>,

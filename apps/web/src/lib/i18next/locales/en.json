@@ -62,6 +62,7 @@
         "shopping": "Shopping",
         "pantries": "Pantries",
         "admin": "Admin",
+        "tenants": "Tenants",
         "users": "Users",
         "invites": "Invites",
         "requests": "Requests",
@@ -88,6 +89,7 @@
       "column": {
         "name": "Name",
         "email": "Email",
+        "tenant": "Tenant",
         "role": "Role",
         "status": "Status",
         "actions": "Actions"
@@ -364,7 +366,50 @@
     },
     "tenants": {
       "placeholder": "Choose a tenant",
-      "required": "Choose a tenant."
+      "required": "Choose a tenant.",
+      "title": "Tenants",
+      "empty": "No tenants.",
+      "loadFailedTitle": "Tenants unavailable",
+      "loadFailed": "The tenants could not be loaded. Try again later.",
+      "notFoundTitle": "Tenant not found",
+      "notFound": "The tenant doesn't exist or is no longer available.",
+      "main": "Main",
+      "own": "Yours",
+      "column": {
+        "name": "Name",
+        "users": "Users",
+        "actions": "Actions"
+      },
+      "action": {
+        "create": "New tenant",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "form": {
+        "createTitle": "New tenant",
+        "createDescription": "Give the tenant a name. You can assign users to it when you create them.",
+        "editTitle": "Edit tenant",
+        "editDescription": "Change the tenant's name.",
+        "name": "Name",
+        "nameInUse": "There is already a tenant with this name.",
+        "createFailed": "Creation failed",
+        "editFailed": "Update failed",
+        "create": "Create",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "delete": {
+        "title": "Delete the tenant {{name}}?",
+        "description": "The tenant is empty: only the tenant will be deleted.",
+        "descriptionWithUsers_one": "{{count}} user will be deleted too, with their lists, sessions and invites. This cannot be undone.",
+        "descriptionWithUsers_other": "{{count}} users will be deleted too, with their lists, sessions and invites. This cannot be undone.",
+        "typeName": "Type “{{name}}” to confirm",
+        "confirm": "Delete",
+        "cancel": "Cancel",
+        "mainBlocked": "The main tenant cannot be deleted",
+        "ownBlocked": "You cannot delete your own tenant",
+        "notAllowed": "Not allowed: neither the main tenant nor your own can be deleted."
+      }
     }
   },
   "validation": {

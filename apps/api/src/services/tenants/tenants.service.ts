@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ne, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 import type {
   CreateTenantInput,
   Tenant,
+  TenantSummary,
   UpdateTenantInput,
 } from "@pantry/shared";
 import type { Database, Executor } from "../../db/client.js";
@@ -23,11 +25,25 @@ const tenantSelection = {
   main: tenants.main,
 };
 
-export const getTenants = async (deps: TenantDeps): Promise<Tenant[]> =>
-  deps.db
-    .select(tenantSelection)
+export const getTenants = async (
+  deps: TenantDeps,
+  actorId: string,
+): Promise<TenantSummary[]> => {
+  const actor = alias(users, "actor");
+  const rows = await deps.db
+    .select({
+      ...tenantSelection,
+      userCount: count(users.id),
+      own: sql<boolean>`bool_or(${actor.id} is not null)`,
+    })
     .from(tenants)
+    .leftJoin(users, eq(users.tenantId, tenants.id))
+    .leftJoin(actor, and(eq(actor.tenantId, tenants.id), eq(actor.id, actorId)))
+    .groupBy(tenants.id)
     .orderBy(desc(tenants.main), asc(tenants.name));
+
+  return rows.map((row) => ({ ...row, own: row.own === true }));
+};
 
 export const createTenant = async (
   deps: TenantDeps,

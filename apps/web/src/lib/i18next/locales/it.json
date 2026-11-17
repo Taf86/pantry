@@ -62,6 +62,7 @@
         "shopping": "Spesa",
         "pantries": "Dispense",
         "admin": "Admin",
+        "tenants": "Tenant",
         "users": "Utenti",
         "invites": "Inviti",
         "requests": "Richieste",
@@ -88,6 +89,7 @@
       "column": {
         "name": "Nome",
         "email": "Email",
+        "tenant": "Tenant",
         "role": "Ruolo",
         "status": "Stato",
         "actions": "Azioni"
@@ -364,7 +366,50 @@
     },
     "tenants": {
       "placeholder": "Scegli un tenant",
-      "required": "Scegli un tenant."
+      "required": "Scegli un tenant.",
+      "title": "Tenant",
+      "empty": "Nessun tenant.",
+      "loadFailedTitle": "Tenant non disponibili",
+      "loadFailed": "Non è stato possibile caricare i tenant. Riprova più tardi.",
+      "notFoundTitle": "Tenant non trovato",
+      "notFound": "Il tenant non esiste o non è più disponibile.",
+      "main": "Principale",
+      "own": "Il tuo",
+      "column": {
+        "name": "Nome",
+        "users": "Utenti",
+        "actions": "Azioni"
+      },
+      "action": {
+        "create": "Nuovo tenant",
+        "edit": "Modifica",
+        "delete": "Elimina"
+      },
+      "form": {
+        "createTitle": "Nuovo tenant",
+        "createDescription": "Dai un nome al tenant. Potrai assegnargli utenti alla loro creazione.",
+        "editTitle": "Modifica tenant",
+        "editDescription": "Cambia il nome del tenant.",
+        "name": "Nome",
+        "nameInUse": "Esiste già un tenant con questo nome.",
+        "createFailed": "Creazione non riuscita",
+        "editFailed": "Modifica non riuscita",
+        "create": "Crea",
+        "save": "Salva",
+        "cancel": "Annulla"
+      },
+      "delete": {
+        "title": "Eliminare il tenant {{name}}?",
+        "description": "Il tenant è vuoto: verrà eliminato solo il tenant.",
+        "descriptionWithUsers_one": "Verrà eliminato anche {{count}} utente, con le sue liste, sessioni e inviti. L'operazione non si può annullare.",
+        "descriptionWithUsers_other": "Verranno eliminati anche {{count}} utenti, con le loro liste, sessioni e inviti. L'operazione non si può annullare.",
+        "typeName": "Scrivi «{{name}}» per confermare",
+        "confirm": "Elimina",
+        "cancel": "Annulla",
+        "mainBlocked": "Il tenant principale non si può eliminare",
+        "ownBlocked": "Non puoi eliminare il tuo tenant",
+        "notAllowed": "Operazione non consentita: non si possono eliminare il tenant principale né il tuo."
+      }
     }
   },
   "validation": {

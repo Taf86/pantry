@@ -12,6 +12,8 @@ import UserPage from "./features/admin/user-page";
 import NotFoundPage from "./components/errors/not-found-page";
 import RequireGuest from "./components/guards/require-guest";
 import InvitesPage from "./features/admin/invites/invites-page";
+import TenantsPage from "./features/admin/tenants/tenants-page";
+import TenantPage from "./features/admin/tenants/tenant-page";
 import RequestsPage from "./features/admin/requests/requests-page";
 import AcceptRequestPage from "./features/admin/requests/accept-request-page";
 import RequestPage from "./features/auth/request-page";
@@ -73,6 +75,9 @@ const router = createBrowserRouter([
                   { path: "users", element: <UsersPage /> },
                   { path: "users/create", element: <UserPage /> },
                   { path: "users/:userId", element: <UserPage /> },
+                  { path: "tenants", element: <TenantsPage /> },
+                  { path: "tenants/create", element: <TenantPage /> },
+                  { path: "tenants/:tenantId", element: <TenantPage /> },
                   { path: "invites", element: <InvitesPage /> },
                   { path: "requests", element: <RequestsPage /> },
                   {

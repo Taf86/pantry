@@ -7,6 +7,7 @@ import { sessions } from "../../src/db/schema/sessions.js";
 import { tenants } from "../../src/db/schema/tenants.js";
 import { users } from "../../src/db/schema/users.js";
 import { createRecordingEventBus } from "../../src/realtime/events.js";
+import { getUsers } from "../../src/services/admin/admin.service.js";
 import {
   createTenant,
   deleteTenant,
@@ -54,7 +55,7 @@ describe("tenants", () => {
 
       expect(created.name).toBe("Famiglia");
       expect(created.main).toBe(false);
-      expect((await getTenants(deps())).map((t) => t.id)).toEqual([
+      expect((await getTenants(deps(), admin)).map((t) => t.id)).toEqual([
         MAIN_TENANT_ID,
         created.id,
       ]);
@@ -209,6 +210,47 @@ describe("tenants", () => {
       await expect(
         deleteTenant(deps(), admin, OTHER_TENANT_ID),
       ).rejects.toThrow(/not existing/i);
+    });
+  });
+
+  describe("users list", () => {
+    const list = (input: Partial<Parameters<typeof getUsers>[1]>) =>
+      getUsers(deps(), {
+        pagination: { pageIndex: 0, pageSize: 50 },
+        sorting: [],
+        filters: {},
+        ...input,
+      });
+
+    it("filters users by tenant", async () => {
+      await addOtherTenant();
+      const other = await makeUser(harness, OTHER_TENANT_ID);
+
+      const page = await list({ filters: { tenant: [OTHER_TENANT_ID] } });
+
+      expect(page.rowCount).toBe(1);
+      expect(page.rows.map((row) => row.id)).toEqual([other]);
+      expect(page.rows[0]?.tenant).toEqual({
+        id: OTHER_TENANT_ID,
+        name: "Other",
+      });
+    });
+
+    it("sorts users by tenant name", async () => {
+      await harness.db
+        .insert(tenants)
+        .values({ id: OTHER_TENANT_ID, name: "Aaa", main: false });
+      const other = await makeUser(harness, OTHER_TENANT_ID);
+
+      const ascending = await list({
+        sorting: [{ id: "tenant", desc: false }],
+      });
+      const descending = await list({
+        sorting: [{ id: "tenant", desc: true }],
+      });
+
+      expect(ascending.rows.map((row) => row.id)).toEqual([other, admin]);
+      expect(descending.rows.map((row) => row.id)).toEqual([admin, other]);
     });
   });
 });

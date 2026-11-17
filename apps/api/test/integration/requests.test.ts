@@ -150,12 +150,24 @@ describe("requests", () => {
       ).rejects.toThrow(/tenant not existing/i);
     });
 
-    it("lists the main tenant first", async () => {
+    it("lists the main tenant first, with its users and whose it is", async () => {
       await addOtherTenant();
 
-      expect(await getTenants(deps())).toEqual([
-        { id: MAIN_TENANT_ID, name: "Main", main: true },
-        { id: OTHER_TENANT_ID, name: "Other", main: false },
+      expect(await getTenants(deps(), admin)).toEqual([
+        {
+          id: MAIN_TENANT_ID,
+          name: "Main",
+          main: true,
+          userCount: 1,
+          own: true,
+        },
+        {
+          id: OTHER_TENANT_ID,
+          name: "Other",
+          main: false,
+          userCount: 0,
+          own: false,
+        },
       ]);
     });
   });

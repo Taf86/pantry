@@ -8,6 +8,11 @@ export type TenantRef = {
 export type Tenant = TenantRef & {
   main: boolean;
 };
+export type TenantSummary = Tenant & {
+  userCount: number;
+  /** The tenant of the admin asking. */
+  own: boolean;
+};
 
 export const createTenantInputSchema = z.object({
   name: nameSchema,

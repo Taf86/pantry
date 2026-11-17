@@ -1,6 +1,7 @@
 import {
   createDataTableColumnHelper,
   optionsFilterValue,
+  stringsFilterValue,
   textFilterValue,
   useDataTableState,
   type DataTableColumns,
@@ -27,11 +28,13 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import DeleteUserAction from "./delete-user-action";
 import UserStatusBadge from "./user-status-badge";
+import useTenants from "../tenants/use-tenants";
 
 const columnHelper = createDataTableColumnHelper<UserExtended>();
 
 export default function useUsersTable() {
   const { t } = useTranslation();
+  const { tenants } = useTenants();
   const table = useDataTableState<UserExtended>({
     sorting: [{ id: "displayName", desc: false }],
   });
@@ -54,6 +57,13 @@ export default function useUsersTable() {
     const role = columnHelper.accessor("role", {
       header: t("feature.users.column.role"),
       cell: ({ getValue }) => t(roleLabelKeys[getValue()]),
+    });
+
+    const tenant = columnHelper.accessor("tenant", {
+      header: t("feature.users.column.tenant"),
+      cell: ({ getValue }) => (
+        <span className="max-w-48 truncate">{getValue().name}</span>
+      ),
     });
 
     const status = columnHelper.accessor("status", {
@@ -85,6 +95,7 @@ export default function useUsersTable() {
       desktopColumns: columnHelper.columns([
         name,
         email,
+        tenant,
         role,
         status,
         actions,
@@ -92,6 +103,7 @@ export default function useUsersTable() {
       mobileColumns: columnHelper.columns([
         name,
         mobileEmail,
+        tenant,
         role,
         status,
         actions,
@@ -103,6 +115,7 @@ export default function useUsersTable() {
     () => [
       { columnId: "displayName", label: t("feature.users.column.name") },
       { columnId: "email", label: t("feature.users.column.email") },
+      { columnId: "tenant", label: t("feature.users.column.tenant") },
       { columnId: "role", label: t("feature.users.column.role") },
       { columnId: "status", label: t("feature.users.column.status") },
     ],
@@ -120,6 +133,17 @@ export default function useUsersTable() {
         columnId: "email",
         label: t("feature.users.column.email"),
         filter: { kind: "text" },
+      },
+      {
+        columnId: "tenant",
+        label: t("feature.users.column.tenant"),
+        filter: {
+          kind: "options",
+          options: (tenants.data ?? []).map((tenant) => ({
+            value: tenant.id,
+            label: tenant.name,
+          })),
+        },
       },
       {
         columnId: "role",
@@ -144,7 +168,7 @@ export default function useUsersTable() {
         },
       },
     ],
-    [t],
+    [t, tenants.data],
   );
 
   const input = useMemo<ListUsersInput>(
@@ -184,12 +208,14 @@ const toUserFilters = (
 ): ListUsersFilters => {
   const displayName = textFilterValue(columnFilters, "displayName");
   const email = textFilterValue(columnFilters, "email");
+  const tenant = stringsFilterValue(columnFilters, "tenant");
   const role = optionsFilterValue(columnFilters, "role", UserRoles);
   const status = optionsFilterValue(columnFilters, "status", UserStatuses);
 
   return {
     ...(displayName !== undefined && { displayName }),
     ...(email !== undefined && { email }),
+    ...(tenant.length > 0 && { tenant }),
     ...(role.length > 0 && { role }),
     ...(status.length > 0 && { status }),
   };

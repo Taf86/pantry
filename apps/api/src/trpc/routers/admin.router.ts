@@ -44,7 +44,7 @@ import { adminProcedure, router } from "../trpc.js";
 
 export const adminRouter = router({
   tenants: router({
-    list: adminProcedure.query(({ ctx }) => getTenants(ctx)),
+    list: adminProcedure.query(({ ctx }) => getTenants(ctx, ctx.user.id)),
 
     create: adminProcedure
       .input(createTenantInputSchema)

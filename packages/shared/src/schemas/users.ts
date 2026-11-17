@@ -6,7 +6,11 @@ import {
   paginationSchema,
   type Page,
 } from "./common.js";
-import { MAX_CONTACT_LENGTH, MAX_NAME_LENGTH } from "../constants.js";
+import {
+  MAX_CONTACT_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_TENANT_FILTER,
+} from "../constants.js";
 import type { TenantRef } from "./tenants.js";
 
 export const UserRole = {
@@ -49,6 +53,7 @@ export type UserExtended = User & {
 export const UserSortFields = [
   "displayName",
   "email",
+  "tenant",
   "role",
   "status",
 ] as const;
@@ -64,6 +69,7 @@ export type UserSort = z.infer<typeof userSortSchema>;
 export const listUsersFiltersSchema = z.object({
   displayName: z.string().trim().min(1).max(MAX_NAME_LENGTH).optional(),
   email: z.string().trim().min(1).max(MAX_CONTACT_LENGTH).optional(),
+  tenant: z.array(z.uuid()).min(1).max(MAX_TENANT_FILTER).optional(),
   role: z.array(userRoleSchema).min(1).max(UserRoles.length).optional(),
   status: z.array(userStatusSchema).min(1).max(UserStatuses.length).optional(),
 });
