@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=.env --watch src/main.ts",
+    "dev": "tsx --conditions=development --env-file=.env --watch src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "smoke": "node scripts/smoke-imports.mjs",
