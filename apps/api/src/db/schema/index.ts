@@ -1,5 +1,6 @@
 export * from "./accounts.js";
 export * from "./applied-mutations.js";
+export * from "./catalog.js";
 export * from "./invites.js";
 export * from "./list-members.js";
 export * from "./lists.js";
